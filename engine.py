@@ -13,14 +13,19 @@ class Tier1_Gatekeeper(nn.Module):
         super().__init__()
         self.encoder = RobertaModel.from_pretrained("microsoft/codebert-base")
         self.classifier = nn.Sequential(
-            nn.Dropout(0.2),
+            nn.Identity(), 
             nn.Linear(768, 1024),
+            nn.LayerNorm(1024), # <--- This is the layer that was missing
             nn.GELU(),
-            nn.Dropout(0.2),
-            nn.Linear(1024, 2)
+            nn.Linear(1024, 2),
+            nn.Dropout(0.3), 
+            nn.Identity()
         )
-    def forward(self, ids, mask):
-        return self.classifier(self.encoder(ids, mask).last_hidden_state[:, 0, :])
+
+    def forward(self, input_ids, attention_mask):
+        outputs = self.encoder(input_ids=input_ids, attention_mask=attention_mask)
+        logits = self.classifier(outputs.last_hidden_state[:, 0, :])
+        return logits
 
 class Tier2_Specialist(nn.Module):
     def __init__(self, num_classes):
@@ -75,19 +80,21 @@ class GenosEngine:
         inputs = self.tokenizer(processed_cmd, return_tensors="pt", truncation=True, padding="max_length", max_length=96).to(self.device)
         
         with torch.no_grad():
-            # Tier 1 Gatekeeper
+            # Tier 1: Gatekeeper
             g_logits = self.t1(inputs['input_ids'], inputs['attention_mask'])
             g_probs = F.softmax(g_logits, dim=1)
             g_conf, g_idx = torch.max(g_probs, dim=1)
             
-            if g_idx.item() == 0:
-                return {"status": "Benign", "confidence": f"{g_conf.item():.2%}"}
-            
-            # Tier 2 Specialist
+            # Tier 2: Specialist
             s_logits = self.t2(inputs['input_ids'], inputs['attention_mask'])
             s_probs = F.softmax(s_logits, dim=1)
             s_conf, s_idx = torch.max(s_probs, dim=1)
             
+            # Ensure this dictionary and the function are closed
             return {
-                "status": "Malicious",
-                "mitre_id": self.s_map[s_idx.item()],
+                "status": "Malicious" if g_idx.item() == 1 else "Benign",
+                "mitre_id": self.s_map[s_idx.item()] if g_idx.item() == 1 else "N/A",
+                "gatekeeper_confidence": round(g_conf.item(), 4),
+                "specialist_confidence": round(s_conf.item(), 4),
+                "combined_confidence": round(g_conf.item() * s_conf.item(), 4)
+            } # <--- Check this brace

