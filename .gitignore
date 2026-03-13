@@ -1,0 +1,5 @@
+__pycache__/
+venv/
+my_flask_env/
+*.py[cod]
+*$py.class

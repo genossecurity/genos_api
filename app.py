@@ -1,5 +1,6 @@
 import sys
 import os
+import time  # <--- Added import
 from flask import Flask, request, jsonify
 
 # Force Python to look in current directory for local modules
@@ -19,9 +20,12 @@ engine = GenosEngine(
 
 @app.route('/scan', methods=['POST'])
 def scan():
+    # 1. Start the high-resolution timer
+    start_time = time.perf_counter()
+    
     data = request.get_json()
     
-    # 1. Validation & Auth
+    # Validation & Auth
     if not data or 'command' not in data or 'api_key' not in data:
         return jsonify({"error": "Missing parameters"}), 400
     
@@ -32,19 +36,23 @@ def scan():
         # 2. Neural Analysis
         raw_result = engine.scan(data['command'])
         
-        # 3. Clean Unified Logic
+        # 3. Stop timer and calculate milliseconds
+        end_time = time.perf_counter()
+        inference_ms = (end_time - start_time) * 1000
+        
+        # 4. Clean Unified Logic (Now with latency injected)
         if raw_result['status'] == "Malicious":
-            # Bad commands: MITRE code, gatekeeper confidence
             response = {
                 "verdict": "Malicious",
                 "mitre_id": raw_result['mitre_id'],
-                "confidence": raw_result['gatekeeper_confidence']
+                "confidence": raw_result['gatekeeper_confidence'],
+                "server_inference_ms": round(inference_ms, 2) # <--- Added
             }
         else:
-            # Good commands: Benign, gatekeeper confidence
             response = {
                 "verdict": "Benign",
-                "confidence": raw_result['gatekeeper_confidence']
+                "confidence": raw_result['gatekeeper_confidence'],
+                "server_inference_ms": round(inference_ms, 2) # <--- Added
             }
             
         return jsonify(response)
