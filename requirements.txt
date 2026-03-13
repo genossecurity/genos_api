@@ -4,3 +4,8 @@ Jinja2==3.1.6
 itsdangerous==2.2.0
 click==8.3.1
 blinker==1.9.0
+torch
+transformers
+faiss-cpu
+pandas
+numpy
