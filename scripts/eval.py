@@ -50,18 +50,18 @@ def run_integrated_audit():
     tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
     
     # Load Mappings
-    with open("specialist_map.json", "r") as f:
+    with open("../config/specialist_map.json", "r") as f:
         s_map = {int(v): k for k, v in json.load(f).items()}
 
     # Initialize and Load
     print("[*] Loading Gatekeeper (Tier 1)...")
     t1 = GatekeeperModel().to(device)
-    t1.load_state_dict(torch.load("gatekeeper.pt", map_location=device))
+    t1.load_state_dict(torch.load("../models/gatekeeper.pt", map_location=device))
     
     print("[*] Loading Ultra Specialist (Tier 2)...")
     t2 = SpecialistModel(num_classes=len(s_map)).to(device)
     # Fix: Now matches the 7-layer state_dict in specialist.pt
-    t2.load_state_dict(torch.load("specialist.pt", map_location=device))
+    t2.load_state_dict(torch.load("../models/specialist.pt", map_location=device))
     
     t1.eval()
     t2.eval()
@@ -70,8 +70,8 @@ def run_integrated_audit():
         return str(cmd).lower().strip()
 
     # Data Source
-    b_df = pd.read_csv("benign_final.csv").sample(1000)
-    m_df = pd.read_csv("mitre_atlas_raw.csv")
+    b_df = pd.read_csv("../data/benign_final.csv").sample(1000)
+    m_df = pd.read_csv("../data/mitre_atlas_raw.csv")
 
     print("\n" + "="*50 + "\n🚀 GENOS PIPELINE AUDIT\n" + "="*50)
 

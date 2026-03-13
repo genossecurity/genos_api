@@ -1,151 +1,112 @@
-import os
-import secrets
-from functools import wraps
-
+from flask import Flask, request, jsonify
 import torch
 import torch.nn as nn
-import numpy as np
-import faiss
-import pandas as pd
-from transformers import RobertaTokenizer, RobertaModel
-from flask import Flask, jsonify, request
-
-# ── Command normalizer (mirrors stress.py pre-processing) ────────────────────
-
-def normalize_command(cmd):
-    if not isinstance(cmd, str):
-        return ""
-    cmd = cmd.lower()
-    cmd = cmd.replace("^", "").replace("`", "")
-    cmd = cmd.replace("/", "\\")
-    cmd = " ".join(cmd.split())
-    cmd = cmd.replace("> nul 2>&1", "").replace(">nul", "")
-    cmd = cmd.replace("\\.\\", "\\")
-    return cmd.strip()
-
-
-# ── Model architecture (must match training) ──────────────────────────────────
-
-class SecurityAgentX_Model(nn.Module):
-    def __init__(self, model_name="roberta-base", num_labels=3):
-        super().__init__()
-        self.encoder = RobertaModel.from_pretrained(model_name)
-        self.classifier_head = nn.Linear(768, num_labels)
-        self.decoder_head = nn.Sequential(
-            nn.Linear(768, 1024),
-            nn.LayerNorm(1024),
-            nn.SiLU(),
-            nn.Linear(1024, 1024),
-            nn.LayerNorm(1024),
-            nn.SiLU(),
-            nn.Linear(1024, 768),
-        )
-
-    def forward(self, input_ids, attention_mask):
-        outputs = self.encoder(input_ids=input_ids, attention_mask=attention_mask)
-        embedding = outputs.last_hidden_state[:, 0, :]
-        logits = self.classifier_head(embedding)
-        reconstructed = self.decoder_head(embedding)
-        return embedding, reconstructed, logits
-
-
-# ── Engine initialisation ─────────────────────────────────────────────────────
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
-
-checkpoint = torch.load(os.path.join(BASE_DIR, "anomaly_engine.pt"), map_location=device)
-# num_labels=3 kept to match saved weights; classifier head is unused at inference
-model = SecurityAgentX_Model(model_name="microsoft/codebert-base", num_labels=3).to(device)
-model.load_state_dict(checkpoint["model_state"], strict=False)
-model.eval()
-THRESHOLD = checkpoint.get("threshold", 0.001)
-
-# FAISS atlas covers all 1745 MITRE ATT&CK attacks — used for every malicious verdict
-atlas_index = faiss.read_index(os.path.join(BASE_DIR, "mitre_atlas.index"))
-metadata = pd.read_csv(os.path.join(BASE_DIR, "mitre_atlas_metadata.csv"))
-
-print(f"[+] Genos engine loaded | threshold={THRESHOLD:.8f} | atlas={len(metadata)} techniques | device={device}")
-
-# ── API key auth ──────────────────────────────────────────────────────────────
-
-# Set the API key via the GENOS_API_KEY environment variable.
-API_KEY = os.environ.get("GENOS_API_KEY", "changeme")
-
-def require_api_key(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        key = request.headers.get("X-API-Key") or request.json and request.json.get("api_key")
-        if not key or not secrets.compare_digest(key, API_KEY):
-            return jsonify(error="Unauthorized"), 401
-        return f(*args, **kwargs)
-    return decorated
-
-
-# ── Flask app ─────────────────────────────────────────────────────────────────
+import torch.nn.functional as F
+from transformers import RobertaModel, RobertaTokenizer
+import base64
+import re
+import json
 
 app = Flask(__name__)
 
+# --- CONFIGURATION ---
+VALID_API_KEY = "GENOS_DEV_KEY_2026" # Replace with your actual key management
 
-@app.route("/")
-def hello():
-    return jsonify(message="Genos API online")
+# --- MODEL ARCHITECTURES ---
 
-
-@app.route("/api/test", methods=["POST"])
-def test():
-    return jsonify(message="server up!")
-
-
-@app.route("/api", methods=["POST"])
-@require_api_key
-def analyze():
-    body = request.get_json(silent=True) or {}
-    command = body.get("commandline", "")
-    if not command:
-        return jsonify(error="'commandline' field is required"), 400
-
-    inputs = tokenizer(
-        normalize_command(command),
-        return_tensors="pt",
-        truncation=True,
-        padding="max_length",
-        max_length=96,
-    ).to(device)
-
-    with torch.no_grad():
-        emb, rec, logits = model(inputs["input_ids"], inputs["attention_mask"])
-        error = torch.mean((emb - rec) ** 2).item()
-        is_anomalous = error > THRESHOLD
-
-    if not is_anomalous:
-        return jsonify(
-            verdict="BENIGN",
-            mitre_code=None,
-            label="Benign",
-            confidence=None,
-            reconstruction_error=f"{error:.8f}",
+class Tier1_Gatekeeper(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.encoder = RobertaModel.from_pretrained("microsoft/codebert-base")
+        self.classifier = nn.Sequential(
+            nn.Dropout(0.2), nn.Linear(768, 1024), nn.GELU(),
+            nn.Dropout(0.2), nn.Linear(1024, 2)
         )
+    def forward(self, ids, mask):
+        return self.classifier(self.encoder(ids, mask).last_hidden_state[:, 0, :])
 
-    # Anomalous — identify the closest of the 1745 MITRE techniques via FAISS atlas
-    query_vec = emb.cpu().float().numpy().astype("float32")
-    distances, indices = atlas_index.search(query_vec, 1)
-    match = metadata.iloc[indices[0][0]]
-    # Convert L2 distance to a 0-100 similarity score (lower distance = higher similarity)
-    l2_dist = float(distances[0][0])
-    similarity = max(0.0, 1.0 / (1.0 + l2_dist))
+class Tier2_Specialist(nn.Module):
+    def __init__(self, num_classes):
+        super().__init__()
+        self.encoder = RobertaModel.from_pretrained("microsoft/codebert-base")
+        self.classifier = nn.Sequential(
+            nn.Linear(768, 1024), nn.LayerNorm(1024), nn.GELU(),
+            nn.Dropout(0.3), nn.Linear(1024, 1024), nn.GELU(),
+            nn.Linear(1024, num_classes)
+        )
+    def forward(self, ids, mask):
+        return self.classifier(self.encoder(ids, mask).last_hidden_state[:, 0, :])
 
-    return jsonify(
-        verdict="MALICIOUS",
-        mitre_code=str(match["mitre_id"]),
-        label=str(match["technique_name"]),
-        confidence=f"{similarity:.2%}",
-        reconstruction_error=f"{error:.8f}",
-        detection_type="ATLAS_MATCH",
-    )
+# --- ENGINE ---
 
+class GenosEngine:
+    def __init__(self):
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
+        
+        # Load Tier 1
+        self.t1 = Tier1_Gatekeeper().to(self.device)
+        self.t1.load_state_dict(torch.load("gatekeeper.pt", map_location=self.device))
+        self.t1.eval()
+        
+        # Load Tier 2
+        with open("specialist_map.json", "r") as f:
+            self.s_map = {int(v): k for k, v in json.load(f).items()}
+        self.t2 = Tier2_Specialist(num_classes=len(self.s_map)).to(self.device)
+        self.t2.load_state_dict(torch.load("specialist.pt", map_location=self.device))
+        self.t2.eval()
 
-if __name__ == "__main__":
-    app.run(debug=False, host="127.0.0.1", port=6000)
+    def analyze(self, raw_cmd):
+        cmd = raw_cmd.lower().strip()
+        inputs = self.tokenizer(cmd, return_tensors="pt", truncation=True, padding="max_length", max_length=96).to(self.device)
+        
+        with torch.no_grad():
+            # Tier 1 Analysis
+            g_logits = self.t1(inputs['input_ids'], inputs['attention_mask'])
+            g_probs = F.softmax(g_logits, dim=1)
+            g_conf, g_idx = torch.max(g_probs, dim=1)
+            
+            if g_idx.item() == 0: # Benign
+                return "Benign", None, f"{g_conf.item():.2%}"
+            
+            # Tier 2 Analysis (If Tier 1 is Malicious)
+            s_logits = self.t2(inputs['input_ids'], inputs['attention_mask'])
+            s_probs = F.softmax(s_logits, dim=1)
+            s_conf, s_idx = torch.max(s_probs, dim=1)
+            
+            return "Malicious", self.s_map[s_idx.item()], f"{s_conf.item():.2%}"
+
+engine = GenosEngine()
+
+# --- ROUTES ---
+
+@app.route('/scan', methods=['POST'])
+def scan():
+    data = request.get_json()
+    
+    # 1. Input Validation
+    if not data or 'command' not in data or 'api_key' not in data:
+        return jsonify({"error": "Invalid input format. Required: {'command': '...', 'api_key': '...'}"}), 400
+    
+    # 2. API Key Check
+    if data['api_key'] != VALID_API_KEY:
+        return jsonify({"error": "Unauthorized API Key"}), 401
+
+    # 3. Analyze
+    status, mitre_code, confidence = engine.analyze(data['command'])
+
+    # 4. Formatted Output
+    if status == "Benign":
+        return jsonify({
+            "status": "Benign",
+            "confidence": confidence
+        })
+    else:
+        return jsonify({
+            "status": "Malicious",
+            "mitre_id": mitre_code,
+            "confidence": confidence
+        })
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
