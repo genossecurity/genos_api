@@ -2,8 +2,12 @@ import torch
 import torch.nn as nn
 import pandas as pd
 import json
+import os
 from transformers import RobertaModel, RobertaTokenizer
 from tqdm import tqdm
+
+# Get the base directory (genos_dev folder)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # --- 1. ARCHITECTURES (Synced with your final trainers) ---
 
@@ -50,18 +54,18 @@ def run_integrated_audit():
     tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
     
     # Load Mappings
-    with open("../config/specialist_map.json", "r") as f:
+    with open(os.path.join(BASE_DIR, "config", "specialist_map.json"), "r") as f:
         s_map = {int(v): k for k, v in json.load(f).items()}
 
     # Initialize and Load
     print("[*] Loading Gatekeeper (Tier 1)...")
     t1 = GatekeeperModel().to(device)
-    t1.load_state_dict(torch.load("../models/gatekeeper.pt", map_location=device))
+    t1.load_state_dict(torch.load(os.path.join(BASE_DIR, "models", "gatekeeper.pt"), map_location=device))
     
     print("[*] Loading Ultra Specialist (Tier 2)...")
     t2 = SpecialistModel(num_classes=len(s_map)).to(device)
     # Fix: Now matches the 7-layer state_dict in specialist.pt
-    t2.load_state_dict(torch.load("../models/specialist.pt", map_location=device))
+    t2.load_state_dict(torch.load(os.path.join(BASE_DIR, "models", "specialist.pt"), map_location=device))
     
     t1.eval()
     t2.eval()
@@ -70,8 +74,8 @@ def run_integrated_audit():
         return str(cmd).lower().strip()
 
     # Data Source
-    b_df = pd.read_csv("../data/benign_final.csv").sample(1000)
-    m_df = pd.read_csv("../data/mitre_atlas_raw.csv")
+    b_df = pd.read_csv(os.path.join(BASE_DIR, "data", "benign_final.csv")).sample(1000)
+    m_df = pd.read_csv(os.path.join(BASE_DIR, "data", "mitre_atlas_raw.csv"))
 
     print("\n" + "="*50 + "\n🚀 GENOS PIPELINE AUDIT\n" + "="*50)
 

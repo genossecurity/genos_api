@@ -15,7 +15,7 @@ class GatekeeperModel(nn.Module):
             nn.Linear(768, 1024),
             nn.GELU(),
             nn.Dropout(0.2),
-            nn.Linear(1024, 2) # Binary: 0=BENIGN, 1=MALICIOUS
+            nn.Linear(1024, 2)
         )
 
     def forward(self, ids, mask):
@@ -24,7 +24,6 @@ class GatekeeperModel(nn.Module):
 
 class BinaryDataset(Dataset):
     def __init__(self, b_csv, m_csv, tokenizer):
-        # Normalization: Force everything to lower
         b_cmds = [str(c).lower().strip() for c in pd.read_csv(b_csv)['command']]
         m_cmds = [str(c).lower().strip() for c in pd.read_csv(m_csv)['command']]
         
@@ -46,7 +45,7 @@ def train():
     device = torch.device("cuda")
     tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
     
-    dataset = BinaryDataset("benign_final.csv", "malicious_augmented.csv", tokenizer)
+    dataset = BinaryDataset("./data/benign_final.csv", "./data/malicious_augmented.csv", tokenizer)
     loader = DataLoader(dataset, batch_size=32, shuffle=True)
 
     model = GatekeeperModel().to(device)
@@ -54,18 +53,42 @@ def train():
     criterion = nn.CrossEntropyLoss()
 
     print("[*] Training Gatekeeper (Tier 1)...")
-    for epoch in range(1):
+    print("[*] Tracking Training Accuracy per Epoch...")
+
+    for epoch in range(15):
         model.train()
-        loop = tqdm(loader, desc=f"Epoch {epoch+1}")
+        correct = 0
+        total = 0
+        
+        loop = tqdm(loader, desc=f"Epoch {epoch+1}/15")
         for batch in loop:
             optimizer.zero_grad()
-            logits = model(batch['ids'].to(device), batch['mask'].to(device))
-            loss = criterion(logits, batch['lbl'].to(device))
+            
+            ids = batch['ids'].to(device)
+            mask = batch['mask'].to(device)
+            labels = batch['lbl'].to(device)
+            
+            logits = model(ids, mask)
+            loss = criterion(logits, labels)
+            
             loss.backward()
             optimizer.step()
-            loop.set_postfix(loss=f"{loss.item():.4f}")
+            
+            # Calculate Accuracy
+            preds = torch.argmax(logits, dim=1)
+            correct += (preds == labels).sum().item()
+            total += labels.size(0)
+            
+            # Update live accuracy in TQDM
+            current_acc = (correct / total) * 100
+            loop.set_postfix(acc=f"{current_acc:.2f}%")
 
-    torch.save(model.state_dict(), "gatekeeper.pt")
+        # End of Epoch Summary
+        epoch_acc = (correct / total) * 100
+        print(f"\n[Epoch {epoch+1}] Training Accuracy: {epoch_acc:.2f}%")
+        print("-" * 40)
+
+    torch.save(model.state_dict(), "./models/gatekeeper.pt")
     print("[+] Saved gatekeeper.pt")
 
 if __name__ == "__main__":

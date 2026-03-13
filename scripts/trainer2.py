@@ -35,7 +35,7 @@ def train():
     df = pd.read_csv("malicious_augmented.csv")
     unique_ids = sorted(df['mitre_id'].unique().tolist())
     label_map = {mid: i for i, mid in enumerate(unique_ids)}
-    with open("specialist_map.json", "w") as f:
+    with open("./config/specialist_map.json", "w") as f:
         json.dump(label_map, f)
     
     # Balanced Sampling Logic
@@ -103,7 +103,7 @@ def train():
         print("-" * 60)
 
         # Save Checkpoint
-        torch.save(model.state_dict(), "specialist.pt")
+        torch.save(model.state_dict(), "./models/specialist.pt")
 
     print("[+] Training Complete. specialist.pt updated with final weights.")
 
