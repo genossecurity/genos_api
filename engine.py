@@ -52,14 +52,14 @@ class GenosEngine:
         
         # Load Tier 1
         self.t1 = Tier1_Gatekeeper().to(self.device)
-        self.t1.load_state_dict(torch.load(t1_path, map_location=self.device))
+        self.t1.load_state_dict(torch.load(t1_path, map_location=self.device, weights_only=False))
         self.t1.eval()
         
         # Load Tier 2
         with open(map_path, "r") as f:
             self.s_map = {int(v): k for k, v in json.load(f).items()}
         self.t2 = Tier2_Specialist(num_classes=len(self.s_map)).to(self.device)
-        self.t2.load_state_dict(torch.load(t2_path, map_location=self.device))
+        self.t2.load_state_dict(torch.load(t2_path, map_location=self.device, weights_only=False))
         self.t2.eval()
 
     def universal_decoder(self, text):

@@ -9,3 +9,6 @@ transformers
 faiss-cpu
 pandas
 numpy
+gunicorn
+pymongo
+python-dotenv
