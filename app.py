@@ -98,10 +98,8 @@ def scan():
         return jsonify(response)
 
     except Exception as e:
-        return jsonify({"error": f"Genos Engine Error: {str(e)}"}), 500
-
-    except Exception as e:
-        return jsonify({"error": f"Genos Engine Error: {str(e)}"}), 500
+        app.logger.error(f"Genos Engine Error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
