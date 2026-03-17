@@ -77,43 +77,47 @@ def health():
         json.dumps({"status": status}, indent=2),
         mimetype='application/json'
     )
-
 @app.route('/scan', methods=['POST'])
 def scan():
     data = request.get_json()
-    if not data or 'api_key' not in data or 'command' not in data:
-        return Response(
-            json.dumps({"error": "Missing parameters"}, indent=2),
-            mimetype='application/json',
-            status=400
-        )
 
-    # Validate API key
+    # --- Validate input ---
+    if not data or 'api_key' not in data or 'command' not in data:
+        return jsonify({"error": "Missing parameters"}), 400
+
+    # --- Validate API key ---
     user_record = keys_collection.find_one({"key": data['api_key']})
     if not user_record:
-        return Response(
-            json.dumps({"error": "Key Not Valid"}, indent=2),
-            mimetype='application/json',
-            status=401
-        )
+        return jsonify({"error": "Key Not Valid"}), 401
 
-    command = safe_base64_decode(data['command'])
+    command = data['command']
+
+    # --- Try auto-decode Base64 commands ---
+    try:
+        decoded_bytes = base64.b64decode(command, validate=True)
+        command = decoded_bytes.decode('utf-8')
+    except Exception:
+        pass  # Assume plain text if decode fails
 
     try:
-        # Run Genos engine
+        # --- Run Genos engine ---
         raw_result = engine.scan(command)
 
-        # Build pretty response
+        label = raw_result['status']
+        label_conf = raw_result['gatekeeper_confidence']
+        mitre_predictions = raw_result.get('top_mitre', [])
+
+        # --- Build response with percentages ---
         response = {
-            "label": raw_result['status'],
-            "label_confidence": round(raw_result['gatekeeper_confidence'], 4),
+            "label": label,
+            "label_confidence": round(label_conf * 100, 2),
             "MITRE_codes": [
-                {"code": t["code"], "confidence": round(t["confidence"], 4)}
-                for t in raw_result.get('top_mitre', [])
+                {"code": t["code"], "confidence": round(t["confidence"] * 100, 2)}
+                for t in mitre_predictions
             ]
         }
 
-        # Log usage
+        # --- Log usage ---
         usage_collection.update_one(
             {"user_id": user_record.get('user_id'), "api_key": data['api_key']},
             {
@@ -122,19 +126,14 @@ def scan():
             }
         )
 
-        return Response(
-            json.dumps(response, indent=2),
+        return app.response_class(
+            response=json.dumps(response, indent=2),  # Pretty print
             mimetype='application/json'
         )
 
     except Exception as e:
         app.logger.error(f"Genos Engine Error: {str(e)}")
-        return Response(
-            json.dumps({"error": "Internal server error"}, indent=2),
-            mimetype='application/json',
-            status=500
-        )
-
+        return jsonify({"error": "Internal server error"}), 500
 # -----------------------
 # Main
 # -----------------------
