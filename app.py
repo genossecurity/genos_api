@@ -1,6 +1,7 @@
 import sys
 import os
 import base64
+import logging
 from flask import Flask, request, jsonify
 from pymongo import MongoClient
 from dotenv import load_dotenv
@@ -14,6 +15,7 @@ from engine import GenosEngine
 load_dotenv()
 
 app = Flask(__name__)
+logging.basicConfig(level=logging.INFO)
 
 # --- MongoDB Configuration ---
 MONGO_URI = os.getenv("MONGO_URI") # Loaded from .env
@@ -25,11 +27,20 @@ usage_collection = db['usage']
 # Initialize Engine
 # Use absolute paths to ensure models load correctly regardless of where gunicorn is started
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+app.logger.info("Loading Genos engine — this may take a moment...")
 engine = GenosEngine(
-    t1_path=os.path.join(BASE_DIR, "models/gatekeeper.pt"), 
-    t2_path=os.path.join(BASE_DIR, "models/specialist.pt"), 
+    t1_path=os.path.join(BASE_DIR, "models/gatekeeper.pt"),
+    t2_path=os.path.join(BASE_DIR, "models/specialist.pt"),
     map_path=os.path.join(BASE_DIR, "models/specialist_map.json")
 )
+# Warm-up pass: forces all CUDA kernels to compile and weights to be
+# fully resident before the first real request arrives.
+app.logger.info("Running warm-up inference pass...")
+engine.scan("warmup")
+app.logger.info("Genos engine ready.")
+
+_engine_ready = True
 
 def is_valid_key(provided_key):
     """
@@ -42,6 +53,13 @@ def is_valid_key(provided_key):
     # Query for the key
     user_data = keys_collection.find_one({"key": provided_key})
     return user_data is not None
+
+@app.route('/health', methods=['GET'])
+def health():
+    if _engine_ready:
+        return jsonify({"status": "ok"}), 200
+    return jsonify({"status": "loading"}), 503
+
 
 @app.route('/scan', methods=['POST'])
 def scan():

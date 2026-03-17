@@ -1,4 +1,3 @@
-import multiprocessing
 import os
 
 # Gunicorn configuration file
@@ -13,8 +12,10 @@ workers = 1
 # The type of workers to use
 worker_class = "sync"
 
-# Timeout for workers
-timeout = 120
+# Timeout for workers — must be long enough to cover model loading + inference.
+# The worker loads both CodeBERT models and runs a warm-up pass on startup;
+# once loaded, individual requests are fast (<1s).
+timeout = 300
 
 # Logging
 accesslog = "-"
