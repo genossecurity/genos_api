@@ -120,6 +120,9 @@ class GenosEngine:
         # Resolve common PowerShell [char] constructions into plain text.
         text = self.deobfuscate_char_constructions(text)
 
+        # Collapse obvious string concatenations after decoding.
+        text = self.clean_concatenation(text)
+
         if pyminusone:
             try:
                 text = pyminusone.deobfuscate(text, lang="powershell")
@@ -128,6 +131,7 @@ class GenosEngine:
 
         # Run once more after AST simplification in case new [char] blocks appear.
         text = self.deobfuscate_char_constructions(text)
+        text = self.clean_concatenation(text)
 
         return text
 
@@ -157,7 +161,48 @@ class GenosEngine:
             value = max(0, min(value, 255))
             return json.dumps(chr(value))
 
-        return single_char_pattern.sub(_single_char, text)
+        text = single_char_pattern.sub(_single_char, text)
+
+        # Pattern: (119..111)+hoami | % { [char]$_ } -> whoami
+        mixed_concat_pattern = re.compile(
+            r"\(\s*(\d{1,3})\s*\.\.\s*(\d{1,3})\s*\)\s*\+\s*([A-Za-z_][A-Za-z0-9_]*)\s*\|\s*%\s*\{\s*\[char\]\s*\$_\s*\}",
+            re.I,
+        )
+
+        def _mixed_concat(match):
+            start = int(match.group(1))
+            end = int(match.group(2))
+            suffix = match.group(3)
+
+            # Heuristic: range+bareword obfuscation often uses first range value as leading char.
+            lead = chr(max(0, min(start, 255)))
+            if abs(start - end) <= 32:
+                return json.dumps(f"{lead}{suffix}")
+
+            # Fallback to decoded range plus suffix for unusually large ranges.
+            step = 1 if end >= start else -1
+            decoded = "".join(chr(max(0, min(i, 255))) for i in range(start, end + step, step))
+            return json.dumps(f"{decoded}{suffix}")
+
+        return mixed_concat_pattern.sub(_mixed_concat, text)
+
+    def clean_concatenation(self, text: str) -> str:
+        # Join adjacent quoted fragments: "ABC" + "DEF" -> "ABCDEF"
+        quoted_join_pattern = re.compile(
+            r"\"((?:\\.|[^\"\\])*)\"\s*\+\s*\"((?:\\.|[^\"\\])*)\""
+        )
+
+        while True:
+            new_text = quoted_join_pattern.sub(lambda m: json.dumps(m.group(1) + m.group(2)), text)
+            if new_text == text:
+                break
+            text = new_text
+
+        # Join quoted + bareword suffix: "w" + hoami -> "whoami"
+        q_plus_word = re.compile(r"\"((?:\\.|[^\"\\])*)\"\s*\+\s*([A-Za-z_][A-Za-z0-9_]*)")
+        text = q_plus_word.sub(lambda m: json.dumps(m.group(1) + m.group(2)), text)
+
+        return text
 
     def extract_powershell_payload(self, text: str):
         payload = self._extract_invocation_payload(text)
