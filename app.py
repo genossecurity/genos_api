@@ -3,7 +3,7 @@ import os
 import base64
 import logging
 import json
-from flask import Flask, request, Response
+from flask import Flask, request, Response, jsonify
 from pymongo import MongoClient
 from dotenv import load_dotenv
 
@@ -67,6 +67,17 @@ def safe_base64_decode(command):
         pass
     return command
 
+
+def _to_percentage(value):
+    """Normalize confidence value to percentage with 2 decimals.
+
+    Accepts either raw probability (0-1) or percentage (>1).
+    """
+    value = float(value)
+    if value <= 1.0:
+        value *= 100.0
+    return round(value, 2)
+
 # -----------------------
 # Routes
 # -----------------------
@@ -103,16 +114,23 @@ def scan():
         # --- Run Genos engine ---
         raw_result = engine.scan(command)
 
-        label = raw_result['status']
-        label_conf = raw_result['gatekeeper_confidence']
-        mitre_predictions = raw_result.get('top_mitre', [])
+        # Support both legacy and updated engine payload keys.
+        label = raw_result.get('label', raw_result.get('status'))
+        label_conf = raw_result.get('label_confidence', raw_result.get('gatekeeper_confidence'))
+        mitre_predictions = raw_result.get('MITRE_codes', raw_result.get('top_mitre', []))
+
+        if label is None or label_conf is None:
+            raise ValueError(f"Unexpected engine payload keys: {list(raw_result.keys())}")
 
         # --- Build response with percentages ---
         response = {
             "label": label,
-            "label_confidence": round(label_conf * 100, 2),
+            "label_confidence": _to_percentage(label_conf),
             "MITRE_codes": [
-                {"code": t["code"], "confidence": round(t["confidence"] * 100, 2)}
+                {
+                    "code": t["code"],
+                    "confidence": _to_percentage(t["confidence"])
+                }
                 for t in mitre_predictions
             ]
         }

@@ -20,7 +20,18 @@ EOF
 }
 
 detect_active_bind() {
+    local preferred
+    if preferred=$(detect_nginx_proxy_bind); then
+        if curl -s -o /dev/null -w "%{http_code}" "http://${preferred}/health" | grep -q '^200$'; then
+            echo "$preferred"
+            return 0
+        fi
+    fi
+
     for port in 6001 6000; do
+        if [ "127.0.0.1:${port}" = "${preferred:-}" ]; then
+            continue
+        fi
         if curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${port}/health" | grep -q '^200$'; then
             echo "127.0.0.1:${port}"
             return 0
@@ -29,8 +40,24 @@ detect_active_bind() {
     return 1
 }
 
+detect_nginx_proxy_bind() {
+    local conf="/etc/nginx/sites-enabled/genossec.com"
+    if [ -r "$conf" ]; then
+        # Parse first proxy_pass target like http://127.0.0.1:6000
+        local target
+        target=$(grep -Eo 'proxy_pass[[:space:]]+http://127\.0\.0\.1:[0-9]+' "$conf" | head -n1 | awk -F'http://' '{print $2}')
+        if [ -n "${target:-}" ]; then
+            echo "$target"
+            return 0
+        fi
+    fi
+    return 1
+}
+
 resolve_bind_for_reload() {
-    if bind=$(detect_active_bind); then
+    if bind=$(detect_nginx_proxy_bind); then
+        echo "$bind"
+    elif bind=$(detect_active_bind); then
         echo "$bind"
     else
         echo "$DEFAULT_BIND"
@@ -140,6 +167,12 @@ cmd_nginx() {
 }
 
 cmd_status() {
+    if bind=$(detect_nginx_proxy_bind); then
+        echo "[*] Nginx proxy target: ${bind}"
+    else
+        echo "[*] Nginx proxy target: unknown"
+    fi
+
     if bind=$(detect_active_bind); then
         echo "[+] API healthy on ${bind}"
     else
