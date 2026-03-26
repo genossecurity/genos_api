@@ -47,15 +47,14 @@ genos_api/
 │   │   ├── augment.py     # Benign dataset prep with admin-noise injection
 │   │   └── boost.py       # Inference probability boost heuristics
 │   ├── benchmarks/
-│   │   └── stress.py      # Unified benchmark (offline audit + fuzzing + API benchmark)
+│   │   └── eval.py        # Unified eval (offline audit + fuzzing + API benchmark)
 │   ├── data/
 │   │   └── source.py      # MITRE source map generation utility
 │   ├── training/
 │   │   ├── trainer1.py    # Tier 1 (Gatekeeper) training script
 │   │   └── trainer2.py    # Tier 2 (Specialist) training script
 │   ├── ops/
-│   │   ├── reload_api.sh  # API reload/restart script
-│   │   └── run_gunicorn.sh # Gunicorn server launch script
+│   │   └── reload_api.sh  # Unified ops script (start/reload/nginx/status)
 │   ├── utils/
 │   │   ├── genos.py       # Local CLI shell for engine testing
 │   │   └── last_push.py   # Final gatekeeper fine-tuning utility
@@ -87,9 +86,9 @@ genos_api/
 - **scripts/**: Executable Scripts (Grouped by Role)
   - `scripts/training/`: model training (`trainer1.py`, `trainer2.py`)
   - `scripts/data_augmentation/`: data and inference augmentation (`augment.py`, `boost.py`)
-  - `scripts/benchmarks/`: unified benchmark runner (`stress.py`)
+  - `scripts/benchmarks/`: unified benchmark runner (`eval.py`)
   - `scripts/data/`: source-to-map data processing (`source.py`)
-  - `scripts/ops/`: operational service scripts (`run_gunicorn.sh`, `reload_api.sh`)
+  - `scripts/ops/`: operational service script (`reload_api.sh`)
   - `scripts/utils/`: local utility scripts (`genos.py`, `last_push.py`)
 
 ## Scripts Reference
@@ -114,17 +113,13 @@ This script trains the Tier 1 Gatekeeper binary classifier (benign vs malicious)
 
 This script trains the Tier 2 Specialist multi-class MITRE classifier using balanced sampling, focal-style loss behavior, and differential learning rates between encoder and head, while regenerating `config/specialist_map.json` and saving `models/specialist.pt`. It belongs to the **training cycle**, specifically second-stage attribution model fitting.
 
-### scripts/benchmarks/stress.py
+### scripts/benchmarks/eval.py
 
 This is the single, final benchmark script for the project. It combines three evaluation modes in one place: offline model audit (false positives, detection rate, MITRE attribution), fuzzing resilience tests (obfuscation-aware robustness checks), and live API benchmarking (latency and verdict accuracy against `/scan`). It belongs to the **evaluation cycle** as the unified quality gate for checkpoint validation and deployment verification.
 
-### scripts/ops/run_gunicorn.sh
-
-This operational script activates the project environment, frees the configured port, and starts the Flask app under Gunicorn using the repository config. It is part of the **evaluation/deployment operations cycle**, enabling reproducible local or server runtime for inference and benchmark execution.
-
 ### scripts/ops/reload_api.sh
 
-This script force-restarts Gunicorn, clears existing listeners, relaunches the API, and waits for `/health` to return success so startup readiness is verified automatically. It belongs to the **evaluation/deployment operations cycle**, supporting controlled rollouts and restart validation.
+This is the single operational control script for the API. It consolidates prior start, restart, and nginx-reload workflows into one entrypoint with modes: `reload` (default full restart + nginx reload + endpoint verification), `start` (foreground Gunicorn launch), `nginx` (nginx-only reload + health test on active API port), and `status` (active health check on ports 6001/6000). It belongs to the **evaluation/deployment operations cycle**, providing a single reproducible command surface for local or server runtime control.
 
 ### scripts/utils/genos.py
 

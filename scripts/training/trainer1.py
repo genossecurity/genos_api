@@ -8,6 +8,21 @@ from tqdm import tqdm
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+
+def resolve_data_path(filename: str) -> str:
+    """Resolve training data path with fallback to archive."""
+    candidates = [
+        os.path.join(BASE_DIR, "data", "training", filename),
+        os.path.join(BASE_DIR, "data", "archive", "training", filename),
+    ]
+    for candidate in candidates:
+        if os.path.exists(candidate):
+            return candidate
+    raise FileNotFoundError(
+        f"Could not find {filename} in expected locations: " + ", ".join(candidates)
+    )
+
+
 # --- 1. ARCHITECTURE ---
 class GatekeeperModel(nn.Module):
     def __init__(self):
@@ -49,8 +64,8 @@ def train():
     tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
     
     dataset = BinaryDataset(
-        os.path.join(BASE_DIR, "data", "training", "trainer1-good.csv"),
-        os.path.join(BASE_DIR, "data", "training", "trainer1-bad.csv"),
+        resolve_data_path("trainer1-good.csv"),
+        resolve_data_path("trainer1-bad.csv"),
         tokenizer,
     )
     loader = DataLoader(dataset, batch_size=32, shuffle=True)
