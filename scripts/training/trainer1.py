@@ -49,8 +49,8 @@ def train():
     tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
     
     dataset = BinaryDataset(
-        os.path.join(BASE_DIR, "data", "benign_final.csv"),
-        os.path.join(BASE_DIR, "data", "malicious_augmented.csv"),
+        os.path.join(BASE_DIR, "data", "training", "trainer1-good.csv"),
+        os.path.join(BASE_DIR, "data", "training", "trainer1-bad.csv"),
         tokenizer,
     )
     loader = DataLoader(dataset, batch_size=32, shuffle=True)

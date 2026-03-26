@@ -16,20 +16,23 @@ genos_api/
 │   └── specialist_map.json          # Specialist model class mapping
 │
 ├── data/                  # Training & evaluation datasets (CSV)
-│   ├── benign_final.csv
-│   ├── malicious_augmented.csv
-│   ├── mitre_atlas_metadata.csv
-│   ├── mitre_atlas_raw.csv
-│   ├── synthetic_benign_baseline.csv
-│   └── archive/
-│       ├── benign_final.csv
-│       ├── boost_data.csv
-│       ├── genos_v1_master_benign.csv
-│       ├── genos_v1_master_malicious.csv
-│       ├── malicious_augmented.csv
-│       ├── mitre_atlas_metadata.csv
-│       ├── mitre_atlas_raw.csv
-│       └── synthetic_benign_baseline.csv
+│   ├── training/          # Primary training datasets (loaded by trainer scripts)
+│   │   ├── trainer1-good.csv        # Benign samples for Tier 1 (Gatekeeper) training
+│   │   └── trainer1-bad.csv         # Malicious samples for Tier 1 (Gatekeeper) training
+│   ├── archive/           # Historical, backup, and experimental datasets
+│   │   ├── training/
+│   │   │   ├── trainer1-bad.csv
+│   │   │   └── trainer1-good.csv
+│   │   ├── raw/
+│   │   ├── art/
+│   │   ├── benign_final.csv
+│   │   ├── boost_data.csv
+│   │   ├── genos_v1_master_benign.csv
+│   │   ├── genos_v1_master_malicious.csv
+│   │   ├── malicious_augmented.csv
+│   │   ├── mitre_atlas_metadata.csv
+│   │   ├── mitre_atlas_raw.csv
+│   │   └── synthetic_benign_baseline.csv
 │
 ├── models/                # Model checkpoints (Git LFS tracked)
 │   ├── gatekeeper.pt      # Tier 1 classifier (benign vs malicious)
@@ -40,9 +43,8 @@ genos_api/
 │       └── gatekeeper_old.pt
 │
 ├── scripts/               # Grouped scripts by function
-│   ├── augmentation/
-│   │   ├── augment.py     # Benign baseline augmentation
-│   │   ├── benign.py      # Benign dataset prep with admin-noise injection
+│   ├── data_augmentation/
+│   │   ├── augment.py     # Benign dataset prep with admin-noise injection
 │   │   └── boost.py       # Inference probability boost heuristics
 │   ├── benchmarks/
 │   │   └── stress.py      # Unified benchmark (offline audit + fuzzing + API benchmark)
@@ -73,10 +75,9 @@ genos_api/
   - JSON mappings for labels and MITRE ATT&CK codes
   - Specialist model class-to-label mappings
 
-- **data/**: Datasets
-  - Training/evaluation CSVs with command samples
-  - Benign, malicious, augmented, and synthetic datasets
-  - Archive folder for historical versions
+- **data/**: Datasets (organized by purpose)
+  - `data/training/` - Active training datasets loaded by trainer scripts (Tier 1/Tier 2 inputs)
+  - `data/archive/` - Historical, experimental, and backup datasets (preserved for reference or debugging)
 
 - **models/**: Neural Network Weights (Git LFS)
   - `gatekeeper.pt` - Tier 1 benign/malicious classifier
@@ -85,7 +86,7 @@ genos_api/
 
 - **scripts/**: Executable Scripts (Grouped by Role)
   - `scripts/training/`: model training (`trainer1.py`, `trainer2.py`)
-  - `scripts/augmentation/`: data and inference augmentation (`augment.py`, `benign.py`, `boost.py`)
+  - `scripts/data_augmentation/`: data and inference augmentation (`augment.py`, `boost.py`)
   - `scripts/benchmarks/`: unified benchmark runner (`stress.py`)
   - `scripts/data/`: source-to-map data processing (`source.py`)
   - `scripts/ops/`: operational service scripts (`run_gunicorn.sh`, `reload_api.sh`)
@@ -97,15 +98,11 @@ genos_api/
 
 This script reads raw MITRE-labeled command data and generates a deterministic label-index mapping (`definitive_mitre_map.json`) used by downstream training and analysis. It is part of the **data generation/preparation cycle**, specifically the label-engineering stage that standardizes class IDs before model training.
 
-### scripts/augmentation/augment.py
+### scripts/data_augmentation/augment.py
 
 This script builds a benign training dataset by loading the synthetic benign baseline, normalizing commands, injecting random admin-noise commands, shuffling, and writing `benign_final.csv`. It belongs to the **data generation cycle**, focused on synthetic expansion of benign samples to improve Tier 1 robustness.
 
-### scripts/augmentation/benign.py
-
-This script is a stronger benign-data constructor that normalizes commands and injects a broader set of high-frequency admin commands (including reconnaissance-like but legitimate activity) before exporting `benign_final.csv`. It is in the **data generation cycle**, specifically hard-negative and benign-noise shaping for false-positive control.
-
-### scripts/augmentation/boost.py
+### scripts/data_augmentation/boost.py
 
 This module applies rule-based post-processing to Tier 2 probabilities (MITRE techniques), boosting or penalizing classes based on command patterns such as encoded PowerShell, LOLBins, or credential-theft indicators. It participates in the **evaluation/inference calibration cycle**, where model outputs are adjusted to better reflect domain heuristics at prediction time.
 
@@ -213,7 +210,6 @@ The `GenosEngine` class orchestrates inference:
 - PyTorch (`torch`, `torch.nn`, `torch.nn.functional`)
 - Transformers library (RobertaModel, RobertaTokenizer)
 - JSON for loading specialist mappings
-- `scripts/augmentation/boost.py` (`apply_boosts`) for confidence adjustment
 
 #### Workflow Integration
 

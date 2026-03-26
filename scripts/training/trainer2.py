@@ -34,7 +34,7 @@ def train():
     tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
     
     # Load and map labels
-    df = pd.read_csv(os.path.join(BASE_DIR, "data", "malicious_augmented.csv"))
+    df = pd.read_csv(os.path.join(BASE_DIR, "data", "training", "trainer1-bad.csv"))
     unique_ids = sorted(df['mitre_id'].unique().tolist())
     label_map = {mid: i for i, mid in enumerate(unique_ids)}
     with open(os.path.join(BASE_DIR, "config", "specialist_map.json"), "w") as f:
