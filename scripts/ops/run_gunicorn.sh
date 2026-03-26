@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Navigate to the project directory
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 
 # Activate virtual environment
 source venv/bin/activate

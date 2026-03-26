@@ -7,6 +7,8 @@ from torch.utils.data import DataLoader, Dataset
 from transformers import RobertaTokenizer, RobertaModel
 from torch.optim import AdamW
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 # --- 1. THE ARCHITECTURE (Matched to your specific .pt file structure) ---
 class GatekeeperModel(nn.Module):
     def __init__(self):
@@ -29,17 +31,17 @@ class GatekeeperModel(nn.Module):
 
 # --- 2. DYNAMIC FILE DETECTION ---
 def find_file(pattern):
-    matches = glob.glob(f"./data/*{pattern}*.csv")
-    if not matches: matches = glob.glob(f"*{pattern}*.csv")
-    if not matches: raise FileNotFoundError(f"Missing {pattern} CSV in ./data/")
+    matches = glob.glob(os.path.join(BASE_DIR, "data", f"*{pattern}*.csv"))
+    if not matches:
+        raise FileNotFoundError(f"Missing {pattern} CSV in data/")
     return matches[0]
 
 # --- 3. CONFIGURATION ---
 BASE_MALICIOUS = find_file("malicious")
 BASE_BENIGN = find_file("benign")
-BOOST_DATA = "boost_data.csv" # Using your pre-generated file
-MODEL_PATH = "./models/gatekeeper_old.pt"
-OUTPUT_PATH = "./models/gatekeeper.pt"
+BOOST_DATA = os.path.join(BASE_DIR, "data", "archive", "boost_data.csv")
+MODEL_PATH = os.path.join(BASE_DIR, "models", "archive", "gatekeeper_old.pt")
+OUTPUT_PATH = os.path.join(BASE_DIR, "models", "gatekeeper.pt")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 LR = 5e-7 
 EPOCHS = 3

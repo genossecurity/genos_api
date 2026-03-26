@@ -6,8 +6,8 @@ import os
 from transformers import RobertaModel, RobertaTokenizer
 from tqdm import tqdm
 
-# Get the base directory (genos_dev folder)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Get the project root directory
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # --- 1. ARCHITECTURES (Synced with your final trainers) ---
 

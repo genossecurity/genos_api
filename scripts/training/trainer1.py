@@ -1,9 +1,12 @@
 import torch
 import torch.nn as nn
 import pandas as pd
+import os
 from transformers import RobertaModel, RobertaTokenizer
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # --- 1. ARCHITECTURE ---
 class GatekeeperModel(nn.Module):
@@ -45,7 +48,11 @@ def train():
     device = torch.device("cuda")
     tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
     
-    dataset = BinaryDataset("./data/benign_final.csv", "./data/malicious_augmented.csv", tokenizer)
+    dataset = BinaryDataset(
+        os.path.join(BASE_DIR, "data", "benign_final.csv"),
+        os.path.join(BASE_DIR, "data", "malicious_augmented.csv"),
+        tokenizer,
+    )
     loader = DataLoader(dataset, batch_size=32, shuffle=True)
 
     model = GatekeeperModel().to(device)
@@ -88,7 +95,7 @@ def train():
         print(f"\n[Epoch {epoch+1}] Training Accuracy: {epoch_acc:.2f}%")
         print("-" * 40)
 
-    torch.save(model.state_dict(), "./models/gatekeeper.pt")
+    torch.save(model.state_dict(), os.path.join(BASE_DIR, "models", "gatekeeper.pt"))
     print("[+] Saved gatekeeper.pt")
 
 if __name__ == "__main__":

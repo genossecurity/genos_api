@@ -6,7 +6,7 @@ import json
 import base64
 import re
 from transformers import RobertaModel, RobertaTokenizer
-from scripts.boost import apply_boosts  # Import the boosts engine
+from scripts.augmentation.boost import apply_boosts  # Import the boosts engine
 
 # =========================
 # MODEL ARCHITECTURES

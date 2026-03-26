@@ -1,4 +1,10 @@
 import sys
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if BASE_DIR not in sys.path:
+    sys.path.append(BASE_DIR)
+
 from engine import GenosEngine
 
 def run_shell():
@@ -11,15 +17,19 @@ def run_shell():
         cmd = input("GENOS > ")
         if cmd.lower() in ['exit', 'quit']: break
         if not cmd.strip(): continue
+        reset = "\033[0m"
 
         res = engine.scan(cmd)
         
         if res['status'] == "Benign":
             color = "\033[92m" # Green
-            print(f"{color}[SAFE]{'\033[0m'} | Conf: {res['confidence']}")
+            print(f"{color}[SAFE]{reset} | Gatekeeper: {res['gatekeeper_confidence']:.4f}")
         else:
             color = "\033[91m" # Red
-            print(f"{color}[MALICIOUS]{'\033[0m'} | MITRE: {res['mitre_id']} | Conf: {res['confidence']}")
+            top = res.get('top_mitre', [])
+            top_code = top[0]['code'] if top else 'N/A'
+            top_conf = top[0]['confidence'] if top else 0.0
+            print(f"{color}[MALICIOUS]{reset} | MITRE: {top_code} ({top_conf:.4f}) | Gatekeeper: {res['gatekeeper_confidence']:.4f}")
         print("-" * 50)
 
 if __name__ == "__main__":

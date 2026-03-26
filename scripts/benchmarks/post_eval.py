@@ -4,8 +4,11 @@ import pandas as pd
 import json
 import random
 import re
+import os
 from transformers import RobertaModel, RobertaTokenizer
 from tqdm import tqdm
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # --- 1. THE FUZZING ENGINE ---
 class CommandFuzzer:
@@ -82,14 +85,15 @@ def run_stress_test():
     fuzzer = CommandFuzzer()
 
     # Load Models & Map
-    with open("specialist_map.json", "r") as f: s_map = {int(v): k for k, v in json.load(f).items()}
+    with open(os.path.join(BASE_DIR, "config", "specialist_map.json"), "r") as f:
+        s_map = {int(v): k for k, v in json.load(f).items()}
     t1 = GatekeeperModel().to(device)
-    t1.load_state_dict(torch.load("gatekeeper.pt", map_location=device))
+    t1.load_state_dict(torch.load(os.path.join(BASE_DIR, "models", "gatekeeper.pt"), map_location=device))
     t2 = SpecialistModel(num_classes=141).to(device)
-    t2.load_state_dict(torch.load("specialist.pt", map_location=device))
+    t2.load_state_dict(torch.load(os.path.join(BASE_DIR, "models", "specialist.pt"), map_location=device))
     t1.eval(); t2.eval()
 
-    m_df = pd.read_csv("mitre_atlas_raw.csv")
+    m_df = pd.read_csv(os.path.join(BASE_DIR, "data", "mitre_atlas_raw.csv"))
     hits, exact = 0, 0
     
     print("\n" + "!"*50 + "\n🔥 INITIATING ADVERSARIAL STRESS TEST\n" + "!"*50)

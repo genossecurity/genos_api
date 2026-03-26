@@ -3,10 +3,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pandas as pd
 import json
-import numpy as np
+import os
 from transformers import RobertaModel, RobertaTokenizer
 from torch.utils.data import DataLoader, WeightedRandomSampler
 from tqdm import tqdm
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # --- 1. ARCHITECTURE: 7-Layer Ultra Head ---
 class SpecialistModel(nn.Module):
@@ -32,10 +34,10 @@ def train():
     tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
     
     # Load and map labels
-    df = pd.read_csv("malicious_augmented.csv")
+    df = pd.read_csv(os.path.join(BASE_DIR, "data", "malicious_augmented.csv"))
     unique_ids = sorted(df['mitre_id'].unique().tolist())
     label_map = {mid: i for i, mid in enumerate(unique_ids)}
-    with open("./config/specialist_map.json", "w") as f:
+    with open(os.path.join(BASE_DIR, "config", "specialist_map.json"), "w") as f:
         json.dump(label_map, f)
     
     # Balanced Sampling Logic
@@ -103,7 +105,7 @@ def train():
         print("-" * 60)
 
         # Save Checkpoint
-        torch.save(model.state_dict(), "./models/specialist.pt")
+        torch.save(model.state_dict(), os.path.join(BASE_DIR, "models", "specialist.pt"))
 
     print("[+] Training Complete. specialist.pt updated with final weights.")
 
