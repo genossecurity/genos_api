@@ -6,7 +6,6 @@ import json
 import base64
 import re
 from transformers import RobertaModel, RobertaTokenizer
-from scripts.augmentation.boost import apply_boosts  # Import the boosts engine
 
 # =========================
 # MODEL ARCHITECTURES
@@ -110,7 +109,6 @@ class GenosEngine:
             # Tier 2: Specialist
             s_logits = self.t2(inputs['input_ids'], inputs['attention_mask'])
             s_probs = F.softmax(s_logits, dim=1).squeeze()
-            s_probs = apply_boosts(processed_cmd, s_probs, self.s_map)
 
             # --- Top MITRE codes sorted by confidence ---
             top_vals, top_idxs = torch.topk(s_probs, k=min(5, len(s_probs)))

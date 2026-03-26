@@ -45,9 +45,7 @@ genos_api/
 │   │   ├── benign.py      # Benign dataset prep with admin-noise injection
 │   │   └── boost.py       # Inference probability boost heuristics
 │   ├── benchmarks/
-│   │   ├── eval.py        # Integrated model audit benchmark
-│   │   ├── post_eval.py   # Adversarial/fuzzed post-evaluation benchmark
-│   │   └── stress.py      # API stress/comprehensive benchmark
+│   │   └── stress.py      # Unified benchmark (offline audit + fuzzing + API benchmark)
 │   ├── data/
 │   │   └── source.py      # MITRE source map generation utility
 │   ├── training/
@@ -88,7 +86,7 @@ genos_api/
 - **scripts/**: Executable Scripts (Grouped by Role)
   - `scripts/training/`: model training (`trainer1.py`, `trainer2.py`)
   - `scripts/augmentation/`: data and inference augmentation (`augment.py`, `benign.py`, `boost.py`)
-  - `scripts/benchmarks/`: evaluations and adversarial benchmarks (`eval.py`, `stress.py`, `post_eval.py`)
+  - `scripts/benchmarks/`: unified benchmark runner (`stress.py`)
   - `scripts/data/`: source-to-map data processing (`source.py`)
   - `scripts/ops/`: operational service scripts (`run_gunicorn.sh`, `reload_api.sh`)
   - `scripts/utils/`: local utility scripts (`genos.py`, `last_push.py`)
@@ -119,17 +117,9 @@ This script trains the Tier 1 Gatekeeper binary classifier (benign vs malicious)
 
 This script trains the Tier 2 Specialist multi-class MITRE classifier using balanced sampling, focal-style loss behavior, and differential learning rates between encoder and head, while regenerating `config/specialist_map.json` and saving `models/specialist.pt`. It belongs to the **training cycle**, specifically second-stage attribution model fitting.
 
-### scripts/benchmarks/eval.py
-
-This script runs an integrated offline audit of both tiers by measuring benign false positives, malicious detection rate, and exact MITRE attribution accuracy over dataset samples. It sits in the **evaluation cycle**, acting as the baseline quality gate for model checkpoints.
-
-### scripts/benchmarks/post_eval.py
-
-This script performs adversarial-style robustness evaluation by fuzzing malicious commands (case mutation, backtick insertion, path flips, whitespace and env substitutions) and re-checking detection and attribution outcomes. It is part of the **evaluation cycle**, specifically resilience testing against obfuscation and command perturbation.
-
 ### scripts/benchmarks/stress.py
 
-This script sends curated command test cases to the live `/scan` API endpoint, records verdict accuracy and latency, and reports pass/fail benchmark totals for deployment validation. It belongs to the **evaluation cycle**, specifically online API benchmark and service-level behavior testing.
+This is the single, final benchmark script for the project. It combines three evaluation modes in one place: offline model audit (false positives, detection rate, MITRE attribution), fuzzing resilience tests (obfuscation-aware robustness checks), and live API benchmarking (latency and verdict accuracy against `/scan`). It belongs to the **evaluation cycle** as the unified quality gate for checkpoint validation and deployment verification.
 
 ### scripts/ops/run_gunicorn.sh
 
