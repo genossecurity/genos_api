@@ -15,10 +15,34 @@ except ImportError:
     pyminusone = None
 
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def _resolve_asset_path(path_value: str, fallback_relpath: str | None = None) -> str:
+    if os.path.isabs(path_value):
+        if os.path.exists(path_value):
+            return path_value
+    else:
+        cwd_candidate = os.path.join(os.getcwd(), path_value)
+        if os.path.exists(cwd_candidate):
+            return cwd_candidate
+
+        base_candidate = os.path.join(BASE_DIR, path_value)
+        if os.path.exists(base_candidate):
+            return base_candidate
+
+    if fallback_relpath:
+        fallback_candidate = os.path.join(BASE_DIR, fallback_relpath)
+        if os.path.exists(fallback_candidate):
+            return fallback_candidate
+
+    return path_value
+
+
 class Tier1_Gatekeeper(nn.Module):
     def __init__(self):
         super().__init__()
-        self.encoder = RobertaModel.from_pretrained("microsoft/codebert-base")
+        self.encoder = RobertaModel.from_pretrained("microsoft/codebert-base", use_safetensors=True)
         self.classifier = nn.Sequential(
             nn.Dropout(0.2),
             nn.Linear(768, 1024),
@@ -36,7 +60,7 @@ class Tier1_Gatekeeper(nn.Module):
 class Tier2_Specialist(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
-        self.encoder = RobertaModel.from_pretrained("microsoft/codebert-base")
+        self.encoder = RobertaModel.from_pretrained("microsoft/codebert-base", use_safetensors=True)
         self.classifier = nn.Sequential(
             nn.Linear(768, 1024),
             nn.LayerNorm(1024),
@@ -60,21 +84,25 @@ class GenosEngine:
         self,
         t1_path="models/gatekeeper.pt",
         t2_path="models/specialist.pt",
-        map_path="models/specialist_map.json",
+        map_path="config/specialist_map.json",
     ):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
         self.max_length = int(os.getenv("GENOS_MAX_TOKENS", "256"))
 
+        t1_path = _resolve_asset_path(t1_path, "models/gatekeeper.pt")
+        t2_path = _resolve_asset_path(t2_path, "models/specialist.pt")
+        map_path = _resolve_asset_path(map_path, "config/specialist_map.json")
+
         self.t1 = Tier1_Gatekeeper().to(self.device)
-        self.t1.load_state_dict(torch.load(t1_path, map_location=self.device), strict=False)
+        self.t1.load_state_dict(torch.load(t1_path, map_location=self.device, weights_only=True), strict=False)
         self.t1.eval()
 
         with open(map_path, "r") as f:
             self.s_map = {int(v): k for k, v in json.load(f).items()}
 
         self.t2 = Tier2_Specialist(num_classes=len(self.s_map)).to(self.device)
-        self.t2.load_state_dict(torch.load(t2_path, map_location=self.device), strict=False)
+        self.t2.load_state_dict(torch.load(t2_path, map_location=self.device, weights_only=True), strict=False)
         self.t2.eval()
 
         # Keep bounded to avoid deobfuscation bombs while allowing deeper peeling.
@@ -363,21 +391,28 @@ class GenosEngine:
             g_conf, g_idx = torch.max(g_probs, dim=1)
             is_malicious = g_idx.item() == 1
 
+            # FIX 1: Multiply Gatekeeper confidence by 100 for standard API percentages
             response = {
                 "label": "Malicious" if is_malicious else "Benign",
-                "label_confidence": round(g_conf.item(), 2),
+                "label_confidence": round(g_conf.item() * 100, 2), 
                 "deobfuscated_cmd": current_cmd if was_obfuscated else None,
             }
 
             if is_malicious:
                 s_logits = self.t2(inputs["input_ids"], inputs["attention_mask"])
-                s_probs = F.softmax(s_logits, dim=1).squeeze(0)
+                
+                # OPTIONAL: If you still want the "Temperature Scaling" boost we discussed
+                # to sharpen the model's confidence, divide s_logits by 0.5 here. 
+                # Otherwise, leave it as standard s_logits.
+                s_probs = F.softmax(s_logits / 0.5, dim=1).squeeze(0)
+                
                 top_vals, top_idxs = torch.topk(
                     s_probs, k=min(5, len(s_probs)), largest=True, sorted=True
                 )
 
+                # FIX 2: Multiply Specialist confidence by 100 so 0.85 becomes 85.0
                 response["MITRE_codes"] = [
-                    {"code": self.s_map[idx.item()], "confidence": round(val.item(), 2)}
+                    {"code": self.s_map[idx.item()], "confidence": round(val.item() * 100, 2)}
                     for idx, val in zip(top_idxs, top_vals)
                 ]
 

@@ -6,200 +6,157 @@ PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
 cd "$PROJECT_DIR"
 
 DEFAULT_BIND="${GENOS_API_BIND:-127.0.0.1:6001}"
-MAX_WAIT=120
+HEALTH_TIMEOUT=120
+HEALTH_RETRY_INTERVAL=2
 
-usage() {
-    cat <<'EOF'
-Usage: scripts/ops/reload_api.sh [reload|start|nginx|status]
-
-  reload  Restart gunicorn, wait for /health, reload nginx, verify API (default)
-  start   Start gunicorn in foreground (replaces run_gunicorn.sh behavior)
-  nginx   Reload nginx only and verify API health on active port
-  status  Print active API port (6001/6000) and health status
-EOF
+log_info() {
+    echo "[*] $*"
 }
 
-detect_active_bind() {
-    local preferred
-    if preferred=$(detect_nginx_proxy_bind); then
-        if curl -s -o /dev/null -w "%{http_code}" "http://${preferred}/health" | grep -q '^200$'; then
-            echo "$preferred"
-            return 0
-        fi
-    fi
+log_ok() {
+    echo "[+] $*"
+}
 
-    for port in 6001 6000; do
-        if [ "127.0.0.1:${port}" = "${preferred:-}" ]; then
-            continue
-        fi
-        if curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${port}/health" | grep -q '^200$'; then
-            echo "127.0.0.1:${port}"
+log_err() {
+    echo "[-] $*" >&2
+}
+
+# Check if API is healthy on a given bind address
+health_check() {
+    local bind="$1"
+    local code
+    code=$(curl -s -o /dev/null -w "%{http_code}" "http://${bind}/health" 2>/dev/null || echo "000")
+    [ "$code" = "200" ]
+}
+
+# Wait for API health endpoint with timeout
+wait_healthy() {
+    local bind="$1"
+    local elapsed=0
+
+    log_info "Waiting for API to be healthy..."
+    while [ "$elapsed" -lt "$HEALTH_TIMEOUT" ]; do
+        if health_check "$bind"; then
+            log_ok "API is healthy on ${bind} (${elapsed}s)"
             return 0
         fi
+        sleep "$HEALTH_RETRY_INTERVAL"
+        elapsed=$((elapsed + HEALTH_RETRY_INTERVAL))
     done
+
+    log_err "API health check timed out after ${HEALTH_TIMEOUT}s"
     return 1
 }
 
-detect_nginx_proxy_bind() {
-    local conf="/etc/nginx/sites-enabled/genossec.com"
-    if [ -r "$conf" ]; then
-        # Parse first proxy_pass target like http://127.0.0.1:6000
-        local target
-        target=$(grep -Eo 'proxy_pass[[:space:]]+http://127\.0\.0\.1:[0-9]+' "$conf" | head -n1 | awk -F'http://' '{print $2}')
-        if [ -n "${target:-}" ]; then
-            echo "$target"
-            return 0
-        fi
-    fi
-    return 1
+# Kill any running gunicorn processes
+stop_gunicorn() {
+    log_info "Stopping gunicorn processes..."
+    pkill -9 -f "gunicorn" 2>/dev/null || true
+    sleep 2
 }
 
-resolve_bind_for_reload() {
-    if bind=$(detect_nginx_proxy_bind); then
-        echo "$bind"
-    elif bind=$(detect_active_bind); then
-        echo "$bind"
-    else
-        echo "$DEFAULT_BIND"
-    fi
-}
-
+# Activate Python virtual environment
 activate_venv() {
     if [ ! -f "venv/bin/activate" ]; then
-        echo "[-] ERROR: venv/bin/activate not found"
-        exit 1
+        log_err "venv/bin/activate not found"
+        return 1
     fi
     # shellcheck disable=SC1091
     source venv/bin/activate
 }
 
-kill_existing_gunicorn() {
-    local port="$1"
-    echo "[*] Killing existing genos_api gunicorn..."
-    pkill -9 -f "genos_api.*gunicorn" 2>/dev/null || true
-    pkill -9 -f "gunicorn -c gunicorn.conf.py" 2>/dev/null || true
-    fuser -k "${port}/tcp" 2>/dev/null || true
-
-    for _ in {1..10}; do
-        fuser "${port}/tcp" 2>/dev/null || break
-        sleep 1
-    done
+# Start gunicorn on the specified bind address
+start_gunicorn() {
+    local bind="$1"
+    log_info "Starting gunicorn on ${bind}..."
+    GENOS_API_BIND="$bind" gunicorn -c gunicorn.conf.py app:app &
+    local pid=$!
+    echo "$pid"
 }
 
-wait_for_health() {
-    local bind="$1"
-    local elapsed=0
+# Reload nginx (non-interactive)
+reload_nginx() {
+    log_info "Reloading nginx..."
+    if sudo -n nginx -s reload 2>/dev/null; then
+        log_ok "Nginx reloaded successfully"
+        sleep 1
+        return 0
+    else
+        log_err "Nginx reload failed (nginx not available or sudo requires password)"
+        return 1
+    fi
+}
 
-    echo "[*] Waiting for engine warm-up..."
-    while [ "$elapsed" -lt "$MAX_WAIT" ]; do
-        status=$(curl -s -o /dev/null -w "%{http_code}" "http://${bind}/health" 2>/dev/null || echo "000")
-        if [ "$status" = "200" ]; then
-            echo "[+] Genos API is live on ${bind} (took ${elapsed}s)"
+# Main reload command
+cmd_reload() {
+    local bind="$DEFAULT_BIND"
+    
+    log_info "Reloading API on ${bind}..."
+    
+    stop_gunicorn
+    activate_venv || return 1
+    
+    local retry=0
+    local max_retries=3
+    
+    while [ $retry -lt $max_retries ]; do
+        log_info "Starting gunicorn (attempt $((retry + 1))/$max_retries)..."
+        
+        start_gunicorn "$bind"
+        
+        if wait_healthy "$bind"; then
+            reload_nginx || true  # Nginx is optional
+            log_ok "API reload complete and verified"
             return 0
         fi
-        sleep 2
-        elapsed=$((elapsed + 2))
+        
+        log_err "Health check failed, retrying..."
+        stop_gunicorn
+        retry=$((retry + 1))
     done
-
-    echo "[-] ERROR: health check timed out after ${MAX_WAIT}s"
+    
+    log_err "Failed to start API after $max_retries attempts"
     return 1
 }
 
-reload_nginx() {
-    echo "[*] Reloading nginx..."
-    sudo nginx -s reload
-    echo "[+] Nginx reloaded successfully"
-    sleep 2
-}
-
-verify_api() {
-    local bind="$1"
-    echo "[*] Testing API endpoint at http://${bind}/health..."
-    health_status=$(curl -s -o /dev/null -w "%{http_code}" "http://${bind}/health" 2>/dev/null || echo "000")
-    if [ "$health_status" = "200" ]; then
-        echo "[+] API health check passed (HTTP 200)"
-        return 0
-    fi
-    echo "[-] ERROR: API health check failed (HTTP ${health_status})"
-    return 1
-}
-
-cmd_reload() {
-    bind="$(resolve_bind_for_reload)"
-    port="${bind##*:}"
-
-    echo "[*] Reloading API on ${bind}..."
-    kill_existing_gunicorn "$port"
-    activate_venv
-
-    echo "[*] Starting genos_api gunicorn on ${bind}..."
-    GENOS_API_BIND="$bind" gunicorn -c gunicorn.conf.py app:app &
-    gunicorn_pid=$!
-
-    if ! wait_for_health "$bind"; then
-        kill -9 "$gunicorn_pid" 2>/dev/null || true
-        exit 1
-    fi
-
-    reload_nginx
-    verify_api "$bind"
-    echo "[+] Reload complete and verified"
-}
-
-cmd_start() {
-    bind="$(resolve_bind_for_reload)"
-    port="${bind##*:}"
-    echo "[*] Starting API on ${bind}..."
-    kill_existing_gunicorn "$port"
-    activate_venv
-    exec GENOS_API_BIND="$bind" gunicorn -c gunicorn.conf.py app:app
-}
-
-cmd_nginx() {
-    if ! bind=$(detect_active_bind); then
-        echo "[-] ERROR: No API found running on port 6001 or 6000"
-        exit 1
-    fi
-    echo "[*] Found active API on ${bind}"
-    reload_nginx
-    verify_api "$bind"
-    echo "[+] Nginx reload complete and verified"
-}
-
+# Check status
 cmd_status() {
-    if bind=$(detect_nginx_proxy_bind); then
-        echo "[*] Nginx proxy target: ${bind}"
+    log_info "Checking API status..."
+    
+    if health_check "$DEFAULT_BIND"; then
+        log_ok "API is healthy on ${DEFAULT_BIND}"
+        return 0
     else
-        echo "[*] Nginx proxy target: unknown"
-    fi
-
-    if bind=$(detect_active_bind); then
-        echo "[+] API healthy on ${bind}"
-    else
-        echo "[-] API not healthy on ports 6001 or 6000"
-        exit 1
+        log_err "API is not healthy on ${DEFAULT_BIND}"
+        return 1
     fi
 }
 
+# Help text
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [reload|status]
+
+  reload  Restart gunicorn and verify API health (default)
+  status  Check if API is healthy
+  -h      Show this help message
+EOF
+}
+
+# Main entry point
 MODE="${1:-reload}"
 case "$MODE" in
     reload)
         cmd_reload
         ;;
-    start)
-        cmd_start
-        ;;
-    nginx)
-        cmd_nginx
-        ;;
     status)
         cmd_status
         ;;
-    -h|--help|help)
+    -h|--help)
         usage
         ;;
     *)
-        echo "[-] ERROR: Unknown mode '$MODE'"
+        log_err "Unknown mode: $MODE"
         usage
         exit 1
         ;;
