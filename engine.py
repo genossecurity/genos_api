@@ -88,7 +88,8 @@ class GenosEngine:
         self,
         t1_path="models/gatekeeper.pt",
         t2_path="models/specialist.pt",
-        raw_mitre_path="data/training/mitre_atlas_raw.csv", # Updated param
+        map_path=None,
+        raw_mitre_path="data/training/mitre_atlas_raw.csv",
     ):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
@@ -96,17 +97,32 @@ class GenosEngine:
 
         t1_path = _resolve_asset_path(t1_path, ["models/gatekeeper.pt"])
         t2_path = _resolve_asset_path(t2_path, ["models/specialist.pt"])
-        
-        # 1. Dynamically Build the Specialist Map from the raw CSV
-        raw_csv_path = _resolve_asset_path(
-            raw_mitre_path, 
-            [
-                "data/art/mitre_atlas_raw.csv",
-                "data/training/mitre_atlas_raw.csv",
-                "mitre_atlas_raw.csv"
-            ]
-        )
-        self.s_map = self._build_map_from_csv(raw_csv_path)
+
+        # Prefer explicit specialist map JSON when provided (backward compatibility).
+        map_candidates = ["config/specialist_map.json", "models/specialist_map.json"]
+        if map_path:
+            map_candidates = [map_path] + map_candidates
+
+        resolved_map_path = None
+        for candidate in map_candidates:
+            resolved = _resolve_asset_path(candidate)
+            if os.path.exists(resolved):
+                resolved_map_path = resolved
+                break
+
+        if resolved_map_path:
+            self.s_map = self._load_map_from_json(resolved_map_path)
+        else:
+            # Fallback: dynamically build specialist map from raw MITRE CSV.
+            raw_csv_path = _resolve_asset_path(
+                raw_mitre_path,
+                [
+                    "data/art/mitre_atlas_raw.csv",
+                    "data/training/mitre_atlas_raw.csv",
+                    "mitre_atlas_raw.csv",
+                ],
+            )
+            self.s_map = self._build_map_from_csv(raw_csv_path)
 
         self.t1 = Tier1_Gatekeeper().to(self.device)
         self.t1.load_state_dict(torch.load(t1_path, map_location=self.device, weights_only=True), strict=False)
@@ -118,6 +134,14 @@ class GenosEngine:
 
         # Keep bounded to avoid deobfuscation bombs while allowing deeper peeling.
         self.max_deobfuscation_layers = 5
+
+    def _load_map_from_json(self, json_path: str) -> dict:
+        """Load specialist label map from JSON file as {int_index: mitre_id}."""
+        with open(json_path, "r", encoding="utf-8") as f:
+            raw_map = json.load(f)
+
+        # Input map is typically {mitre_id: index}; convert to {index: mitre_id}.
+        return {int(v): k for k, v in raw_map.items()}
 
     def _build_map_from_csv(self, csv_path: str) -> dict:
         """Reads the raw MITRE CSV, extracts unique IDs, sorts them, and maps them to ints."""
