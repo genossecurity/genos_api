@@ -6,6 +6,7 @@ import json
 from transformers import RobertaModel, RobertaTokenizer
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
+from torch.amp import autocast, GradScaler # Ensure this import is at the top of your script
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -67,14 +68,22 @@ class BinaryDataset(Dataset):
             "mask": self.encodings['attention_mask'][idx],
             "lbl": torch.tensor(self.labels[idx], dtype=torch.long)
         }
-
 def train():
+    # 1. HARDWARE OPTIMIZATION
+    torch.backends.cudnn.benchmark = True # Auto-tunes hardware paths
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"[*] Training on device: {device}")
+
+    # Keep memory usage predictable: use micro-batches + grad accumulation.
+    effective_batch_size = int(os.getenv("GENOS_T1_EFFECTIVE_BATCH", "256"))
+    micro_batch_size = int(os.getenv("GENOS_T1_MICRO_BATCH", "32"))
+    if micro_batch_size <= 0:
+        raise ValueError("GENOS_T1_MICRO_BATCH must be > 0")
+    grad_acc_steps = max(1, effective_batch_size // micro_batch_size)
+    effective_batch_size = micro_batch_size * grad_acc_steps
     
     tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
     
-    # Explicitly load the pre-split training and validation datasets
     train_dataset = BinaryDataset(
         resolve_data_path("gatekeeper_train.csv"),
         resolve_data_path("specialist_train.csv"), 
@@ -89,28 +98,48 @@ def train():
         phase="Validation"
     )
 
-    # Use pin_memory and multiple workers to feed the GPU faster
     train_loader = DataLoader(
         train_dataset, 
-        batch_size=32, 
+        batch_size=micro_batch_size,
         shuffle=True, 
         pin_memory=True, 
-        num_workers=7  
+        num_workers=4
     )
     val_loader = DataLoader(
         val_dataset, 
-        batch_size=32, 
+        batch_size=micro_batch_size,
         shuffle=False, 
         pin_memory=True,
-        num_workers=7
+        num_workers=4
     )
 
-    model = GatekeeperModel().to(device)
+    print(
+        f"[*] Batch config: micro={micro_batch_size}, grad_acc={grad_acc_steps}, "
+        f"effective={effective_batch_size}"
+    )
+
+    # 3. COMPILE MODEL (opt-in; can increase memory use on large transformer graphs)
+    raw_model = GatekeeperModel().to(device)
+    use_compile = os.getenv("GENOS_T1_USE_COMPILE", "0") == "1"
+    if use_compile and hasattr(torch, "compile"):
+        try:
+            model = torch.compile(raw_model)
+            print("[+] torch.compile() enabled.")
+        except Exception:
+            model = raw_model
+            print("[-] torch.compile() failed. Proceeding without it.")
+    else:
+        model = raw_model
+        print("[*] torch.compile() disabled (set GENOS_T1_USE_COMPILE=1 to enable).")
+
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=0.01)
     
-    # BIAS CORRECTION: Weight the Malicious class (1) higher
     weights = torch.tensor([1.0, 3.0]).to(device) 
     criterion = nn.CrossEntropyLoss(weight=weights)
+
+    # 4. INITIALIZE AMP SCALER
+    amp_enabled = device.type == "cuda"
+    scaler = GradScaler(enabled=amp_enabled)
 
     best_val_acc = 0.0
     model_save_path = os.path.join(BASE_DIR, "models", "gatekeeper.pt")
@@ -122,17 +151,24 @@ def train():
         model.train()
         train_correct = 0
         train_total = 0
+        optimizer.zero_grad(set_to_none=True)
         
         loop = tqdm(train_loader, desc=f"Epoch {epoch+1}/{epochs} [Train]")
-        for batch in loop:
-            optimizer.zero_grad()
+        for step, batch in enumerate(loop, start=1):
             ids, mask, labels = batch['ids'].to(device), batch['mask'].to(device), batch['lbl'].to(device)
             
-            logits = model(ids, mask)
-            loss = criterion(logits, labels)
+            # 6. AMP AUTOCAST CONTEXT
+            with autocast(device_type='cuda', dtype=torch.float16, enabled=amp_enabled):
+                logits = model(ids, mask)
+                loss = criterion(logits, labels) / grad_acc_steps
             
-            loss.backward()
-            optimizer.step()
+            # 7. SCALED BACKWARD PASS
+            scaler.scale(loss).backward()
+
+            if step % grad_acc_steps == 0 or step == len(train_loader):
+                scaler.step(optimizer)
+                scaler.update()
+                optimizer.zero_grad(set_to_none=True)
             
             preds = torch.argmax(logits, dim=1)
             train_correct += (preds == labels).sum().item()
@@ -145,7 +181,11 @@ def train():
         with torch.no_grad():
             for batch in val_loader:
                 ids, mask, labels = batch['ids'].to(device), batch['mask'].to(device), batch['lbl'].to(device)
-                logits = model(ids, mask)
+                
+                # Use AMP for inference too
+                with autocast(device_type='cuda', dtype=torch.float16, enabled=amp_enabled):
+                    logits = model(ids, mask)
+                
                 preds = torch.argmax(logits, dim=1)
                 val_correct += (preds == labels).sum().item()
                 val_total += labels.size(0)
@@ -155,7 +195,8 @@ def train():
         
         if val_acc > best_val_acc:
             best_val_acc = val_acc
-            torch.save(model.state_dict(), model_save_path)
+            # Save raw_model.state_dict() if using torch.compile to avoid saving compiled prefixes
+            torch.save(raw_model.state_dict(), model_save_path)
             print(f"[+] Gatekeeper Improved! Saved gatekeeper.pt")
         print("-" * 60)
 

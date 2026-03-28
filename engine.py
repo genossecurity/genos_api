@@ -3,10 +3,12 @@ import json
 import math
 import os
 import re
+import csv
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.amp import autocast  # Added for FP16 inference speed
 from transformers import RobertaModel, RobertaTokenizer
 
 try:
@@ -18,7 +20,8 @@ except ImportError:
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def _resolve_asset_path(path_value: str, fallback_relpath: str | None = None) -> str:
+def _resolve_asset_path(path_value: str, fallback_relpaths: list[str] | None = None) -> str:
+    """Resolve asset path with support for multiple fallbacks."""
     if os.path.isabs(path_value):
         if os.path.exists(path_value):
             return path_value
@@ -31,10 +34,11 @@ def _resolve_asset_path(path_value: str, fallback_relpath: str | None = None) ->
         if os.path.exists(base_candidate):
             return base_candidate
 
-    if fallback_relpath:
-        fallback_candidate = os.path.join(BASE_DIR, fallback_relpath)
-        if os.path.exists(fallback_candidate):
-            return fallback_candidate
+    if fallback_relpaths:
+        for fallback in fallback_relpaths if isinstance(fallback_relpaths, list) else [fallback_relpaths]:
+            fallback_candidate = os.path.join(BASE_DIR, fallback)
+            if os.path.exists(fallback_candidate):
+                return fallback_candidate
 
     return path_value
 
@@ -84,22 +88,29 @@ class GenosEngine:
         self,
         t1_path="models/gatekeeper.pt",
         t2_path="models/specialist.pt",
-        map_path="config/specialist_map.json",
+        raw_mitre_path="data/training/mitre_atlas_raw.csv", # Updated param
     ):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
         self.max_length = int(os.getenv("GENOS_MAX_TOKENS", "256"))
 
-        t1_path = _resolve_asset_path(t1_path, "models/gatekeeper.pt")
-        t2_path = _resolve_asset_path(t2_path, "models/specialist.pt")
-        map_path = _resolve_asset_path(map_path, "config/specialist_map.json")
+        t1_path = _resolve_asset_path(t1_path, ["models/gatekeeper.pt"])
+        t2_path = _resolve_asset_path(t2_path, ["models/specialist.pt"])
+        
+        # 1. Dynamically Build the Specialist Map from the raw CSV
+        raw_csv_path = _resolve_asset_path(
+            raw_mitre_path, 
+            [
+                "data/art/mitre_atlas_raw.csv",
+                "data/training/mitre_atlas_raw.csv",
+                "mitre_atlas_raw.csv"
+            ]
+        )
+        self.s_map = self._build_map_from_csv(raw_csv_path)
 
         self.t1 = Tier1_Gatekeeper().to(self.device)
         self.t1.load_state_dict(torch.load(t1_path, map_location=self.device, weights_only=True), strict=False)
         self.t1.eval()
-
-        with open(map_path, "r") as f:
-            self.s_map = {int(v): k for k, v in json.load(f).items()}
 
         self.t2 = Tier2_Specialist(num_classes=len(self.s_map)).to(self.device)
         self.t2.load_state_dict(torch.load(t2_path, map_location=self.device, weights_only=True), strict=False)
@@ -107,6 +118,22 @@ class GenosEngine:
 
         # Keep bounded to avoid deobfuscation bombs while allowing deeper peeling.
         self.max_deobfuscation_layers = 5
+
+    def _build_map_from_csv(self, csv_path: str) -> dict:
+        """Reads the raw MITRE CSV, extracts unique IDs, sorts them, and maps them to ints."""
+        unique_ids = set()
+        if not os.path.exists(csv_path):
+            raise FileNotFoundError(f"Cannot build specialist map. Missing: {csv_path}")
+            
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if 'mitre_id' in row and row['mitre_id'].strip():
+                    unique_ids.add(row['mitre_id'].strip())
+                    
+        sorted_ids = sorted(list(unique_ids))
+        # Create a dictionary mapping integer index back to the MITRE ID string
+        return {i: mitre_id for i, mitre_id in enumerate(sorted_ids)}
 
     def calculate_entropy(self, text):
         if not text:
@@ -385,35 +412,39 @@ class GenosEngine:
             max_length=self.max_length,
         ).to(self.device)
 
+        # Determine best precision type based on hardware
+        device_type = 'cuda' if 'cuda' in self.device.type else 'cpu'
+        autocast_dtype = torch.float16 if device_type == 'cuda' else torch.bfloat16
+
         with torch.no_grad():
-            g_logits = self.t1(inputs["input_ids"], inputs["attention_mask"])
-            g_probs = F.softmax(g_logits, dim=1)
-            g_conf, g_idx = torch.max(g_probs, dim=1)
-            is_malicious = g_idx.item() == 1
+            # AMP Context for fast Tensor Core execution
+            with autocast(device_type=device_type, dtype=autocast_dtype):
+                g_logits = self.t1(inputs["input_ids"], inputs["attention_mask"])
+                g_probs = F.softmax(g_logits, dim=1)
+                g_conf, g_idx = torch.max(g_probs, dim=1)
+                is_malicious = g_idx.item() == 1
 
-            # FIX 1: Multiply Gatekeeper confidence by 100 for standard API percentages
-            response = {
-                "label": "Malicious" if is_malicious else "Benign",
-                "label_confidence": round(g_conf.item() * 100, 2), 
-                "deobfuscated_cmd": current_cmd if was_obfuscated else None,
-            }
+                # Multiply Gatekeeper confidence by 100 for standard API percentages
+                response = {
+                    "label": "Malicious" if is_malicious else "Benign",
+                    "label_confidence": round(g_conf.item() * 100, 2), 
+                    "deobfuscated_cmd": current_cmd if was_obfuscated else None,
+                }
 
-            if is_malicious:
-                s_logits = self.t2(inputs["input_ids"], inputs["attention_mask"])
-                
-                # OPTIONAL: If you still want the "Temperature Scaling" boost we discussed
-                # to sharpen the model's confidence, divide s_logits by 0.5 here. 
-                # Otherwise, leave it as standard s_logits.
-                s_probs = F.softmax(s_logits / 0.5, dim=1).squeeze(0)
-                
-                top_vals, top_idxs = torch.topk(
-                    s_probs, k=min(5, len(s_probs)), largest=True, sorted=True
-                )
+                if is_malicious:
+                    s_logits = self.t2(inputs["input_ids"], inputs["attention_mask"])
+                    
+                    # Temperature Scaling boost
+                    s_probs = F.softmax(s_logits / 0.5, dim=1).squeeze(0)
+                    
+                    top_vals, top_idxs = torch.topk(
+                        s_probs, k=min(5, len(s_probs)), largest=True, sorted=True
+                    )
 
-                # FIX 2: Multiply Specialist confidence by 100 so 0.85 becomes 85.0
-                response["MITRE_codes"] = [
-                    {"code": self.s_map[idx.item()], "confidence": round(val.item() * 100, 2)}
-                    for idx, val in zip(top_idxs, top_vals)
-                ]
+                    # Multiply Specialist confidence by 100
+                    response["MITRE_codes"] = [
+                        {"code": self.s_map[idx.item()], "confidence": round(val.item() * 100, 2)}
+                        for idx, val in zip(top_idxs, top_vals)
+                    ]
 
         return response
