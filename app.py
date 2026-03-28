@@ -24,10 +24,15 @@ logging.basicConfig(level=logging.INFO)
 # MongoDB Configuration
 # -----------------------
 MONGO_URI = os.getenv("MONGO_URI")
-client = MongoClient(MONGO_URI)
-db = client['genos']
-keys_collection = db['api_keys']
-usage_collection = db['usage']
+client = None
+db = None
+keys_collection = None
+usage_collection = None
+if MONGO_URI:
+    client = MongoClient(MONGO_URI)
+    db = client['genos']
+    keys_collection = db['api_keys']
+    usage_collection = db['usage']
 
 # -----------------------
 # Genos Engine Initialization
@@ -78,6 +83,39 @@ def _to_percentage(value):
         value *= 100.0
     return round(value, 2)
 
+
+def _run_inference(command):
+    """Run engine and normalize response payload schema."""
+    # --- Try auto-decode Base64 commands ---
+    try:
+        decoded_bytes = base64.b64decode(command, validate=True)
+        command = decoded_bytes.decode('utf-8')
+    except Exception:
+        pass  # Assume plain text if decode fails
+
+    # --- Run Genos engine ---
+    raw_result = engine.scan(command)
+
+    # Support both legacy and updated engine payload keys.
+    label = raw_result.get('label', raw_result.get('status'))
+    label_conf = raw_result.get('label_confidence', raw_result.get('gatekeeper_confidence'))
+    mitre_predictions = raw_result.get('MITRE_codes', raw_result.get('top_mitre', []))
+
+    if label is None or label_conf is None:
+        raise ValueError(f"Unexpected engine payload keys: {list(raw_result.keys())}")
+
+    return {
+        "label": label,
+        "label_confidence": _to_percentage(label_conf),
+        "MITRE_codes": [
+            {
+                "code": t["code"],
+                "confidence": _to_percentage(t["confidence"])
+            }
+            for t in mitre_predictions
+        ]
+    }
+
 # -----------------------
 # Routes
 # -----------------------
@@ -96,44 +134,16 @@ def scan():
     if not data or 'api_key' not in data or 'command' not in data:
         return jsonify({"error": "Missing parameters"}), 400
 
+    if keys_collection is None or usage_collection is None:
+        return jsonify({"error": "DB unavailable for /scan route"}), 503
+
     # --- Validate API key ---
     user_record = keys_collection.find_one({"key": data['api_key']})
     if not user_record:
         return jsonify({"error": "Key Not Valid"}), 401
 
-    command = data['command']
-
-    # --- Try auto-decode Base64 commands ---
     try:
-        decoded_bytes = base64.b64decode(command, validate=True)
-        command = decoded_bytes.decode('utf-8')
-    except Exception:
-        pass  # Assume plain text if decode fails
-
-    try:
-        # --- Run Genos engine ---
-        raw_result = engine.scan(command)
-
-        # Support both legacy and updated engine payload keys.
-        label = raw_result.get('label', raw_result.get('status'))
-        label_conf = raw_result.get('label_confidence', raw_result.get('gatekeeper_confidence'))
-        mitre_predictions = raw_result.get('MITRE_codes', raw_result.get('top_mitre', []))
-
-        if label is None or label_conf is None:
-            raise ValueError(f"Unexpected engine payload keys: {list(raw_result.keys())}")
-
-        # --- Build response with percentages ---
-        response = {
-            "label": label,
-            "label_confidence": _to_percentage(label_conf),
-            "MITRE_codes": [
-                {
-                    "code": t["code"],
-                    "confidence": _to_percentage(t["confidence"])
-                }
-                for t in mitre_predictions
-            ]
-        }
+        response = _run_inference(data['command'])
 
         # --- Log usage ---
         usage_collection.update_one(
@@ -151,6 +161,30 @@ def scan():
 
     except Exception as e:
         app.logger.error(f"Genos Engine Error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
+
+@app.route('/scan/internal', methods=['POST'])
+def scan_internal():
+    """Internal high-speed inference endpoint (no DB/API key checks)."""
+    data = request.get_json()
+    if not data or 'command' not in data:
+        return jsonify({"error": "Missing parameters"}), 400
+
+    internal_token = os.getenv("INTERNAL_TEST_TOKEN")
+    if internal_token:
+        provided_token = data.get("internal_token")
+        if provided_token != internal_token:
+            return jsonify({"error": "Internal token invalid"}), 401
+
+    try:
+        response = _run_inference(data['command'])
+        return app.response_class(
+            response=json.dumps(response, indent=2),
+            mimetype='application/json'
+        )
+    except Exception as e:
+        app.logger.error(f"Genos Engine Internal Error: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
 # -----------------------
 # Main

@@ -4,7 +4,7 @@ import pandas as pd
 import os
 import json
 from transformers import RobertaModel, RobertaTokenizer
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -37,13 +37,13 @@ class GatekeeperModel(nn.Module):
         return self.classifier(out.last_hidden_state[:, 0, :])
 
 class BinaryDataset(Dataset):
-    def __init__(self, b_csv, m_csv, tokenizer, max_len=256):
-        print("[*] Loading and pre-tokenizing Gatekeeper dataset...")
+    def __init__(self, b_csv, m_csv, tokenizer, max_len=256, phase="Train"):
+        print(f"[*] Loading and pre-tokenizing Gatekeeper dataset ({phase})...")
         # Load Benign
         b_df = pd.read_csv(b_csv)
         b_cmds = [str(c).lower().strip() for c in b_df['command']]
         
-        # Load Malicious (using the specialist train set)
+        # Load Malicious
         m_df = pd.read_csv(m_csv)
         m_cmds = [str(c).lower().strip() for c in m_df['command']]
         
@@ -57,7 +57,7 @@ class BinaryDataset(Dataset):
             max_length=max_len, 
             return_tensors="pt"
         )
-        print(f"[+] Load complete: {len(b_cmds)} Benign | {len(m_cmds)} Malicious")
+        print(f"[+] {phase} Load complete: {len(b_cmds)} Benign | {len(m_cmds)} Malicious")
 
     def __len__(self): return len(self.labels)
 
@@ -74,36 +74,43 @@ def train():
     
     tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
     
-    # Using your split data to ensure sync with Tier 2
-    full_dataset = BinaryDataset(
-        resolve_data_path("genos-balanced-good.csv"),
-        resolve_data_path("specialist_train_set.csv"), # Use the 'bad' split
-        tokenizer
+    # Explicitly load the pre-split training and validation datasets
+    train_dataset = BinaryDataset(
+        resolve_data_path("gatekeeper_train.csv"),
+        resolve_data_path("specialist_train.csv"), 
+        tokenizer,
+        phase="Train"
     )
     
-    train_size = int(0.8 * len(full_dataset))
-    val_size = len(full_dataset) - train_size
-    train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
+    val_dataset = BinaryDataset(
+        resolve_data_path("gatekeeper_val.csv"),
+        resolve_data_path("specialist_val.csv"),
+        tokenizer,
+        phase="Validation"
+    )
 
+    # Use pin_memory and multiple workers to feed the GPU faster
     train_loader = DataLoader(
         train_dataset, 
         batch_size=32, 
         shuffle=True, 
         pin_memory=True, 
-        num_workers=7  # <--- Add this (match your CPU core count)
+        num_workers=7  
     )
-    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, pin_memory=True)
+    val_loader = DataLoader(
+        val_dataset, 
+        batch_size=32, 
+        shuffle=False, 
+        pin_memory=True,
+        num_workers=7
+    )
 
     model = GatekeeperModel().to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=0.01)
     
-    # ---------------------------------------------------------
     # BIAS CORRECTION: Weight the Malicious class (1) higher
-    # This forces the model to be more paranoid about threats.
-    # ---------------------------------------------------------
     weights = torch.tensor([1.0, 3.0]).to(device) 
     criterion = nn.CrossEntropyLoss(weight=weights)
-    # ---------------------------------------------------------
 
     best_val_acc = 0.0
     model_save_path = os.path.join(BASE_DIR, "models", "gatekeeper.pt")

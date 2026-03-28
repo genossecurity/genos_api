@@ -5,7 +5,7 @@ import pandas as pd
 import json
 import os
 from transformers import RobertaModel, RobertaTokenizer
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -40,8 +40,8 @@ class SpecialistModel(nn.Module):
         return self.classifier(out.last_hidden_state[:, 0, :])
 
 class SpecialistDataset(Dataset):
-    def __init__(self, data_list, tokenizer, max_len=256):
-        print("[*] Pre-tokenizing data into RAM...")
+    def __init__(self, data_list, tokenizer, max_len=256, phase="Train"):
+        print(f"[*] Pre-tokenizing data into RAM ({phase})...")
         texts = [str(item[0]).lower().strip() for item in data_list]
         self.labels = [item[1] for item in data_list]
         self.encodings = tokenizer(
@@ -57,7 +57,7 @@ class SpecialistDataset(Dataset):
             "lbl": torch.tensor(self.labels[idx], dtype=torch.long)
         }
 
-def train_booster():
+def train_specialist():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
     model_save_path = os.path.join(BASE_DIR, "models", "specialist.pt")
@@ -71,28 +71,23 @@ def train_booster():
         label_map = json.load(f)
     print(f"[*] Loaded mapping for {len(label_map)} classes.")
 
-    # 2. Load the Data & Auto-Merge Booster
-    df_main = pd.read_csv(resolve_data_path("specialist_train_set.csv"))
+    # 2. Load the Pre-Split Data
+    df_train = pd.read_csv(resolve_data_path("specialist_train.csv"))
+    df_val = pd.read_csv(resolve_data_path("specialist_val.csv"))
     
-    try:
-        booster_path = resolve_data_path("specialist_booster.csv")
-        df_booster = pd.read_csv(booster_path)
-        df = pd.concat([df_main, df_booster], ignore_index=True)
-        print(f"[*] Dynamically merged booster data. Total samples: {len(df)}")
-    except FileNotFoundError:
-        df = df_main
-        print("[!] No specialist_booster.csv found. Training on standard set.")
+    print(f"[*] Loaded splits. Train samples: {len(df_train)} | Val samples: {len(df_val)}")
 
-    labels = [label_map[m] for m in df['mitre_id']]
-    data_list = list(zip(df['command'].tolist(), labels))
+    train_labels = [label_map[m] for m in df_train['mitre_id']]
+    train_data_list = list(zip(df_train['command'].tolist(), train_labels))
     
-    full_dataset = SpecialistDataset(data_list, tokenizer)
-    train_size = int(0.9 * len(full_dataset))
-    val_size = len(full_dataset) - train_size
-    train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
+    val_labels = [label_map[m] for m in df_val['mitre_id']]
+    val_data_list = list(zip(df_val['command'].tolist(), val_labels))
+    
+    train_dataset = SpecialistDataset(train_data_list, tokenizer, phase="Train")
+    val_dataset = SpecialistDataset(val_data_list, tokenizer, phase="Validation")
 
-    train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True, pin_memory=True)
-    val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False, pin_memory=True)
+    train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True, pin_memory=True, num_workers=7)
+    val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False, pin_memory=True, num_workers=7)
 
     # 3. Initialize Model and LOAD PREVIOUS WEIGHTS
     model = SpecialistModel(num_classes=len(label_map)).to(device)
@@ -159,10 +154,10 @@ def train_booster():
         val_acc = (val_correct / val_total) * 100
         print(f"\n[Epoch {epoch+1}] Val Acc: {val_acc:.2f}%")
         
-        if val_acc >= best_val_acc: # Save if it meets or beats
+        if val_acc >= best_val_acc: 
             best_val_acc = val_acc
             torch.save(model.state_dict(), model_save_path)
             print(f"[+] Brain Updated! Precision Patch weights saved.")
 
 if __name__ == "__main__":
-    train_booster()
+    train_specialist()
