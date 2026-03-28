@@ -21,6 +21,15 @@ log_err() {
     echo "[-] $*" >&2
 }
 
+port_in_use() {
+    local port="$1"
+    if command -v ss >/dev/null 2>&1; then
+        ss -ltn "sport = :${port}" 2>/dev/null | grep -q LISTEN
+    else
+        lsof -ti "tcp:${port}" -sTCP:LISTEN >/dev/null 2>&1
+    fi
+}
+
 # Check if API is healthy on a given bind address
 health_check() {
     local bind="$1"
@@ -50,9 +59,43 @@ wait_healthy() {
 
 # Kill any running gunicorn processes
 stop_gunicorn() {
-    log_info "Stopping gunicorn processes..."
-    pkill -9 -f "gunicorn" 2>/dev/null || true
-    sleep 2
+    local bind="$1"
+    local port="${bind##*:}"
+    local pids
+
+    log_info "Checking for existing process on ${bind}..."
+    if ! port_in_use "$port"; then
+        log_info "No API listener found on port ${port}."
+        return 0
+    fi
+
+    log_info "Port ${port} is in use. Stopping existing process(es)..."
+    pids="$(lsof -ti "tcp:${port}" -sTCP:LISTEN 2>/dev/null | sort -u | tr '\n' ' ' || true)"
+    if [ -n "${pids// /}" ]; then
+        # shellcheck disable=SC2086
+        kill ${pids} 2>/dev/null || true
+    fi
+
+    # Fallback for listeners not visible/killable by current user.
+    pkill -f "gunicorn.*127.0.0.1:${port}" 2>/dev/null || true
+    pkill -f "gunicorn.*:${port}" 2>/dev/null || true
+
+    if port_in_use "$port" && command -v sudo >/dev/null 2>&1; then
+        sudo -n fuser -k -n tcp "$port" >/dev/null 2>&1 || true
+    fi
+
+    for _ in $(seq 1 40); do
+        if ! port_in_use "$port"; then
+            return 0
+        fi
+        sleep 0.25
+    done
+
+    if port_in_use "$port"; then
+        log_err "Port ${port} is still in use. Could not stop existing process."
+        log_err "Re-run with sudo or stop the existing service manually."
+        return 1
+    fi
 }
 
 # Activate Python virtual environment
@@ -74,26 +117,18 @@ start_gunicorn() {
     echo "$pid"
 }
 
-# Reload nginx (non-interactive)
-reload_nginx() {
-    log_info "Reloading nginx..."
-    if sudo -n nginx -s reload 2>/dev/null; then
-        log_ok "Nginx reloaded successfully"
-        sleep 1
-        return 0
-    else
-        log_err "Nginx reload failed (nginx not available or sudo requires password)"
-        return 1
-    fi
-}
-
 # Main reload command
 cmd_reload() {
     local bind="$DEFAULT_BIND"
     
     log_info "Reloading API on ${bind}..."
+
+    if [ "$bind" != "127.0.0.1:6001" ]; then
+        log_err "This script is restricted to internal API bind 127.0.0.1:6001 (got: ${bind})"
+        return 1
+    fi
     
-    stop_gunicorn
+    stop_gunicorn "$bind" || return 1
     activate_venv || return 1
     
     local retry=0
@@ -105,13 +140,12 @@ cmd_reload() {
         start_gunicorn "$bind"
         
         if wait_healthy "$bind"; then
-            reload_nginx || true  # Nginx is optional
-            log_ok "API reload complete and verified"
+            log_ok "Internal API reload complete and verified on ${bind}"
             return 0
         fi
         
         log_err "Health check failed, retrying..."
-        stop_gunicorn
+        stop_gunicorn "$bind" || return 1
         retry=$((retry + 1))
     done
     
@@ -137,7 +171,7 @@ usage() {
     cat <<EOF
 Usage: $(basename "$0") [reload|status]
 
-  reload  Restart gunicorn and verify API health (default)
+    reload  Restart internal API gunicorn on 127.0.0.1:6001 (default)
   status  Check if API is healthy
   -h      Show this help message
 EOF
