@@ -3,6 +3,7 @@ import os
 import base64
 import logging
 import json
+from datetime import datetime
 from flask import Flask, request, Response, jsonify
 from pymongo import MongoClient
 from dotenv import load_dotenv
@@ -131,11 +132,20 @@ def scan():
     data = request.get_json()
 
     # --- Validate input ---
-    if not data or 'api_key' not in data or 'command' not in data:
-        return jsonify({"error": "Missing parameters"}), 400
+    if not data:
+        return jsonify({"error": "Missing parameters: request body"}), 400
+    
+    missing_params = []
+    if 'api_key' not in data:
+        missing_params.append('api_key')
+    if 'command' not in data:
+        missing_params.append('command')
+    
+    if missing_params:
+        return jsonify({"error": f"Missing parameters: {', '.join(missing_params)}"}), 400
 
     if keys_collection is None or usage_collection is None:
-        return jsonify({"error": "DB unavailable for /scan route"}), 503
+        return jsonify({"error": "Internal error"}), 400
 
     # --- Validate API key ---
     user_record = keys_collection.find_one({"key": data['api_key']})
@@ -150,7 +160,7 @@ def scan():
             {"user_id": user_record.get('user_id'), "api_key": data['api_key']},
             {
                 "$inc": {"req_count": 1},
-                "$set": {"updated_at": os.getenv("CURRENT_TIME", "2026-03-17T00:00:00.000+00:00")}
+                "$set": {"updated_at": datetime.utcnow().isoformat()}
             }
         )
 
@@ -163,29 +173,6 @@ def scan():
         app.logger.error(f"Genos Engine Error: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
 
-
-@app.route('/scan/internal', methods=['POST'])
-def scan_internal():
-    """Internal high-speed inference endpoint (no DB/API key checks)."""
-    data = request.get_json()
-    if not data or 'command' not in data:
-        return jsonify({"error": "Missing parameters"}), 400
-
-    internal_token = os.getenv("INTERNAL_TEST_TOKEN")
-    if internal_token:
-        provided_token = data.get("internal_token")
-        if provided_token != internal_token:
-            return jsonify({"error": "Internal token invalid"}), 401
-
-    try:
-        response = _run_inference(data['command'])
-        return app.response_class(
-            response=json.dumps(response, indent=2),
-            mimetype='application/json'
-        )
-    except Exception as e:
-        app.logger.error(f"Genos Engine Internal Error: {str(e)}")
-        return jsonify({"error": "Internal server error"}), 500
 # -----------------------
 # Main
 # -----------------------
