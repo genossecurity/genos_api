@@ -107,11 +107,12 @@ def _run_inference(command):
 
     return {
         "label": label,
-        "label_confidence": _to_percentage(label_conf),
+        # engine.scan() already returns percentages (multiplied by 100); pass through directly.
+        "label_confidence": round(float(label_conf), 2),
         "MITRE_codes": [
             {
                 "code": t["code"],
-                "confidence": _to_percentage(t["confidence"])
+                "confidence": round(float(t["confidence"]), 2)
             }
             for t in mitre_predictions
         ]

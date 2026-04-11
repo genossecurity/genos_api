@@ -462,7 +462,7 @@ class GenosEngine:
                     s_probs = F.softmax(s_logits / 0.5, dim=1).squeeze(0)
                     
                     top_vals, top_idxs = torch.topk(
-                        s_probs, k=min(5, len(s_probs)), largest=True, sorted=True
+                        s_probs, k=min(3, len(s_probs)), largest=True, sorted=True
                     )
 
                     # Multiply Specialist confidence by 100
