@@ -173,6 +173,34 @@ def scan():
         app.logger.error(f"Genos Engine Error: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
 
+
+@app.route('/scan/free', methods=['POST'])
+def scan_free():
+    """Run inference without API key validation or usage logging.
+
+    Intended for the public GUI dashboard which enforces its own
+    IP-based rate limit (500/day) on the dashboard server side.
+    Only accepts requests from localhost.
+    """
+    # Restrict to loopback so only the dashboard server can call this
+    if request.remote_addr not in ('127.0.0.1', '::1'):
+        return jsonify({"error": "Forbidden"}), 403
+
+    data = request.get_json()
+    if not data or 'command' not in data:
+        return jsonify({"error": "Missing parameters: command"}), 400
+
+    try:
+        response = _run_inference(data['command'])
+        return app.response_class(
+            response=json.dumps(response, indent=2),
+            mimetype='application/json'
+        )
+    except Exception as e:
+        app.logger.error(f"Genos Engine Error (free): {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
+
 # -----------------------
 # Main
 # -----------------------
