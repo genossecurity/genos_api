@@ -117,9 +117,7 @@ class GenosEngine:
             raw_csv_path = _resolve_asset_path(
                 raw_mitre_path,
                 [
-                    "data/art/mitre_atlas_raw.csv",
-                    "data/training/mitre_atlas_raw.csv",
-                    "mitre_atlas_raw.csv",
+                    "data/art/mitre_atlas_raw.csv"
                 ],
             )
             self.s_map = self._build_map_from_csv(raw_csv_path)
