@@ -3,64 +3,33 @@
 ```
 genos_api/
 ├── app.py                  # Main Flask API server
-├── engine.py              # Inference engine with two-tier classification
-├── gunicorn.conf.py       # Gunicorn WSGI configuration
-├── requirements.txt       # Python dependencies
-├── req_res.txt            # Request/response examples
-├── README.md              # Project documentation
-├── STRUCTURE.md           # This file
+├── engine.py               # Inference engine with two-tier classification
+├── gunicorn.conf.py        # Gunicorn WSGI configuration
+├── gunicorn.ctl            # Gunicorn PID/control file
+├── README.md               # Project documentation
+├── STRUCTURE.md            # This file
 │
-├── config/                # Configuration files (JSON)
+├── config/                 # Configuration files (JSON)
 │   ├── definitive_mitre_map.json    # MITRE ATT&CK to category mapping
 │   ├── label_map.json               # Label definitions
 │   └── specialist_map.json          # Specialist model class mapping
 │
-├── data/                  # Training & evaluation datasets (CSV)
-│   ├── training/          # Primary training datasets (loaded by trainer scripts)
-│   │   ├── trainer1-good.csv        # Benign samples for Tier 1 (Gatekeeper) training
-│   │   └── trainer1-bad.csv         # Malicious samples for Tier 1 (Gatekeeper) training
-│   ├── archive/           # Historical, backup, and experimental datasets
-│   │   ├── training/
-│   │   │   ├── trainer1-bad.csv
-│   │   │   └── trainer1-good.csv
-│   │   ├── raw/
-│   │   ├── art/
-│   │   ├── benign_final.csv
-│   │   ├── boost_data.csv
-│   │   ├── genos_v1_master_benign.csv
-│   │   ├── genos_v1_master_malicious.csv
-│   │   ├── malicious_augmented.csv
-│   │   ├── mitre_atlas_metadata.csv
-│   │   ├── mitre_atlas_raw.csv
-│   │   └── synthetic_benign_baseline.csv
+├── data/                   # Reference datasets (CSV)
+│   └── art/
+│       └── mitre_atlas_raw.csv      # Raw MITRE ATLAS source data
 │
-├── models/                # Model checkpoints (Git LFS tracked)
-│   ├── gatekeeper.pt      # Tier 1 classifier (benign vs malicious)
-│   ├── specialist.pt      # Tier 2 specialist model (MITRE ATT&CK classification)
-│   ├── mitre_atlas.index  # FAISS vector index
-│   ├── specialist_map.json
-│   └── archive/
-│       └── gatekeeper_old.pt
+├── models/                 # Model checkpoints (Git LFS tracked)
+│   ├── gatekeeper.pt       # Tier 1 classifier (benign vs malicious)
+│   └── specialist.pt       # Tier 2 specialist model (MITRE ATT&CK classification)
 │
-├── scripts/               # Grouped scripts by function
-│   ├── data_augmentation/
-│   │   ├── augment.py     # Benign dataset prep with admin-noise injection
-│   │   └── boost.py       # Inference probability boost heuristics
-│   ├── benchmarks/
-│   │   └── eval.py        # Unified eval (offline audit + fuzzing + API benchmark)
-│   ├── data/
-│   │   └── source.py      # MITRE source map generation utility
-│   ├── training/
-│   │   ├── trainer1.py    # Tier 1 (Gatekeeper) training script
-│   │   └── trainer2.py    # Tier 2 (Specialist) training script
-│   ├── ops/
-│   │   └── reload_api.sh  # Unified ops script (start/reload/nginx/status)
-│   ├── utils/
-│   │   ├── genos.py       # Local CLI shell for engine testing
-│   │   └── last_push.py   # Final gatekeeper fine-tuning utility
-│   └── __pycache__/
+├── scripts/                # Grouped scripts by function
+│   ├── benchmark/
+│   │   ├── ieee.py                  # IEEE benchmark evaluation
+│   │   └── internal_api_test.py     # Internal API endpoint tests
+│   └── ops/
+│       └── reload_api.sh            # Unified ops script (start/reload/nginx/status)
 │
-└── __pycache__/          # Python bytecode (ignored)
+└── __pycache__/            # Python bytecode (ignored)
 ```
 
 ## Organization Principles
@@ -69,66 +38,36 @@ genos_api/
   - `app.py` - Flask REST API server
   - `engine.py` - Two-tier inference engine for command classification
   - `gunicorn.conf.py` - Production WSGI configuration
-  
+  - `gunicorn.ctl` - Gunicorn runtime PID/control file
+
 - **config/**: Configuration Files
   - JSON mappings for labels and MITRE ATT&CK codes
   - Specialist model class-to-label mappings
 
-- **data/**: Datasets (organized by purpose)
-  - `data/training/` - Active training datasets loaded by trainer scripts (Tier 1/Tier 2 inputs)
-  - `data/archive/` - Historical, experimental, and backup datasets (preserved for reference or debugging)
+- **data/**: Reference Datasets
+  - `data/art/` - Raw MITRE ATLAS source data used for reference and mapping
 
 - **models/**: Neural Network Weights (Git LFS)
   - `gatekeeper.pt` - Tier 1 benign/malicious classifier
   - `specialist.pt` - Tier 2 MITRE ATT&CK technique classifier
-  - `mitre_atlas.index` - FAISS vector index for similarity search
 
 - **scripts/**: Executable Scripts (Grouped by Role)
-  - `scripts/training/`: model training (`trainer1.py`, `trainer2.py`)
-  - `scripts/data_augmentation/`: data and inference augmentation (`augment.py`, `boost.py`)
-  - `scripts/benchmarks/`: unified benchmark runner (`eval.py`)
-  - `scripts/data/`: source-to-map data processing (`source.py`)
+  - `scripts/benchmark/`: benchmark and API test runners (`ieee.py`, `internal_api_test.py`)
   - `scripts/ops/`: operational service script (`reload_api.sh`)
-  - `scripts/utils/`: local utility scripts (`genos.py`, `last_push.py`)
 
 ## Scripts Reference
 
-### scripts/data/source.py
+### scripts/benchmark/ieee.py
 
-This script reads raw MITRE-labeled command data and generates a deterministic label-index mapping (`definitive_mitre_map.json`) used by downstream training and analysis. It is part of the **data generation/preparation cycle**, specifically the label-engineering stage that standardizes class IDs before model training.
+This script runs benchmark evaluation against the IEEE dataset, measuring detection accuracy and MITRE attribution quality. It belongs to the **evaluation cycle** as an external benchmark for model quality assessment.
 
-### scripts/data_augmentation/augment.py
+### scripts/benchmark/internal_api_test.py
 
-This script builds a benign training dataset by loading the synthetic benign baseline, normalizing commands, injecting random admin-noise commands, shuffling, and writing `benign_final.csv`. It belongs to the **data generation cycle**, focused on synthetic expansion of benign samples to improve Tier 1 robustness.
-
-### scripts/data_augmentation/boost.py
-
-This module applies rule-based post-processing to Tier 2 probabilities (MITRE techniques), boosting or penalizing classes based on command patterns such as encoded PowerShell, LOLBins, or credential-theft indicators. It participates in the **evaluation/inference calibration cycle**, where model outputs are adjusted to better reflect domain heuristics at prediction time.
-
-### scripts/training/trainer1.py
-
-This script trains the Tier 1 Gatekeeper binary classifier (benign vs malicious) using `benign_final.csv` and `malicious_augmented.csv`, tracks epoch accuracy, and saves `models/gatekeeper.pt`. It is part of the **training cycle**, specifically first-stage detection model fitting.
-
-### scripts/training/trainer2.py
-
-This script trains the Tier 2 Specialist multi-class MITRE classifier using balanced sampling, focal-style loss behavior, and differential learning rates between encoder and head, while regenerating `config/specialist_map.json` and saving `models/specialist.pt`. It belongs to the **training cycle**, specifically second-stage attribution model fitting.
-
-### scripts/benchmarks/eval.py
-
-This is the single, final benchmark script for the project. It combines three evaluation modes in one place: offline model audit (false positives, detection rate, MITRE attribution), fuzzing resilience tests (obfuscation-aware robustness checks), and live API benchmarking (latency and verdict accuracy against `/scan`). It belongs to the **evaluation cycle** as the unified quality gate for checkpoint validation and deployment verification.
+This script tests the live API endpoints for correctness and latency, sending known-malicious and known-benign commands to `/scan` and validating verdicts. It belongs to the **evaluation/deployment operations cycle** as a post-deploy smoke test.
 
 ### scripts/ops/reload_api.sh
 
 This is the single operational control script for the API. It consolidates prior start, restart, and nginx-reload workflows into one entrypoint with modes: `reload` (default full restart + nginx reload + endpoint verification), `start` (foreground Gunicorn launch), `nginx` (nginx-only reload + health test on active API port), and `status` (active health check on ports 6001/6000). It belongs to the **evaluation/deployment operations cycle**, providing a single reproducible command surface for local or server runtime control.
-
-### scripts/utils/genos.py
-
-This utility provides an interactive local shell that loads `GenosEngine`, accepts commands, and prints live benign/malicious decisions with top MITRE prediction and confidence values. It is in the **evaluation cycle** as a manual smoke-test and qualitative inspection tool for inference behavior.
-
-### scripts/utils/last_push.py
-
-This utility performs a short gatekeeper fine-tuning “nudge” pass by combining malicious, benign, and boost datasets, then loading archived weights and saving an updated `gatekeeper.pt`. It is part of the **training cycle**, typically used as a final refinement step before evaluation or deployment.
-
 ## Core Components
 
 ### engine.py - Inference Engine
@@ -184,7 +123,6 @@ The `GenosEngine` class orchestrates inference:
   3. Tokenize with CodeBERT tokenizer (96 token max length)
 - Tier 1 classification: Determines if malicious/benign
 - Tier 2 classification: Generates probabilities for all MITRE techniques
-- Applies confidence boosts using `boost.py` engine
 - Returns top-5 MITRE techniques with confidence scores
 
 **Output Format:**
@@ -212,10 +150,9 @@ The `GenosEngine` class orchestrates inference:
 - Loaded once on server startup for efficient batch inference
 - Supports GPU acceleration for production deployments
 
-Large model and index files are tracked using Git LFS:
+Model files are tracked using Git LFS:
 ```
 *.pt filter=lfs diff=lfs merge=lfs -text
-*.index filter=lfs diff=lfs merge=lfs -text
 ```
 
 To clone this repo with LFS files:
@@ -228,11 +165,9 @@ git lfs pull  # Download LFS files
 ## File Paths (From Scripts)
 
 When running scripts from **scripts/** subfolders, use project-root-relative resolution:
-- Training (`scripts/training/*.py`) resolves data/models via `../../data` and `../../models`
-- Benchmarks (`scripts/benchmarks/*.py`) resolves config/data/models via `../../config`, `../../data`, and `../../models`
-- Augmentation/Data scripts resolve files via `../../data` (and `../../config` where needed)
+- Benchmarks (`scripts/benchmark/*.py`) resolves config/models via `../../config` and `../../models`
 
 When running from **root** directory, directly use:
 - `config/specialist_map.json`
-- `data/benign_final.csv`
 - `models/gatekeeper.pt`
+- `models/specialist.pt`
