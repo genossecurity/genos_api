@@ -758,7 +758,14 @@ def _rule_boot_logon_broad(parsed: dict, sem: dict, result: dict) -> None:
         "\\appdata\\roaming\\microsoft\\windows\\start menu",
         "xdg/autostart",
     }
-    fires = any(p in norm for p in _AUTOSTART_PATHS)
+    # Exclude pure text output commands from firing on autostart paths — echoing a
+    # comment line to /etc/init.d/ does not establish persistence and creates false
+    # prior promotion (broke T1543 cases in evaluation).
+    _ECHO_NOISE = frozenset({
+        "echo", "printf", "cat", "type",
+        "write-host", "write-output", "write-error", "write-verbose",
+    })
+    fires = any(p in norm for p in _AUTOSTART_PATHS) and exe not in _ECHO_NOISE
     # systemd enable (for persistence)
     if exe == "systemctl" and (parsed.get("subcommand") or "").lower() == "enable":
         fires = True

@@ -19,6 +19,21 @@ except ImportError:
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+import sys as _sys
+_PARSER_DIR = os.path.join(BASE_DIR, "parser")
+if _PARSER_DIR not in _sys.path:
+    _sys.path.insert(0, _PARSER_DIR)
+
+try:
+    from parser import parse_command as _parse_command
+    from semantic_features import build_semantic_features as _build_semantic_features
+    from rule_engine import build_rule_result as _build_rule_result
+    from candidate_mask import build_prior_vector as _build_prior_vector
+    from build_residual_dataset import build_residual as _build_residual, build_feature_tags as _build_feature_tags
+    _RESIDUAL_PIPELINE_AVAILABLE = True
+except ImportError:
+    _RESIDUAL_PIPELINE_AVAILABLE = False
+
 
 def _resolve_asset_path(path_value: str, fallback_relpaths: list[str] | None = None) -> str:
     """Resolve asset path with support for multiple fallbacks."""
@@ -93,10 +108,12 @@ class GenosEngine:
     def __init__(
         self,
         t1_path="models/gatekeeper.pt",
-        t2_path="models/specialist.pt",
+        t2_path="models/specialist_residual_a.pt",
         map_path=None,
         raw_mitre_path="data/training/mitre_atlas_raw.csv",
         gatekeeper_meta_path=None,
+        use_residual_format=True,
+        prior_alphas=None,
     ):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
@@ -152,6 +169,10 @@ class GenosEngine:
         self.t2.eval()
 
         self.max_deobfuscation_layers = 5
+        self.use_residual_format = use_residual_format and _RESIDUAL_PIPELINE_AVAILABLE
+        self.prior_alphas = prior_alphas or {"strong": 2.0, "weak": 1.5, "none": 0.0}
+        # Forward map {mitre_id: int_index} used by build_prior_vector
+        self._specialist_map_fwd = {mitre: idx for idx, mitre in self.s_map.items()}
 
     def _load_map_from_json(self, json_path: str) -> dict:
         """Load specialist label map from JSON file as {int_index: mitre_id}."""
@@ -188,6 +209,24 @@ class GenosEngine:
 
         sorted_ids = sorted(list(unique_ids))
         return {i: mitre_id for i, mitre_id in enumerate(sorted_ids)}
+
+    def _build_variant_a_text(self, cmd: str):
+        """
+        Build Variant A specialist input text and return (text, rule_result).
+        Format matches training exactly:
+          RAW: {cmd}
+          RESIDUAL: {residual}
+          FEATURES: {tags}   (line omitted when no tags fire)
+        """
+        parsed = _parse_command(cmd)
+        sem = _build_semantic_features(parsed)
+        rules = _build_rule_result(parsed, sem)
+        residual = _build_residual(parsed, sem, rules)
+        feature_tags = _build_feature_tags(sem, rules)
+        parts = [f"RAW: {cmd}", f"RESIDUAL: {residual}"]
+        if feature_tags:
+            parts.append(f"FEATURES: {' '.join(feature_tags)}")
+        return "\n".join(parts), rules
 
     def calculate_entropy(self, text):
         if not text:
@@ -490,7 +529,34 @@ class GenosEngine:
                 }
 
                 if gate["is_malicious"]:
-                    s_logits = self.t2(inputs["input_ids"], inputs["attention_mask"])
+                    # Build T2 input: Variant A format when pipeline is available
+                    if self.use_residual_format:
+                        t2_text, rule_result = self._build_variant_a_text(raw_cmd.strip())
+                        t2_inputs = self.tokenizer(
+                            t2_text,
+                            return_tensors="pt",
+                            truncation=True,
+                            padding="max_length",
+                            max_length=self.max_length,
+                        ).to(self.device)
+                    else:
+                        t2_inputs = inputs
+                        rule_result = None
+
+                    s_logits = self.t2(t2_inputs["input_ids"], t2_inputs["attention_mask"])
+
+                    # Soft prior fusion — additive only, no hard masking
+                    if rule_result is not None:
+                        pv = _build_prior_vector(
+                            rule_result,
+                            self._specialist_map_fwd,
+                            alpha_overrides=self.prior_alphas,
+                        )
+                        pv_tensor = torch.tensor(
+                            pv["prior_vector"], dtype=s_logits.dtype, device=self.device
+                        ).unsqueeze(0)
+                        s_logits = s_logits + pv_tensor
+
                     s_probs = F.softmax(s_logits / 0.5, dim=1).squeeze(0)
 
                     top_vals, top_idxs = torch.topk(

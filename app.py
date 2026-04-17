@@ -42,8 +42,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app.logger.info("Loading Genos engine — this may take a moment...")
 engine = GenosEngine(
     t1_path=os.path.join(BASE_DIR, "models/gatekeeper.pt"),
-    t2_path=os.path.join(BASE_DIR, "models/specialist.pt"),
-    map_path=os.path.join(BASE_DIR, "models/specialist_map.json")
+    t2_path=os.path.join(BASE_DIR, "models/specialist_residual_a.pt"),
 )
 
 # Warm-up inference
