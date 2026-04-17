@@ -458,7 +458,10 @@ _GTFOBINS_FUNC_TO_MITRE = {
     "bind-shell":          "T1059",
     "non-interactive-bind-shell": "T1059",
     "non-interactive-reverse-shell": "T1059",
-    "file-upload":         "T1105",   # ingress tool transfer
+    "command":             "T1059",
+    "upload":              "T1105",   # ingress tool transfer
+    "download":            "T1105",
+    "file-upload":         "T1105",   # legacy aliases (pre-2024 naming)
     "file-download":       "T1105",
     "file-write":          "T1222",   # file/directory permissions modification (proxy)
     "file-read":           "T1005",   # data from local system
@@ -467,7 +470,8 @@ _GTFOBINS_FUNC_TO_MITRE = {
     "sudo":                "T1548",
     "capabilities":        "T1548",
     "limited-suid":        "T1548",
-    "command":             "T1059",
+    "privilege-escalation": "T1548",
+    "inherit":             "T1548",   # inherits elevated context
 }
 
 
@@ -491,7 +495,8 @@ def parse_gtfobins(tarball_path: Path) -> list[dict]:
         for member in tf:
             if not member.isfile(): continue
             if "/_gtfobins/" not in member.name: continue
-            if not member.name.endswith(".md"): continue
+            # GTFOBins files may have no extension (bare names like 'curl', '7z')
+            # or .md extension depending on repo version — accept both.
             f = tf.extractfile(member)
             if f is None: continue
             text = f.read().decode("utf-8", errors="ignore")

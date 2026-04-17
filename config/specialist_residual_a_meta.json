@@ -1,0 +1,33 @@
+{
+  "variant": "a",
+  "seed": 42,
+  "epochs_requested": 25,
+  "best_epoch": 19,
+  "num_classes": 108,
+  "micro_batch_size": 16,
+  "effective_batch_size": 64,
+  "max_len": 256,
+  "encoder_lr": 1e-05,
+  "head_lr": 5e-05,
+  "dropout": 0.2,
+  "warm_start": false,
+  "model_path": "/home/snake/genos_api/genos_api/models/specialist_residual_a.pt",
+  "val": {
+    "accuracy": 0.34992887624466573,
+    "top3_accuracy": 0.5561877667140825,
+    "macro_precision": 0.30567541814273835,
+    "macro_recall": 0.4091793988760674,
+    "macro_f1": 0.3109726501525398,
+    "weighted_f1": 0.3430033664040442,
+    "loss": 2.704672163275533
+  },
+  "test": {
+    "accuracy": 0.3800243605359318,
+    "top3_accuracy": 0.5554202192448234,
+    "macro_precision": 0.3633545883012201,
+    "macro_recall": 0.45801490114249305,
+    "macro_f1": 0.379656792998956,
+    "weighted_f1": 0.3566208374059663,
+    "loss": 2.726040045613929
+  }
+}

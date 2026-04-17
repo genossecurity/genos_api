@@ -1,0 +1,35 @@
+{
+  "specialist_train": {
+    "total": 5921,
+    "organic_true_label_in_candidates": 5353,
+    "organic_coverage_pct": 90.41,
+    "fallback_count": 5258,
+    "fallback_pct": 88.8,
+    "avg_candidate_size": 96.34,
+    "min_candidate_size": 2,
+    "max_candidate_size": 108,
+    "median_candidate_size": 108
+  },
+  "specialist_val": {
+    "total": 703,
+    "organic_true_label_in_candidates": 643,
+    "organic_coverage_pct": 91.47,
+    "fallback_count": 626,
+    "fallback_pct": 89.05,
+    "avg_candidate_size": 96.59,
+    "min_candidate_size": 2,
+    "max_candidate_size": 108,
+    "median_candidate_size": 108
+  },
+  "specialist_test": {
+    "total": 821,
+    "organic_true_label_in_candidates": 740,
+    "organic_coverage_pct": 90.13,
+    "fallback_count": 722,
+    "fallback_pct": 87.94,
+    "avg_candidate_size": 95.44,
+    "min_candidate_size": 2,
+    "max_candidate_size": 108,
+    "median_candidate_size": 108
+  }
+}
