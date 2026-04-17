@@ -1,0 +1,38 @@
+{
+  "seed": 42,
+  "epochs_requested": 25,
+  "micro_batch_size": 16,
+  "effective_batch_size": 64,
+  "max_len": 256,
+  "encoder_lr": 1e-05,
+  "head_lr": 5e-05,
+  "weight_decay": 0.01,
+  "label_smoothing": 0.0,
+  "dropout": 0.2,
+  "warmup_ratio": 0.08,
+  "grad_clip_norm": 1.0,
+  "freeze_encoder_epochs": 1,
+  "warm_start": false,
+  "best_epoch": 21,
+  "num_classes": 91,
+  "label_map_path": "/home/snake/genos_api/genos_api/config/specialist_map.json",
+  "model_path": "/home/snake/genos_api/genos_api/models/specialist.pt",
+  "val_metrics": {
+    "accuracy": 0.34459459459459457,
+    "top3_accuracy": 0.5168918918918919,
+    "macro_precision": 0.343475193272764,
+    "macro_recall": 0.43016792511923363,
+    "macro_f1": 0.3397707333456346,
+    "weighted_f1": 0.336781667353567,
+    "loss": 2.787074214703328
+  },
+  "test_metrics": {
+    "accuracy": 0.3466476462196862,
+    "top3_accuracy": 0.5178316690442225,
+    "macro_precision": 0.3196918245512298,
+    "macro_recall": 0.40431484470759466,
+    "macro_f1": 0.3242592559529558,
+    "weighted_f1": 0.325141681527447,
+    "loss": 2.7840453741723903
+  }
+}

@@ -1,0 +1,217 @@
+{
+  "build_timestamp": "2026-04-16T23:55:42Z",
+  "seed": 42,
+  "sources": [
+    {
+      "key": "nl2bash",
+      "kind": "benign",
+      "url": "https://raw.githubusercontent.com/TellinaTool/nl2bash/master/data/bash/all.cm",
+      "fetch_type": "raw",
+      "parser": "parse_nl2bash",
+      "note": "~10K bash commands, 102 utilities, MIT license"
+    },
+    {
+      "key": "tldr_pages",
+      "kind": "benign",
+      "url": "https://codeload.github.com/tldr-pages/tldr/tar.gz/refs/heads/main",
+      "fetch_type": "tarball",
+      "parser": "parse_tldr_pages",
+      "note": "~4K binaries with ~5-7 real invocations each, CC-BY-4.0"
+    },
+    {
+      "key": "atomic_red_team",
+      "kind": "malicious",
+      "url": "https://codeload.github.com/redcanaryco/atomic-red-team/tar.gz/refs/heads/master",
+      "fetch_type": "tarball",
+      "parser": "parse_atomic_red_team",
+      "note": "MITRE-mapped atomic tests across ~290 techniques, MIT license"
+    },
+    {
+      "key": "lolbas",
+      "kind": "malicious",
+      "url": "https://codeload.github.com/LOLBAS-Project/LOLBAS/tar.gz/refs/heads/master",
+      "fetch_type": "tarball",
+      "parser": "parse_lolbas",
+      "note": "Windows living-off-the-land binaries; attack_mitre_attack_ids in YAML"
+    },
+    {
+      "key": "gtfobins",
+      "kind": "malicious",
+      "url": "https://codeload.github.com/GTFOBins/GTFOBins.github.io/tar.gz/refs/heads/master",
+      "fetch_type": "tarball",
+      "parser": "parse_gtfobins",
+      "note": "Unix living-off-the-land binaries; maps functions -> technique heuristically"
+    },
+    {
+      "key": "mitre_cti",
+      "kind": "malicious",
+      "url": "https://raw.githubusercontent.com/mitre/cti/master/enterprise-attack/enterprise-attack.json",
+      "fetch_type": "raw",
+      "parser": "parse_mitre_cti",
+      "note": "MITRE ATT&CK STIX; procedure examples from known threat actor reports"
+    }
+  ],
+  "statuses": [
+    {
+      "key": "nl2bash",
+      "kind": "benign",
+      "ok": true,
+      "rows": 12604,
+      "error": ""
+    },
+    {
+      "key": "tldr_pages",
+      "kind": "benign",
+      "ok": true,
+      "rows": 30781,
+      "error": ""
+    },
+    {
+      "key": "atomic_red_team",
+      "kind": "malicious",
+      "ok": true,
+      "rows": 4517,
+      "error": ""
+    },
+    {
+      "key": "lolbas",
+      "kind": "malicious",
+      "ok": true,
+      "rows": 467,
+      "error": ""
+    },
+    {
+      "key": "gtfobins",
+      "kind": "malicious",
+      "ok": false,
+      "rows": 0,
+      "error": "parser returned 0 rows (check parser logic or upstream format change)"
+    },
+    {
+      "key": "mitre_cti",
+      "kind": "malicious",
+      "ok": true,
+      "rows": 4706,
+      "error": ""
+    }
+  ],
+  "split_ratios": {
+    "train": 0.8,
+    "val": 0.1,
+    "test": 0.1
+  },
+  "max_per_class": 500,
+  "summaries": {
+    "gatekeeper_train": {
+      "name": "gatekeeper_train",
+      "total_rows": 29607,
+      "unique_commands": 29607,
+      "num_classes": 1,
+      "unique_first_tokens": 5072,
+      "sources": {
+        "nl2bash": 8464,
+        "tldr_pages": 21143
+      },
+      "class_count_min": 29607,
+      "class_count_max": 29607,
+      "class_count_median": 29607,
+      "len_min": 2,
+      "len_max": 532,
+      "len_mean": 39.28486506569392,
+      "short_cmds_under_20_chars": 6592
+    },
+    "gatekeeper_val": {
+      "name": "gatekeeper_val",
+      "total_rows": 5266,
+      "unique_commands": 5266,
+      "num_classes": 1,
+      "unique_first_tokens": 3465,
+      "sources": {
+        "tldr_pages": 4256,
+        "nl2bash": 1010
+      },
+      "class_count_min": 5266,
+      "class_count_max": 5266,
+      "class_count_median": 5266,
+      "len_min": 2,
+      "len_max": 348,
+      "len_mean": 39.13577668059248,
+      "short_cmds_under_20_chars": 1210
+    },
+    "gatekeeper_test": {
+      "name": "gatekeeper_test",
+      "total_rows": 5587,
+      "unique_commands": 5587,
+      "num_classes": 1,
+      "unique_first_tokens": 3465,
+      "sources": {
+        "tldr_pages": 4480,
+        "nl2bash": 1107
+      },
+      "class_count_min": 5587,
+      "class_count_max": 5587,
+      "class_count_median": 5587,
+      "len_min": 2,
+      "len_max": 232,
+      "len_mean": 38.72704492572042,
+      "short_cmds_under_20_chars": 1283
+    },
+    "specialist_train": {
+      "name": "specialist_train",
+      "total_rows": 5028,
+      "unique_commands": 5028,
+      "num_classes": 91,
+      "unique_first_tokens": 2485,
+      "sources": {
+        "atomic_red_team": 2707,
+        "mitre_cti": 1976,
+        "lolbas": 345
+      },
+      "class_count_min": 12,
+      "class_count_max": 336,
+      "class_count_median": 33,
+      "len_min": 2,
+      "len_max": 1007,
+      "len_mean": 51.20982498011138,
+      "short_cmds_under_20_chars": 1491
+    },
+    "specialist_val": {
+      "name": "specialist_val",
+      "total_rows": 592,
+      "unique_commands": 592,
+      "num_classes": 91,
+      "unique_first_tokens": 401,
+      "sources": {
+        "atomic_red_team": 314,
+        "mitre_cti": 240,
+        "lolbas": 38
+      },
+      "class_count_min": 1,
+      "class_count_max": 42,
+      "class_count_median": 4,
+      "len_min": 2,
+      "len_max": 429,
+      "len_mean": 48.866554054054056,
+      "short_cmds_under_20_chars": 187
+    },
+    "specialist_test": {
+      "name": "specialist_test",
+      "total_rows": 701,
+      "unique_commands": 701,
+      "num_classes": 91,
+      "unique_first_tokens": 478,
+      "sources": {
+        "mitre_cti": 293,
+        "atomic_red_team": 370,
+        "lolbas": 38
+      },
+      "class_count_min": 2,
+      "class_count_max": 42,
+      "class_count_median": 5,
+      "len_min": 3,
+      "len_max": 482,
+      "len_mean": 50.33380884450784,
+      "short_cmds_under_20_chars": 203
+    }
+  }
+}

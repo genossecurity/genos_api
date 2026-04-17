@@ -1,0 +1,626 @@
+[*] Testing 95 benign commands against http://127.0.0.1:6001/scan/free
+======================================================================
+  [  1] FP     | Malicious (99.55%) T1087 | ls -la /home/user/documents
+  [  2] FP     | Malicious (99.63%) T1030 | cd /var/log
+  [  3] FP     | Malicious (99.29%) T1087 | pwd
+  [  4] FP     | Malicious (99.71%) T1564 | mkdir -p /home/user/projects/new_app
+  [  5] FP     | Malicious (99.75%) T1037 | cp config.yaml config.yaml.bak
+  [  6] FP     | Malicious (99.67%) T1560 | mv report.pdf ~/Documents/
+  [  7] FP     | Malicious (99.75%) T1070 | rm old_logfile.log
+  [  8] FP     | Malicious (99.47%) T1220 | touch notes.txt
+  [  9] FP     | Malicious (99.74%) T1083 | find . -name '*.py' -type f
+  [ 10] FP     | Malicious (99.61%) T1069 | tree -L 2
+  [ 11] FP     | Malicious (99.71%) T1016 | cat /etc/hostname
+  [ 12] FP     | Malicious (99.61%) T1070 | head -n 20 access.log
+  [ 13] FP     | Malicious (99.04%) T1070 | tail -f /var/log/syslog
+  [ 14] FP     | Malicious (99.27%) T1082 | less README.md
+  [ 15] FP     | Malicious (99.59%) T1016 | nano server.conf
+  [ 16] FP     | Malicious (99.52%) T1564 | vim ~/.bashrc
+  [ 17] FP     | Malicious (99.6%) T1003 | wc -l main.py
+  [ 18] FP     | Malicious (99.72%) T1070 | diff file1.txt file2.txt
+  [ 19] FP     | Malicious (99.68%) T1069 | sort names.txt | uniq
+  [ 20] OK     | Benign (98.86%) | grep -r 'TODO' src/
+  [ 21] FP     | Malicious (99.59%) T1072 | apt list --installed
+  [ 22] FP     | Malicious (99.51%) T1072 | pip install flask
+  [ 23] FP     | Malicious (99.71%) T1129 | pip freeze > requirements.txt
+  [ 24] FP     | Malicious (99.31%) T1195 | npm install express
+  [ 25] FP     | Malicious (98.57%) T1609 | npm run build
+  [ 26] FP     | Malicious (99.53%) T1562 | yarn add react
+  [ 27] FP     | Malicious (89.81%) T1072 | pip install --upgrade pip
+  [ 28] FP     | Malicious (99.31%) T1082 | apt-get update
+  [ 29] FP     | Malicious (99.6%) T1543 | conda activate myenv
+  [ 30] FP     | Malicious (99.44%) T1547 | brew install wget
+  [ 31] FP     | Malicious (97.76%) T1082 | git status
+  [ 32] OK     | Benign (99.06%) | git log --oneline -10
+  [ 33] OK     | Benign (99.0%) | git diff HEAD~1
+  [ 34] FP     | Malicious (96.47%) T1195 | git add .
+  [ 35] OK     | Benign (99.11%) | git commit -m 'fix: update readme'
+  [ 36] OK     | Benign (95.74%) | git pull origin main
+  [ 37] OK     | Benign (99.05%) | git push origin feature-branch
+  [ 38] OK     | Benign (98.74%) | git branch -a
+  [ 39] OK     | Benign (98.61%) | git checkout -b new-feature
+  [ 40] FP     | Malicious (99.09%) T1070 | git stash pop
+  [ 41] FP     | Malicious (99.57%) T1572 | top -bn1 | head -20
+  [ 42] FP     | Malicious (99.23%) T1070 | df -h
+  [ 43] FP     | Malicious (99.69%) T1070 | du -sh /var/log
+  [ 44] FP     | Malicious (99.4%) T1030 | free -m
+  [ 45] FP     | Malicious (99.17%) T1082 | uptime
+  [ 46] FP     | Malicious (99.31%) T1087 | whoami
+  [ 47] FP     | Malicious (98.98%) T1614 | hostname
+  [ 48] FP     | Malicious (99.51%) T1087 | uname -a
+  [ 49] FP     | Malicious (99.6%) T1057 | ps aux | grep python
+  [ 50] FP     | Malicious (99.54%) T1652 | lsblk
+  [ 51] FP     | Malicious (99.64%) T1016 | ping -c 4 google.com
+  [ 52] FP     | Malicious (99.33%) T1614 | curl -I https://example.com
+  [ 53] FP     | Malicious (99.63%) T1048 | wget https://example.com/file.tar.gz
+  [ 54] FP     | Malicious (97.18%) T1614 | ifconfig
+  [ 55] FP     | Malicious (99.58%) T1018 | ip addr show
+  [ 56] FP     | Malicious (99.63%) T1016 | netstat -tlnp
+  [ 57] FP     | Malicious (99.46%) T1220 | ss -tuln
+  [ 58] FP     | Malicious (99.29%) T1129 | dig example.com
+  [ 59] FP     | Malicious (99.58%) T1087 | nslookup google.com
+  [ 60] FP     | Malicious (99.63%) T1016 | traceroute 8.8.8.8
+  [ 61] FP     | Malicious (99.35%) T1057 | docker ps
+  [ 62] FP     | Malicious (94.44%) T1614 | docker images
+  [ 63] OK     | Benign (98.98%) | docker-compose up -d
+  [ 64] FP     | Malicious (99.64%) T1654 | docker logs my-container
+  [ 65] FP     | Malicious (97.82%) T1485 | docker build -t myapp:latest .
+  [ 66] FP     | Malicious (99.53%) T1090 | docker stop web-server
+  [ 67] FP     | Malicious (99.56%) T1202 | docker exec -it db bash
+  [ 68] FP     | Malicious (99.47%) T1082 | docker volume ls
+  [ 69] FP     | Malicious (99.46%) T1016 | docker network ls
+  [ 70] FP     | Malicious (78.35%) T1082 | docker pull nginx:latest
+  [ 71] FP     | Malicious (99.66%) T1129 | python3 manage.py runserver
+  [ 72] FP     | Malicious (99.63%) T1560 | python3 -m pytest tests/
+  [ 73] FP     | Malicious (99.63%) T1129 | python3 setup.py install
+  [ 74] FP     | Malicious (99.73%) T1059 | python3 -c 'print("hello world")'
+  [ 75] FP     | Malicious (99.56%) T1571 | flask run --host=0.0.0.0
+  [ 76] FP     | Malicious (99.24%) T1046 | gunicorn app:app --bind 0.0.0.0:8000
+  [ 77] FP     | Malicious (99.48%) T1129 | node server.js
+  [ 78] FP     | Malicious (99.64%) T1558 | gcc -o main main.c
+  [ 79] FP     | Malicious (99.41%) T1070 | make clean && make
+  [ 80] FP     | Malicious (99.6%) T1027 | java -jar application.jar
+  [ 81] FP     | Malicious (99.51%) T1222 | chmod 644 index.html
+  [ 82] FP     | Malicious (99.68%) T1222 | chown www-data:www-data /var/www
+  [ 83] FP     | Malicious (85.55%) T1614 | id
+  [ 84] FP     | Malicious (97.99%) T1069 | groups
+  [ 85] FP     | Malicious (99.39%) T1087 | passwd
+  [ 86] FP     | Malicious (99.28%) T1135 | crontab -l
+  [ 87] FP     | Malicious (99.64%) T1016 | systemctl status nginx
+  [ 88] FP     | Malicious (99.55%) T1070 | journalctl -u ssh --since today
+  [ 89] FP     | Malicious (83.18%) T1560 | tar -czf backup.tar.gz /home/user/data
+  [ 90] FP     | Malicious (99.71%) T1560 | unzip archive.zip -d /tmp/output
+  [ 91] FP     | Malicious (99.66%) T1105 | rsync -avz src/ dest/
+  [ 92] FP     | Malicious (99.77%) T1564 | scp file.txt user@remote:/home/user/
+  [ 93] FP     | Malicious (99.57%) T1087 | ssh user@192.168.1.10
+  [ 94] FP     | Malicious (98.32%) T1124 | date
+  [ 95] FP     | Malicious (98.05%) T1220 | cal
+
+======================================================================
+SUMMARY
+======================================================================
+  Total commands tested : 95
+  Correctly benign (TN) : 9
+  False positives  (FP) : 86
+  Errors                : 0
+  FP Rate               : 90.5%
+
+──────────────────────────────────────────────────────────────────────
+FALSE POSITIVE DETAILS:
+──────────────────────────────────────────────────────────────────────
+
+  Command    : ls -la /home/user/documents
+  Label      : Malicious (99.55%)
+  MITRE      : T1087 (48.64%)
+  MITRE      : T1614 (27.34%)
+  MITRE      : T1652 (13.8%)
+
+  Command    : cd /var/log
+  Label      : Malicious (99.63%)
+  MITRE      : T1030 (76.04%)
+  MITRE      : T1070 (16.9%)
+  MITRE      : T1562 (4.05%)
+
+  Command    : pwd
+  Label      : Malicious (99.29%)
+  MITRE      : T1087 (77.11%)
+  MITRE      : T1220 (10.31%)
+  MITRE      : T1016 (5.1%)
+
+  Command    : mkdir -p /home/user/projects/new_app
+  Label      : Malicious (99.71%)
+  MITRE      : T1564 (89.76%)
+  MITRE      : T1140 (2.63%)
+  MITRE      : T1036 (1.5%)
+
+  Command    : cp config.yaml config.yaml.bak
+  Label      : Malicious (99.75%)
+  MITRE      : T1037 (59.02%)
+  MITRE      : T1543 (13.51%)
+  MITRE      : T1053 (6.46%)
+
+  Command    : mv report.pdf ~/Documents/
+  Label      : Malicious (99.67%)
+  MITRE      : T1560 (23.47%)
+  MITRE      : T1564 (18.05%)
+  MITRE      : T1070 (16.4%)
+
+  Command    : rm old_logfile.log
+  Label      : Malicious (99.75%)
+  MITRE      : T1070 (99.89%)
+  MITRE      : T1222 (0.04%)
+  MITRE      : T1560 (0.02%)
+
+  Command    : touch notes.txt
+  Label      : Malicious (99.47%)
+  MITRE      : T1220 (79.89%)
+  MITRE      : T1548 (9.77%)
+  MITRE      : T1070 (4.12%)
+
+  Command    : find . -name '*.py' -type f
+  Label      : Malicious (99.74%)
+  MITRE      : T1083 (49.44%)
+  MITRE      : T1552 (33.59%)
+  MITRE      : T1652 (10.92%)
+
+  Command    : tree -L 2
+  Label      : Malicious (99.61%)
+  MITRE      : T1069 (91.4%)
+  MITRE      : T1087 (3.88%)
+  MITRE      : T1083 (0.89%)
+
+  Command    : cat /etc/hostname
+  Label      : Malicious (99.71%)
+  MITRE      : T1016 (52.66%)
+  MITRE      : T1201 (27.53%)
+  MITRE      : T1018 (7.24%)
+
+  Command    : head -n 20 access.log
+  Label      : Malicious (99.61%)
+  MITRE      : T1070 (87.73%)
+  MITRE      : T1074 (2.17%)
+  MITRE      : T1120 (1.37%)
+
+  Command    : tail -f /var/log/syslog
+  Label      : Malicious (99.04%)
+  MITRE      : T1070 (99.72%)
+  MITRE      : T1654 (0.15%)
+  MITRE      : T1129 (0.05%)
+
+  Command    : less README.md
+  Label      : Malicious (99.27%)
+  MITRE      : T1082 (56.78%)
+  MITRE      : T1129 (8.27%)
+  MITRE      : T1614 (6.51%)
+
+  Command    : nano server.conf
+  Label      : Malicious (99.59%)
+  MITRE      : T1016 (50.09%)
+  MITRE      : T1201 (41.2%)
+  MITRE      : T1087 (3.67%)
+
+  Command    : vim ~/.bashrc
+  Label      : Malicious (99.52%)
+  MITRE      : T1564 (56.04%)
+  MITRE      : T1546 (18.73%)
+  MITRE      : T1547 (13.05%)
+
+  Command    : wc -l main.py
+  Label      : Malicious (99.6%)
+  MITRE      : T1003 (54.99%)
+  MITRE      : T1543 (10.31%)
+  MITRE      : T1220 (10.24%)
+
+  Command    : diff file1.txt file2.txt
+  Label      : Malicious (99.72%)
+  MITRE      : T1070 (93.4%)
+  MITRE      : T1564 (1.91%)
+  MITRE      : T1016 (0.79%)
+
+  Command    : sort names.txt | uniq
+  Label      : Malicious (99.68%)
+  MITRE      : T1069 (26.6%)
+  MITRE      : T1087 (16.81%)
+  MITRE      : T1552 (16.14%)
+
+  Command    : apt list --installed
+  Label      : Malicious (99.59%)
+  MITRE      : T1072 (57.66%)
+  MITRE      : T1082 (22.32%)
+  MITRE      : T1074 (5.61%)
+
+  Command    : pip install flask
+  Label      : Malicious (99.51%)
+  MITRE      : T1072 (41.26%)
+  MITRE      : T1129 (23.37%)
+  MITRE      : T1048 (10.34%)
+
+  Command    : pip freeze > requirements.txt
+  Label      : Malicious (99.71%)
+  MITRE      : T1129 (26.46%)
+  MITRE      : T1048 (12.49%)
+  MITRE      : T1072 (11.26%)
+
+  Command    : npm install express
+  Label      : Malicious (99.31%)
+  MITRE      : T1195 (54.54%)
+  MITRE      : T1555 (12.7%)
+  MITRE      : T1505 (7.62%)
+
+  Command    : npm run build
+  Label      : Malicious (98.57%)
+  MITRE      : T1609 (28.97%)
+  MITRE      : T1195 (23.25%)
+  MITRE      : T1069 (7.35%)
+
+  Command    : yarn add react
+  Label      : Malicious (99.53%)
+  MITRE      : T1562 (29.7%)
+  MITRE      : T1543 (12.39%)
+  MITRE      : T1614 (10.49%)
+
+  Command    : pip install --upgrade pip
+  Label      : Malicious (89.81%)
+  MITRE      : T1072 (78.98%)
+  MITRE      : T1195 (6.31%)
+  MITRE      : T1129 (5.88%)
+
+  Command    : apt-get update
+  Label      : Malicious (99.31%)
+  MITRE      : T1082 (62.55%)
+  MITRE      : T1016 (12.44%)
+  MITRE      : T1070 (6.62%)
+
+  Command    : conda activate myenv
+  Label      : Malicious (99.6%)
+  MITRE      : T1543 (88.4%)
+  MITRE      : T1574 (4.7%)
+  MITRE      : T1564 (2.25%)
+
+  Command    : brew install wget
+  Label      : Malicious (99.44%)
+  MITRE      : T1547 (84.44%)
+  MITRE      : T1505 (4.26%)
+  MITRE      : T1220 (2.29%)
+
+  Command    : git status
+  Label      : Malicious (97.76%)
+  MITRE      : T1082 (45.77%)
+  MITRE      : T1057 (30.14%)
+  MITRE      : T1074 (8.74%)
+
+  Command    : git add .
+  Label      : Malicious (96.47%)
+  MITRE      : T1195 (37.79%)
+  MITRE      : T1074 (7.31%)
+  MITRE      : T1564 (7.05%)
+
+  Command    : git stash pop
+  Label      : Malicious (99.09%)
+  MITRE      : T1070 (37.73%)
+  MITRE      : T1082 (13.43%)
+  MITRE      : T1057 (7.18%)
+
+  Command    : top -bn1 | head -20
+  Label      : Malicious (99.57%)
+  MITRE      : T1572 (27.89%)
+  MITRE      : T1016 (15.71%)
+  MITRE      : T1018 (13.51%)
+
+  Command    : df -h
+  Label      : Malicious (99.23%)
+  MITRE      : T1070 (29.37%)
+  MITRE      : T1082 (12.88%)
+  MITRE      : T1614 (8.15%)
+
+  Command    : du -sh /var/log
+  Label      : Malicious (99.69%)
+  MITRE      : T1070 (99.05%)
+  MITRE      : T1220 (0.37%)
+  MITRE      : T1129 (0.24%)
+
+  Command    : free -m
+  Label      : Malicious (99.4%)
+  MITRE      : T1030 (59.02%)
+  MITRE      : T1070 (12.3%)
+  MITRE      : T1485 (6.81%)
+
+  Command    : uptime
+  Label      : Malicious (99.17%)
+  MITRE      : T1082 (83.35%)
+  MITRE      : T1057 (4.82%)
+  MITRE      : T1124 (2.33%)
+
+  Command    : whoami
+  Label      : Malicious (99.31%)
+  MITRE      : T1087 (29.42%)
+  MITRE      : T1053 (14.48%)
+  MITRE      : T1057 (10.76%)
+
+  Command    : hostname
+  Label      : Malicious (98.98%)
+  MITRE      : T1614 (23.24%)
+  MITRE      : T1016 (21.83%)
+  MITRE      : T1129 (13.29%)
+
+  Command    : uname -a
+  Label      : Malicious (99.51%)
+  MITRE      : T1087 (42.73%)
+  MITRE      : T1558 (15.27%)
+  MITRE      : T1069 (9.2%)
+
+  Command    : ps aux | grep python
+  Label      : Malicious (99.6%)
+  MITRE      : T1057 (80.09%)
+  MITRE      : T1018 (9.7%)
+  MITRE      : T1087 (5.45%)
+
+  Command    : lsblk
+  Label      : Malicious (99.54%)
+  MITRE      : T1652 (99.59%)
+  MITRE      : T1614 (0.21%)
+  MITRE      : T1082 (0.05%)
+
+  Command    : ping -c 4 google.com
+  Label      : Malicious (99.64%)
+  MITRE      : T1016 (83.54%)
+  MITRE      : T1497 (16.45%)
+  MITRE      : T1571 (0.0%)
+
+  Command    : curl -I https://example.com
+  Label      : Malicious (99.33%)
+  MITRE      : T1614 (95.93%)
+  MITRE      : T1074 (0.74%)
+  MITRE      : T1071 (0.61%)
+
+  Command    : wget https://example.com/file.tar.gz
+  Label      : Malicious (99.63%)
+  MITRE      : T1048 (99.23%)
+  MITRE      : T1560 (0.45%)
+  MITRE      : T1105 (0.2%)
+
+  Command    : ifconfig
+  Label      : Malicious (97.18%)
+  MITRE      : T1614 (32.2%)
+  MITRE      : T1562 (30.01%)
+  MITRE      : T1016 (16.19%)
+
+  Command    : ip addr show
+  Label      : Malicious (99.58%)
+  MITRE      : T1018 (55.68%)
+  MITRE      : T1016 (43.7%)
+  MITRE      : T1135 (0.28%)
+
+  Command    : netstat -tlnp
+  Label      : Malicious (99.63%)
+  MITRE      : T1016 (87.49%)
+  MITRE      : T1049 (12.41%)
+  MITRE      : T1087 (0.02%)
+
+  Command    : ss -tuln
+  Label      : Malicious (99.46%)
+  MITRE      : T1220 (40.26%)
+  MITRE      : T1614 (21.89%)
+  MITRE      : T1016 (18.15%)
+
+  Command    : dig example.com
+  Label      : Malicious (99.29%)
+  MITRE      : T1129 (25.04%)
+  MITRE      : T1087 (15.91%)
+  MITRE      : T1016 (15.81%)
+
+  Command    : nslookup google.com
+  Label      : Malicious (99.58%)
+  MITRE      : T1087 (71.5%)
+  MITRE      : T1016 (21.64%)
+  MITRE      : T1018 (4.35%)
+
+  Command    : traceroute 8.8.8.8
+  Label      : Malicious (99.63%)
+  MITRE      : T1016 (30.33%)
+  MITRE      : T1485 (11.78%)
+  MITRE      : T1040 (7.48%)
+
+  Command    : docker ps
+  Label      : Malicious (99.35%)
+  MITRE      : T1057 (72.66%)
+  MITRE      : T1007 (8.71%)
+  MITRE      : T1082 (6.21%)
+
+  Command    : docker images
+  Label      : Malicious (94.44%)
+  MITRE      : T1614 (47.4%)
+  MITRE      : T1129 (16.54%)
+  MITRE      : T1071 (8.25%)
+
+  Command    : docker logs my-container
+  Label      : Malicious (99.64%)
+  MITRE      : T1654 (79.03%)
+  MITRE      : T1056 (7.25%)
+  MITRE      : T1485 (6.24%)
+
+  Command    : docker build -t myapp:latest .
+  Label      : Malicious (97.82%)
+  MITRE      : T1485 (19.84%)
+  MITRE      : T1610 (13.68%)
+  MITRE      : T1609 (12.92%)
+
+  Command    : docker stop web-server
+  Label      : Malicious (99.53%)
+  MITRE      : T1090 (65.34%)
+  MITRE      : T1133 (23.16%)
+  MITRE      : T1562 (3.0%)
+
+  Command    : docker exec -it db bash
+  Label      : Malicious (99.56%)
+  MITRE      : T1202 (35.74%)
+  MITRE      : T1611 (7.2%)
+  MITRE      : T1485 (6.62%)
+
+  Command    : docker volume ls
+  Label      : Malicious (99.47%)
+  MITRE      : T1082 (31.93%)
+  MITRE      : T1578 (18.21%)
+  MITRE      : T1553 (10.72%)
+
+  Command    : docker network ls
+  Label      : Malicious (99.46%)
+  MITRE      : T1016 (43.19%)
+  MITRE      : T1082 (39.48%)
+  MITRE      : T1007 (12.92%)
+
+  Command    : docker pull nginx:latest
+  Label      : Malicious (78.35%)
+  MITRE      : T1082 (51.58%)
+  MITRE      : T1074 (14.97%)
+  MITRE      : T1652 (4.65%)
+
+  Command    : python3 manage.py runserver
+  Label      : Malicious (99.66%)
+  MITRE      : T1129 (39.33%)
+  MITRE      : T1016 (10.84%)
+  MITRE      : T1572 (9.51%)
+
+  Command    : python3 -m pytest tests/
+  Label      : Malicious (99.63%)
+  MITRE      : T1560 (56.88%)
+  MITRE      : T1485 (21.13%)
+  MITRE      : T1041 (6.39%)
+
+  Command    : python3 setup.py install
+  Label      : Malicious (99.63%)
+  MITRE      : T1129 (53.91%)
+  MITRE      : T1505 (30.48%)
+  MITRE      : T1195 (5.55%)
+
+  Command    : python3 -c 'print("hello world")'
+  Label      : Malicious (99.73%)
+  MITRE      : T1059 (88.64%)
+  MITRE      : T1202 (2.62%)
+  MITRE      : T1564 (1.12%)
+
+  Command    : flask run --host=0.0.0.0
+  Label      : Malicious (99.56%)
+  MITRE      : T1571 (32.59%)
+  MITRE      : T1007 (20.39%)
+  MITRE      : T1016 (13.17%)
+
+  Command    : gunicorn app:app --bind 0.0.0.0:8000
+  Label      : Malicious (99.24%)
+  MITRE      : T1046 (46.18%)
+  MITRE      : T1135 (31.99%)
+  MITRE      : T1090 (12.19%)
+
+  Command    : node server.js
+  Label      : Malicious (99.48%)
+  MITRE      : T1129 (45.54%)
+  MITRE      : T1127 (25.75%)
+  MITRE      : T1614 (19.4%)
+
+  Command    : gcc -o main main.c
+  Label      : Malicious (99.64%)
+  MITRE      : T1558 (45.43%)
+  MITRE      : T1059 (16.91%)
+  MITRE      : T1202 (11.71%)
+
+  Command    : make clean && make
+  Label      : Malicious (99.41%)
+  MITRE      : T1070 (70.67%)
+  MITRE      : T1490 (15.08%)
+  MITRE      : T1552 (7.63%)
+
+  Command    : java -jar application.jar
+  Label      : Malicious (99.6%)
+  MITRE      : T1027 (29.72%)
+  MITRE      : T1505 (22.09%)
+  MITRE      : T1555 (8.09%)
+
+  Command    : chmod 644 index.html
+  Label      : Malicious (99.51%)
+  MITRE      : T1222 (98.74%)
+  MITRE      : T1014 (0.34%)
+  MITRE      : T1564 (0.2%)
+
+  Command    : chown www-data:www-data /var/www
+  Label      : Malicious (99.68%)
+  MITRE      : T1222 (45.92%)
+  MITRE      : T1135 (41.01%)
+  MITRE      : T1548 (5.98%)
+
+  Command    : id
+  Label      : Malicious (85.55%)
+  MITRE      : T1614 (80.95%)
+  MITRE      : T1220 (6.1%)
+  MITRE      : T1550 (2.76%)
+
+  Command    : groups
+  Label      : Malicious (97.99%)
+  MITRE      : T1069 (82.73%)
+  MITRE      : T1087 (12.99%)
+  MITRE      : T1018 (2.04%)
+
+  Command    : passwd
+  Label      : Malicious (99.39%)
+  MITRE      : T1087 (78.99%)
+  MITRE      : T1016 (7.03%)
+  MITRE      : T1201 (4.63%)
+
+  Command    : crontab -l
+  Label      : Malicious (99.28%)
+  MITRE      : T1135 (23.84%)
+  MITRE      : T1614 (20.78%)
+  MITRE      : T1007 (20.18%)
+
+  Command    : systemctl status nginx
+  Label      : Malicious (99.64%)
+  MITRE      : T1016 (90.55%)
+  MITRE      : T1007 (5.14%)
+  MITRE      : T1518 (1.38%)
+
+  Command    : journalctl -u ssh --since today
+  Label      : Malicious (99.55%)
+  MITRE      : T1070 (76.83%)
+  MITRE      : T1562 (7.04%)
+  MITRE      : T1056 (6.74%)
+
+  Command    : tar -czf backup.tar.gz /home/user/data
+  Label      : Malicious (83.18%)
+  MITRE      : T1560 (91.45%)
+  MITRE      : T1048 (7.71%)
+  MITRE      : T1105 (0.33%)
+
+  Command    : unzip archive.zip -d /tmp/output
+  Label      : Malicious (99.71%)
+  MITRE      : T1560 (99.72%)
+  MITRE      : T1048 (0.22%)
+  MITRE      : T1074 (0.03%)
+
+  Command    : rsync -avz src/ dest/
+  Label      : Malicious (99.66%)
+  MITRE      : T1105 (73.37%)
+  MITRE      : T1195 (10.7%)
+  MITRE      : T1070 (5.71%)
+
+  Command    : scp file.txt user@remote:/home/user/
+  Label      : Malicious (99.77%)
+  MITRE      : T1564 (54.71%)
+  MITRE      : T1087 (25.05%)
+  MITRE      : T1136 (12.38%)
+
+  Command    : ssh user@192.168.1.10
+  Label      : Malicious (99.57%)
+  MITRE      : T1087 (90.33%)
+  MITRE      : T1078 (2.59%)
+  MITRE      : T1548 (1.33%)
+
+  Command    : date
+  Label      : Malicious (98.32%)
+  MITRE      : T1124 (99.97%)
+  MITRE      : T1070 (0.02%)
+  MITRE      : T1016 (0.0%)
+
+  Command    : cal
+  Label      : Malicious (98.05%)
+  MITRE      : T1220 (57.35%)
+  MITRE      : T1614 (31.55%)
+  MITRE      : T1124 (6.09%)

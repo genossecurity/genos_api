@@ -1,0 +1,75 @@
+{
+  "baseline": {
+    "top1_acc": 0.4165477888730385,
+    "top3_acc": 0.5677603423680456,
+    "macro_f1": 0.3516176261569782,
+    "lat_ms": 26.981267955528836
+  },
+  "tier1": {
+    "auc": 0.9947853778143526,
+    "ap": 0.970051124670378,
+    "precision": 0.9306184012066365,
+    "recall": 0.8801711840228246,
+    "f1": 0.9046920821114369,
+    "balanced_acc": 0.9359688925304743,
+    "tn": 5541,
+    "fp": 46,
+    "fn": 84,
+    "tp": 617,
+    "threshold_used": 0.89,
+    "decision_mode": "threshold",
+    "mean_preproc_ms": 0.03573363375081029,
+    "obfuscation_flag_rate": 0.026876590330788805,
+    "deobfuscation_change_rate": 0.00047709923664122136
+  },
+  "tier2": {
+    "top1_acc": 0.34522111269614836,
+    "top3_acc": 0.5164051355206848,
+    "macro_f1": 0.3232896373362785,
+    "lat_ms": 6.7941700018671325,
+    "mean_preproc_ms": 0.035299126061474034,
+    "deobfuscation_change_rate": 0.0042796005706134095,
+    "n_eval": 701,
+    "n_skipped_missing_label": 0
+  },
+  "full_pipeline": {
+    "0.5": {
+      "end_to_end_lat_ms": 9.4792277129367,
+      "mean_preproc_ms": 0.03533339113928378,
+      "tier2_trigger_rate": 0.4427,
+      "obfuscation_flag_rate": 0.1049,
+      "deobfuscation_change_rate": 0.0015,
+      "binary_acc": 0.9355,
+      "binary_bal_acc": 0.9355,
+      "n_stream": 10000
+    },
+    "0.9": {
+      "end_to_end_lat_ms": 7.166699400288053,
+      "mean_preproc_ms": 0.034457035711966455,
+      "tier2_trigger_rate": 0.0956,
+      "obfuscation_flag_rate": 0.0238,
+      "deobfuscation_change_rate": 0.0003,
+      "binary_acc": 0.979,
+      "binary_bal_acc": 0.9318888888888889,
+      "n_stream": 10000
+    },
+    "0.99": {
+      "end_to_end_lat_ms": 6.6384751878445964,
+      "mean_preproc_ms": 0.034214306133799256,
+      "tier2_trigger_rate": 0.0176,
+      "obfuscation_flag_rate": 0.0069,
+      "deobfuscation_change_rate": 0.0001,
+      "binary_acc": 0.9894,
+      "binary_bal_acc": 0.9204040404040403,
+      "n_stream": 10000
+    }
+  },
+  "real_world_benign": {
+    "n_total": 95,
+    "fp_count": 4,
+    "true_negative_count": 91,
+    "fp_rate": 0.042105263157894736,
+    "mean_malicious_prob": 0.16884136163586702,
+    "csv_path": "/home/snake/genos_api/genos_api/logs/real_world_benign_results.csv"
+  }
+}
