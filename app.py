@@ -104,7 +104,7 @@ def _run_inference(command):
     if label is None or label_conf is None:
         raise ValueError(f"Unexpected engine payload keys: {list(raw_result.keys())}")
 
-    return {
+    result = {
         "label": label,
         # engine.scan() already returns percentages (multiplied by 100); pass through directly.
         "label_confidence": round(float(label_conf), 2),
@@ -114,8 +114,12 @@ def _run_inference(command):
                 "confidence": round(float(t["confidence"]), 2)
             }
             for t in mitre_predictions
-        ]
+        ],
     }
+    for key in ("evidence", "mapping_reasons", "why_mapped", "ioc_summary", "confidence_driver", "analyst_hint"):
+        if key in raw_result:
+            result[key] = raw_result[key]
+    return result
 
 # -----------------------
 # Routes
