@@ -306,8 +306,6 @@ class GenosEngine:
         re.compile(r"^\s*cat\s+/(?:etc/(?:hostname|os-release|issue(?:\.net)?|debian_version|redhat-release)|proc/(?:version|cpuinfo|meminfo))\b", re.I),
         re.compile(r"^\s*(?:git\s+log\b|docker\s+ps\b|systemctl\s+status\b|journalctl\s+-u\b)", re.I),
     )
-    _BENIGN_TOLERATED_FEATURES = frozenset({"has_service_or_system_inspection"})
-
     def __init__(
         self,
         t1_path="models/gatekeeper.pt",
@@ -1397,6 +1395,98 @@ class GenosEngine:
 
         return None
 
+    def _probability_route(
+        self,
+        top_label: str,
+        weak_prediction: bool,
+        class_probs: dict,
+        features: dict,
+        suspicious_signals: list[str],
+        malicious_promotion_features: list[str],
+    ) -> tuple[str, str, str]:
+        if top_label == "Malicious" and (features.get("has_exploit_or_attack_tooling") or features.get("has_sensitive_source")):
+            return (
+                "Malicious",
+                "Model and attack-oriented tooling or sensitive-source handling both indicate malicious activity.",
+                "model_malicious_attack_tooling",
+            )
+
+        if top_label == "Malicious" and not weak_prediction:
+            return (
+                "Malicious",
+                "Model strongly favors Malicious with a clear confidence margin.",
+                "model_aligned_malicious",
+            )
+
+        if features.get("has_sensitive_source") and top_label != "Malicious":
+            return (
+                "Suspicious",
+                "Sensitive-source access without a strong malicious verdict is routed to Suspicious for review.",
+                "suspicious_sensitive_source_guardrail",
+            )
+
+        if top_label == "Benign" and suspicious_signals and (weak_prediction or len(suspicious_signals) >= 2):
+            return (
+                "Suspicious",
+                "Benign model prediction is softened by dual-use security signals: " + ", ".join(suspicious_signals[:3]),
+                "suspicious_dual_use_guardrail",
+            )
+
+        if top_label == "Malicious" and suspicious_fallback_enabled and weak_prediction and not malicious_promotion_features:
+            return (
+                "Suspicious",
+                "Malicious model prediction was weak or low-margin without a strong attack-chain feature, so it falls back to Suspicious.",
+                "suspicious_low_margin_fallback",
+            )
+
+        if top_label == "Suspicious":
+            return (
+                "Suspicious",
+                "Model routes this command to Suspicious because the behavior remains dual-use or context dependent.",
+                "model_aligned_suspicious",
+            )
+
+        if top_label == "Benign" and not weak_prediction:
+            if suspicious_signals:
+                return (
+                    "Benign",
+                    "Model still favors Benign with sufficient confidence despite limited dual-use indicators.",
+                    "model_benign_with_caution",
+                )
+            return (
+                "Benign",
+                "Model strongly favors Benign and no security-significant features were detected.",
+                "model_aligned_benign",
+            )
+
+        if suspicious_fallback_enabled:
+            return (
+                "Suspicious",
+                "Model confidence was weak or ambiguous, so the command is routed to Suspicious for safer handling.",
+                "suspicious_confidence_fallback",
+            )
+
+        return top_label, f"Using raw model top class {top_label}.", "model_top_class"
+
+    def _should_run_specialist(
+        self,
+        final_label: str,
+        class_probs: dict,
+        high_risk: bool,
+        features: dict,
+        suspicious_signals: list[str],
+    ) -> bool:
+        if final_label == "Malicious":
+            return True
+        if final_label != "Suspicious":
+            return False
+        return (
+            class_probs["Suspicious"] >= specialist_suspicious_conf_threshold
+            or high_risk
+            or features.get("has_offensive_tooling")
+            or len(suspicious_signals) >= 2
+        )
+
     def _route_gatekeeper(self, gate: dict, features: dict, raw_cmd: str, deobfuscated_cmd: str | None = None) -> dict:
         hard_override = self._check_hard_overrides(raw_cmd, deobfuscated_cmd)
         class_probs = gate["class_probabilities"]
@@ -1437,57 +1527,22 @@ class GenosEngine:
         if benign_override is not None:
             return benign_override
 
-        if top_label == "Malicious" and (features.get("has_exploit_or_attack_tooling") or features.get("has_sensitive_source")):
-            final_label = "Malicious"
-            reason = "Model and attack-oriented tooling or sensitive-source handling both indicate malicious activity."
-            policy = "model_malicious_attack_tooling"
-        elif top_label == "Malicious" and not weak_prediction:
-            final_label = "Malicious"
-            reason = "Model strongly favors Malicious with a clear confidence margin."
-            policy = "model_aligned_malicious"
-        elif features.get("has_sensitive_source") and top_label != "Malicious":
-            final_label = "Suspicious"
-            reason = "Sensitive-source access without a strong malicious verdict is routed to Suspicious for review."
-            policy = "suspicious_sensitive_source_guardrail"
-        elif top_label == "Benign" and suspicious_signals and (weak_prediction or len(suspicious_signals) >= 2):
-            final_label = "Suspicious"
-            reason = "Benign model prediction is softened by dual-use security signals: " + ", ".join(suspicious_signals[:3])
-            policy = "suspicious_dual_use_guardrail"
-        elif top_label == "Malicious" and suspicious_fallback_enabled and weak_prediction and not malicious_promotion_features:
-            final_label = "Suspicious"
-            reason = "Malicious model prediction was weak or low-margin without a strong attack-chain feature, so it falls back to Suspicious."
-            policy = "suspicious_low_margin_fallback"
-        elif top_label == "Suspicious":
-            final_label = "Suspicious"
-            reason = "Model routes this command to Suspicious because the behavior remains dual-use or context dependent."
-            policy = "model_aligned_suspicious"
-        elif top_label == "Benign" and not weak_prediction:
-            final_label = "Benign"
-            if suspicious_signals:
-                reason = "Model still favors Benign with sufficient confidence despite limited dual-use indicators."
-                policy = "model_benign_with_caution"
-            else:
-                reason = "Model strongly favors Benign and no security-significant features were detected."
-                policy = "model_aligned_benign"
-        elif suspicious_fallback_enabled:
-            final_label = "Suspicious"
-            reason = "Model confidence was weak or ambiguous, so the command is routed to Suspicious for safer handling."
-            policy = "suspicious_confidence_fallback"
-        else:
-            final_label = top_label
-            reason = f"Using raw model top class {top_label}."
-            policy = "model_top_class"
+        final_label, reason, policy = self._probability_route(
+            top_label=top_label,
+            weak_prediction=weak_prediction,
+            class_probs=class_probs,
+            features=features,
+            suspicious_signals=suspicious_signals,
+            malicious_promotion_features=malicious_promotion_features,
+        )
 
-        specialist = False
-        if final_label == "Malicious":
-            specialist = True
-        elif final_label == "Suspicious":
-            specialist = (
-                class_probs["Suspicious"] >= specialist_suspicious_conf_threshold
-                or high_risk
-                or features.get("has_offensive_tooling")
-                or len(suspicious_signals) >= 2
-            )
+        specialist = self._should_run_specialist(
+            final_label=final_label,
+            class_probs=class_probs,
+            high_risk=high_risk,
+            features=features,
+            suspicious_signals=suspicious_signals,
+        )
 
         confidence_floor = {
             "Benign": 0.68,
@@ -1563,29 +1618,6 @@ class GenosEngine:
             re.I,
         ), "fork_bomb", 0.99),
     ]
-
-    def _apply_routing_override(self, gate: dict, label: str, confidence: float, mode: str) -> None:
-        confidence = max(0.0, min(1.0, confidence))
-        remainder = max(0.0, 1.0 - confidence)
-        other = remainder / 2.0
-        gate["benign_prob"] = other
-        gate["malicious_prob"] = other
-        gate["ctx_prob"] = other
-        if label == "Benign":
-            gate["benign_prob"] = confidence
-            gate["is_malicious"] = False
-            gate["is_context_dependent"] = False
-        elif label == "Malicious":
-            gate["malicious_prob"] = confidence
-            gate["is_malicious"] = True
-            gate["is_context_dependent"] = False
-        else:
-            gate["ctx_prob"] = confidence
-            gate["is_malicious"] = False
-            gate["is_context_dependent"] = True
-        gate["label"] = label
-        gate["label_conf"] = confidence
-        gate["decision_mode"] = mode
 
     def _check_hard_overrides(self, raw_cmd, deobfuscated_cmd):
         """Return an override dict if a deterministic pattern matches, else None."""

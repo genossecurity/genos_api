@@ -21,6 +21,7 @@ Labeling rubric:
 
 import argparse
 import csv
+import math
 import os
 import random
 import re
@@ -28,6 +29,160 @@ import sys
 from collections import Counter
 
 BASE = os.path.join(os.path.dirname(__file__), "..", "data", "training", "genos_dataset")
+
+TARGET_BENIGN_RATIO = 0.55
+TARGET_MALICIOUS_RATIO = 0.30
+TARGET_CTX_RATIO = 0.15
+
+_MUTATION_IPS = [
+    "10.0.0.1", "10.0.0.5", "10.0.0.8", "10.0.0.10", "10.0.0.25", "10.0.0.50", "10.0.0.100",
+    "10.10.10.10", "10.10.10.25", "10.10.10.50", "10.20.30.40",
+    "192.168.1.1", "192.168.1.10", "192.168.1.25", "192.168.1.100", "192.168.1.254",
+    "192.168.0.5", "192.168.0.50", "172.16.0.10", "172.16.0.25", "172.16.5.20", "172.20.10.8",
+]
+_MUTATION_DOMAINS = [
+    "evil.com", "malware.site", "payload.c2", "update.bad", "cdn-sync.bad", "assets-dropper.net",
+    "corp-backup.internal", "ops-audit.internal", "files.company.local", "support.internal",
+    "target.com", "internal.corp", "example.com", "staging.lab",
+]
+_MUTATION_PORTS = [
+    "22", "53", "80", "110", "143", "443", "445", "993", "995", "1433", "3306",
+    "3389", "4444", "5432", "6379", "8080", "8443", "8888", "9001", "9090",
+]
+_MUTATION_USERS = [
+    "root", "admin", "backup", "deploy", "operator", "jenkins", "svcuser", "support", "audit", "postgres",
+]
+_MUTATION_TMP_NAMES = [
+    "/tmp/.cache", "/tmp/.hidden", "/tmp/.svc", "/tmp/.agent", "/tmp/.upd", "/tmp/.sync", "/tmp/.job", "/tmp/.task",
+]
+
+_IP_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
+_DOMAIN_RE = re.compile(r"\b(?:[a-z0-9-]+\.)+(?:com|net|org|site|bad|corp|local|internal|lab|c2)\b", re.IGNORECASE)
+_USER_AT_HOST_RE = re.compile(r"\b([A-Za-z_][\w.-]*)@((?:\d{1,3}\.){3}\d{1,3}|(?:[a-z0-9-]+\.)+(?:com|net|org|site|bad|corp|local|internal|lab|c2))\b", re.IGNORECASE)
+_TMP_PATH_RE = re.compile(r"/tmp/[A-Za-z0-9_.-]+")
+_COLON_PORT_RE = re.compile(r":(\d{2,5})(?!\.)\b")
+_SPACE_PORT_RE = re.compile(r"(?<=\s)(\d{2,5})(?=\s*$)")
+
+
+def _ratio_triplet(args) -> tuple[float, float, float]:
+    ratios = (args.target_benign, args.target_malicious, args.target_ctx)
+    if any(r <= 0 for r in ratios):
+        raise ValueError("Target class ratios must all be positive.")
+    if abs(sum(ratios) - 1.0) > 1e-6:
+        raise ValueError("Target class ratios must sum to 1.0.")
+    return ratios
+
+
+def _desired_counts(base_counts: Counter, benign_ratio: float, malicious_ratio: float, ctx_ratio: float) -> dict[str, int]:
+    benign = base_counts["Benign"]
+    malicious = base_counts["Malicious"]
+    ctx = base_counts["Context_Dependent"]
+    final_total = max(
+        benign + malicious + ctx,
+        math.ceil(benign / benign_ratio),
+        math.ceil(malicious / malicious_ratio) if malicious else 0,
+        math.ceil(ctx / ctx_ratio) if ctx else 0,
+    )
+    desired_malicious = max(malicious, math.ceil(final_total * malicious_ratio))
+    desired_ctx = max(ctx, math.ceil(final_total * ctx_ratio))
+    final_total = benign + desired_malicious + desired_ctx
+    return {
+        "Benign": benign,
+        "Malicious": desired_malicious,
+        "Context_Dependent": desired_ctx,
+        "total": final_total,
+    }
+
+
+def _replace_regex(cmd: str, pattern: re.Pattern, replacements: list[str], rng: random.Random) -> str:
+    matches = list(pattern.finditer(cmd))
+    if not matches:
+        return cmd
+    chosen = rng.choice(matches)
+    replacement = rng.choice(replacements)
+    return cmd[:chosen.start()] + replacement + cmd[chosen.end():]
+
+
+def _mutate_command(cmd: str, label: str, rng: random.Random) -> str:
+    mutated = cmd
+
+    if _USER_AT_HOST_RE.search(mutated) and rng.random() < 0.7:
+        def _swap_user_host(match):
+            return f"{rng.choice(_MUTATION_USERS)}@{rng.choice(_MUTATION_IPS + _MUTATION_DOMAINS)}"
+        mutated = _USER_AT_HOST_RE.sub(_swap_user_host, mutated, count=1)
+
+    for pattern, replacements, probability in (
+        (_IP_RE, _MUTATION_IPS, 0.9),
+        (_DOMAIN_RE, _MUTATION_DOMAINS, 0.7),
+        (_TMP_PATH_RE, _MUTATION_TMP_NAMES, 0.5),
+        (_COLON_PORT_RE, [f":{port}" for port in _MUTATION_PORTS], 0.7),
+        (_SPACE_PORT_RE, _MUTATION_PORTS, 0.3),
+    ):
+        if rng.random() < probability:
+            mutated = _replace_regex(mutated, pattern, replacements, rng)
+
+    if label == "Malicious" and rng.random() < 0.2 and "curl" in mutated and "| bash" not in mutated:
+        mutated = mutated + " && chmod +x /tmp/.svc && /tmp/.svc"
+    if label == "Context_Dependent" and rng.random() < 0.2 and mutated.startswith("find ") and "| head" not in mutated:
+        mutated = mutated + " | head -20"
+
+    return _normalize_command(mutated)
+
+
+def _ensure_pool_size(commands: list[str], target_size: int, label: str, seed: int) -> list[str]:
+    pool = {_normalize_command(cmd) for cmd in commands}
+    if len(pool) >= target_size:
+        return sorted(pool)
+
+    rng = random.Random(seed)
+    seeds = sorted(pool)
+    attempts = 0
+    max_attempts = max(10000, target_size * 20)
+    while len(pool) < target_size and attempts < max_attempts:
+        base_cmd = rng.choice(seeds)
+        mutated = _mutate_command(base_cmd, label=label, rng=rng)
+        if mutated:
+            pool.add(mutated)
+        attempts += 1
+
+    if len(pool) < target_size:
+        raise RuntimeError(f"Unable to expand {label} synthetic pool to required size {target_size}; reached {len(pool)} unique commands")
+
+    return sorted(pool)
+
+
+def _count_labels(rows: list[tuple[str, str, str, str]]) -> Counter:
+    counts = Counter()
+    for _, label, _, _ in rows:
+        counts[label] += 1
+    return counts
+
+
+def _top_up_rows(
+    rows: list[tuple[str, str, str, str]],
+    reserve: list[str],
+    label: str,
+    needed: int,
+) -> int:
+    if needed <= 0:
+        return 0
+
+    used_commands = {_normalize_command(cmd) for cmd, _, _, _ in rows}
+    added = 0
+    reserve_index = 0
+    while added < needed and reserve_index < len(reserve):
+        cmd = _normalize_command(reserve[reserve_index])
+        reserve_index += 1
+        if cmd in used_commands:
+            continue
+        rows.append((cmd, label, "Synthetic", "Synthetic"))
+        used_commands.add(cmd)
+        added += 1
+
+    del reserve[:reserve_index]
+    if added < needed:
+        raise RuntimeError(f"Unable to top up {label} rows by required {needed}; only added {added}")
+    return added
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # PHASE 1 — RELABELING RULES
@@ -1183,46 +1338,83 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true",
                         help="Print stats without writing files")
+    parser.add_argument("--target-benign", type=float, default=TARGET_BENIGN_RATIO,
+                        help="Target benign ratio after expansion (default: 0.55)")
+    parser.add_argument("--target-malicious", type=float, default=TARGET_MALICIOUS_RATIO,
+                        help="Target malicious ratio after expansion (default: 0.30)")
+    parser.add_argument("--target-ctx", type=float, default=TARGET_CTX_RATIO,
+                        help="Target context-dependent ratio after expansion (default: 0.15)")
     args = parser.parse_args()
+    target_benign, target_malicious, target_ctx = _ratio_triplet(args)
 
     print("=" * 72)
-    print("  GATEKEEPER 3-CLASS DATASET BUILDER (v2 — expanded CTX)")
+    print("  GATEKEEPER 3-CLASS DATASET BUILDER (v3 — targeted rebalance)")
     print("=" * 72)
+    print(f"  Target mix: Benign={target_benign:.0%}  Malicious={target_malicious:.0%}  Context_Dependent={target_ctx:.0%}")
 
-    # Phase 2: Generate synthetic CTX
-    synthetic_cmds = _generate_synthetic_ctx()
-    synthetic_mal = _generate_synthetic_malicious()
-    print(f"\n  Synthetic CTX generated: {len(synthetic_cmds)} unique commands")
-    print(f"  Synthetic MAL generated: {len(synthetic_mal)} unique commands")
-
-    # Split synthetic 80/10/10
-    random.seed(42)
-    n = len(synthetic_cmds)
-    n_train = int(n * 0.80)
-    n_val = int(n * 0.10)
-    syn_splits = {
-        "train": synthetic_cmds[:n_train],
-        "val":   synthetic_cmds[n_train:n_train + n_val],
-        "test":  synthetic_cmds[n_train + n_val:],
-    }
-    m = len(synthetic_mal)
-    m_train = int(m * 0.80)
-    m_val = int(m * 0.10)
-    mal_splits = {
-        "train": synthetic_mal[:m_train],
-        "val":   synthetic_mal[m_train:m_train + m_val],
-        "test":  synthetic_mal[m_train + m_val:],
-    }
-    for s, cmds in syn_splits.items():
-        print(f"    {s}: {len(cmds)} synthetic CTX")
-    for s, cmds in mal_splits.items():
-        print(f"    {s}: {len(cmds)} synthetic MAL")
-
-    # Phase 1 + 3: Relabel and merge
+    # Phase 1: Relabel existing data first so synthetic expansion is driven by real deficits.
     grand_stats = Counter()
+    actual_added = Counter()
+    base_rows_by_split = {}
+    base_stats_by_split = {}
+    deficits_by_split = {}
+    total_ctx_needed = 0
+    total_mal_needed = 0
     for split in ("train", "val", "test"):
         rows, stats = relabel_split(split)
+        rows, dedupe_stats = _dedupe_rows(rows)
+        stats += dedupe_stats
+        base_rows_by_split[split] = rows
+        base_stats_by_split[split] = stats
         grand_stats += stats
+
+        base_counts = _count_labels(rows)
+        desired = _desired_counts(base_counts, target_benign, target_malicious, target_ctx)
+        ctx_needed = max(0, desired["Context_Dependent"] - base_counts["Context_Dependent"])
+        mal_needed = max(0, desired["Malicious"] - base_counts["Malicious"])
+        deficits_by_split[split] = {
+            "ctx": ctx_needed,
+            "malicious": mal_needed,
+            "desired": desired,
+            "base_counts": dict(base_counts),
+        }
+        total_ctx_needed += ctx_needed
+        total_mal_needed += mal_needed
+
+    # Phase 2: Generate and, if necessary, expand synthetic pools to cover the exact deficits.
+    ctx_pool_target = total_ctx_needed + max(256, math.ceil(total_ctx_needed * 0.05))
+    mal_pool_target = total_mal_needed + max(512, math.ceil(total_mal_needed * 0.05))
+    synthetic_cmds = _ensure_pool_size(_generate_synthetic_ctx(), ctx_pool_target, label="Context_Dependent", seed=42)
+    synthetic_mal = _ensure_pool_size(_generate_synthetic_malicious(), mal_pool_target, label="Malicious", seed=43)
+    print(f"\n  Synthetic CTX available: {len(synthetic_cmds)} unique commands")
+    print(f"  Synthetic MAL available: {len(synthetic_mal)} unique commands")
+
+    syn_splits = {}
+    mal_splits = {}
+    syn_offset = 0
+    mal_offset = 0
+    for split in ("train", "val", "test"):
+        ctx_needed = deficits_by_split[split]["ctx"]
+        mal_needed = deficits_by_split[split]["malicious"]
+        syn_splits[split] = synthetic_cmds[syn_offset:syn_offset + ctx_needed]
+        mal_splits[split] = synthetic_mal[mal_offset:mal_offset + mal_needed]
+        syn_offset += ctx_needed
+        mal_offset += mal_needed
+
+    syn_reserve = synthetic_cmds[syn_offset:]
+    mal_reserve = synthetic_mal[mal_offset:]
+
+    for split in ("train", "val", "test"):
+        desired = deficits_by_split[split]["desired"]
+        print(
+            f"    {split}: add CTX={deficits_by_split[split]['ctx']} add MAL={deficits_by_split[split]['malicious']} "
+            f"=> target totals B={desired['Benign']} M={desired['Malicious']} C={desired['Context_Dependent']}"
+        )
+
+    # Phase 3: Merge, dedupe, shuffle, and write.
+    for split in ("train", "val", "test"):
+        rows = list(base_rows_by_split[split])
+        stats = Counter(base_stats_by_split[split])
 
         for cmd in syn_splits[split]:
             rows.append((cmd, "Context_Dependent", "Synthetic", "Synthetic"))
@@ -1233,6 +1425,15 @@ def main():
 
         rows, dedupe_stats = _dedupe_rows(rows)
         stats += dedupe_stats
+
+        current_counts = _count_labels(rows)
+        desired = deficits_by_split[split]["desired"]
+        ctx_top_up = max(0, desired["Context_Dependent"] - current_counts["Context_Dependent"])
+        mal_top_up = max(0, desired["Malicious"] - current_counts["Malicious"])
+        if ctx_top_up:
+            stats["synthetic_ctx"] += _top_up_rows(rows, syn_reserve, "Context_Dependent", ctx_top_up)
+        if mal_top_up:
+            stats["synthetic_malicious"] += _top_up_rows(rows, mal_reserve, "Malicious", mal_top_up)
 
         random.seed(hash(split))
         random.shuffle(rows)
@@ -1257,6 +1458,9 @@ def main():
         print(f"    duplicates removed:  {stats['duplicates_removed']:>5}")
         print(f"    label conflicts:     {stats['label_conflicts']:>5}")
 
+        actual_added["synthetic_ctx"] += stats["synthetic_ctx"]
+        actual_added["synthetic_malicious"] += stats["synthetic_malicious"]
+
         if not args.dry_run:
             out_path = os.path.join(BASE, f"gatekeeper_3class_{split}.csv")
             with open(out_path, "w", newline="", encoding="utf-8") as f:
@@ -1272,9 +1476,9 @@ def main():
         print(f"  {k:30s} {grand_stats[k]:>6}")
     total_relabeled_ctx = grand_stats["benign→ctx"] + grand_stats["malicious→ctx"]
     print(f"  {'relabeled ctx':30s} {total_relabeled_ctx:>6}")
-    print(f"  {'synthetic ctx':30s} {len(synthetic_cmds):>6}")
-    print(f"  {'synthetic malicious':30s} {len(synthetic_mal):>6}")
-    print(f"  {'total ctx':30s} {total_relabeled_ctx + len(synthetic_cmds):>6}")
+    print(f"  {'synthetic ctx':30s} {actual_added['synthetic_ctx']:>6}")
+    print(f"  {'synthetic malicious':30s} {actual_added['synthetic_malicious']:>6}")
+    print(f"  {'total ctx':30s} {total_relabeled_ctx + actual_added['synthetic_ctx']:>6}")
 
     if not args.dry_run:
         print(f"\n  Sample synthetic (first 15):")
