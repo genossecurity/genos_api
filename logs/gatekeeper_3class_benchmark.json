@@ -1,122 +1,62 @@
 {
   "probe": {
     "total": 101,
-    "correct": 59,
-    "accuracy": 0.5841584158415841,
-    "macro_f1": 0.5787143465304384,
+    "correct": 77,
+    "accuracy": 0.7623762376237624,
+    "macro_f1": 0.7534520274246302,
     "per_class": {
       "Benign": {
-        "precision": 0.5,
-        "recall": 0.21052631578947367,
-        "f1": 0.2962962962962963,
-        "tp": 8,
-        "fp": 8,
-        "fn": 30,
+        "precision": 0.8717948717948718,
+        "recall": 0.8947368421052632,
+        "f1": 0.8831168831168831,
+        "tp": 34,
+        "fp": 5,
+        "fn": 4,
         "support": 38
       },
       "Malicious": {
-        "precision": 0.7575757575757576,
-        "recall": 1.0,
-        "f1": 0.8620689655172413,
-        "tp": 25,
-        "fp": 8,
-        "fn": 0,
+        "precision": 0.6666666666666666,
+        "recall": 0.72,
+        "f1": 0.6923076923076923,
+        "tp": 18,
+        "fp": 9,
+        "fn": 7,
         "support": 25
       },
       "Context_Dependent": {
-        "precision": 0.5,
-        "recall": 0.6842105263157895,
-        "f1": 0.5777777777777778,
-        "tp": 26,
-        "fp": 26,
-        "fn": 12,
+        "precision": 0.7142857142857143,
+        "recall": 0.6578947368421053,
+        "f1": 0.684931506849315,
+        "tp": 25,
+        "fp": 10,
+        "fn": 13,
         "support": 38
       }
     },
     "confusion_matrix": {
       "Benign": {
-        "Benign": 8,
-        "Malicious": 4,
-        "Context_Dependent": 26
+        "Benign": 34,
+        "Malicious": 0,
+        "Context_Dependent": 4
       },
       "Malicious": {
-        "Benign": 0,
-        "Malicious": 25,
-        "Context_Dependent": 0
+        "Benign": 1,
+        "Malicious": 18,
+        "Context_Dependent": 6
       },
       "Context_Dependent": {
-        "Benign": 8,
-        "Malicious": 4,
-        "Context_Dependent": 26
+        "Benign": 4,
+        "Malicious": 9,
+        "Context_Dependent": 25
       }
     },
     "routing_distribution": {
-      "Benign": 0.15841584158415842,
-      "Malicious": 0.32673267326732675,
-      "Context_Dependent": 0.5148514851485149
+      "Benign": 0.38613861386138615,
+      "Malicious": 0.26732673267326734,
+      "Context_Dependent": 0.3465346534653465
     },
-    "avg_latency_ms": 20.174072011106528,
-    "p50_latency_ms": 18.81588506512344,
-    "p95_latency_ms": 20.391436060890555
-  },
-  "test": {
-    "total": 6587,
-    "correct": 6090,
-    "accuracy": 0.924548352816153,
-    "macro_f1": 0.8405766148117952,
-    "per_class": {
-      "Benign": {
-        "precision": 0.9882260596546311,
-        "recall": 0.9343228200371058,
-        "f1": 0.960518786954034,
-        "tp": 5036,
-        "fp": 60,
-        "fn": 354,
-        "support": 5390
-      },
-      "Malicious": {
-        "precision": 0.7441574415744158,
-        "recall": 0.9016393442622951,
-        "f1": 0.8153638814016173,
-        "tp": 605,
-        "fp": 208,
-        "fn": 66,
-        "support": 671
-      },
-      "Context_Dependent": {
-        "precision": 0.6622418879056047,
-        "recall": 0.8536121673003803,
-        "f1": 0.7458471760797342,
-        "tp": 449,
-        "fp": 229,
-        "fn": 77,
-        "support": 526
-      }
-    },
-    "confusion_matrix": {
-      "Benign": {
-        "Benign": 5036,
-        "Malicious": 158,
-        "Context_Dependent": 196
-      },
-      "Malicious": {
-        "Benign": 33,
-        "Malicious": 605,
-        "Context_Dependent": 33
-      },
-      "Context_Dependent": {
-        "Benign": 27,
-        "Malicious": 50,
-        "Context_Dependent": 449
-      }
-    },
-    "routing_distribution": {
-      "Benign": 0.7736450584484591,
-      "Malicious": 0.12342492788826476,
-      "Context_Dependent": 0.10293001366327614
-    },
-    "avg_latency_ms": 11.206570344429768,
-    "p50_latency_ms": 8.96420213393867,
-    "p95_latency_ms": 19.02021304704249
+    "avg_latency_ms": 17.61664648420445,
+    "p50_latency_ms": 18.99836491793394,
+    "p95_latency_ms": 20.34217189066112
   }
 }

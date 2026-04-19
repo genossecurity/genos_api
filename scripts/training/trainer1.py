@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import random
+import sys
 from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -10,7 +11,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 from torch.amp import GradScaler, autocast
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from tqdm import tqdm
 from transformers import RobertaModel, RobertaTokenizer
 
@@ -169,11 +170,29 @@ def multiclass_metrics(targets: List[int], all_probs: List[List[float]]) -> Dict
     }
 
 
-def compute_class_weights(labels: List[int], device: torch.device, num_classes: int = NUM_CLASSES) -> torch.Tensor:
+def compute_class_weights(
+    labels: List[int],
+    device: torch.device,
+    num_classes: int = NUM_CLASSES,
+    power: float = 1.0,
+) -> torch.Tensor:
     counts = torch.bincount(torch.tensor(labels, dtype=torch.long), minlength=num_classes).float()
     total = counts.sum()
     weights = total / (num_classes * counts.clamp_min(1.0))
+    if power != 1.0:
+        weights = weights.pow(power)
     return weights.to(device)
+
+
+def build_balanced_sampler(labels: List[int], num_classes: int = NUM_CLASSES, power: float = 1.0) -> WeightedRandomSampler:
+    counts = torch.bincount(torch.tensor(labels, dtype=torch.long), minlength=num_classes).float().clamp_min(1.0)
+    class_sample_weights = (1.0 / counts).pow(power)
+    sample_weights = class_sample_weights[torch.tensor(labels, dtype=torch.long)]
+    return WeightedRandomSampler(
+        weights=sample_weights.double(),
+        num_samples=len(labels),
+        replacement=True,
+    )
 
 
 def train(args: argparse.Namespace) -> None:
@@ -186,7 +205,9 @@ def train(args: argparse.Namespace) -> None:
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     amp_enabled = device.type == "cuda"
-    print(f"[*] Training on device: {device}")
+    progress_is_tty = sys.stderr.isatty()
+    log_interval = max(1, args.log_interval)
+    print(f"[*] Training on device: {device}", flush=True)
 
     tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
 
@@ -210,10 +231,18 @@ def train(args: argparse.Namespace) -> None:
     )
 
     pin_memory = device.type == "cuda"
+    train_sampler = None
+    if args.balanced_sampling:
+        train_sampler = build_balanced_sampler(
+            train_dataset.labels,
+            power=args.sampling_power,
+        )
+
     train_loader = DataLoader(
         train_dataset,
         batch_size=args.micro_batch_size,
-        shuffle=True,
+        shuffle=train_sampler is None,
+        sampler=train_sampler,
         pin_memory=pin_memory,
         num_workers=args.num_workers,
     )
@@ -234,26 +263,34 @@ def train(args: argparse.Namespace) -> None:
 
     grad_acc_steps = max(1, args.effective_batch_size // args.micro_batch_size)
     effective_batch_size = args.micro_batch_size * grad_acc_steps
-    print(f"[*] Batch config: micro={args.micro_batch_size}, grad_acc={grad_acc_steps}, effective={effective_batch_size}")
+    print(f"[*] Batch config: micro={args.micro_batch_size}, grad_acc={grad_acc_steps}, effective={effective_batch_size}", flush=True)
 
     raw_model = GatekeeperModel().to(device)
     use_compile = args.use_compile and hasattr(torch, "compile")
     if use_compile:
         try:
             model = torch.compile(raw_model)
-            print("[+] torch.compile() enabled.")
+            print("[+] torch.compile() enabled.", flush=True)
         except Exception as exc:  # pragma: no cover
             model = raw_model
-            print(f"[-] torch.compile() failed: {exc}. Proceeding without it.")
+            print(f"[-] torch.compile() failed: {exc}. Proceeding without it.", flush=True)
     else:
         model = raw_model
-        print("[*] torch.compile() disabled.")
+        print("[*] torch.compile() disabled.", flush=True)
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    class_weights = compute_class_weights(train_dataset.labels, device)
+    class_weights = compute_class_weights(
+        train_dataset.labels,
+        device,
+        power=args.class_weight_power,
+    )
     wt_str = ", ".join(f"{LABEL_NAMES[i]}={class_weights[i].item():.4f}" for i in range(NUM_CLASSES))
-    print(f"[*] Dynamic class weights: {wt_str}")
-    criterion = nn.CrossEntropyLoss(weight=class_weights)
+    print(f"[*] Dynamic class weights: {wt_str}", flush=True)
+    if args.balanced_sampling:
+        print(f"[*] Balanced sampling enabled: power={args.sampling_power:.2f} (replacement sampling across classes)", flush=True)
+    else:
+        print("[*] Balanced sampling disabled.", flush=True)
+    criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=args.label_smoothing)
     scaler = GradScaler(enabled=amp_enabled)
 
     models_dir = BASE_DIR / "models"
@@ -272,7 +309,7 @@ def train(args: argparse.Namespace) -> None:
         train_total = 0
         train_loss_sum = 0.0
 
-        loop = tqdm(train_loader, desc=f"Epoch {epoch + 1}/{args.epochs} [Train]")
+        loop = tqdm(train_loader, desc=f"Epoch {epoch + 1}/{args.epochs} [Train]", disable=not progress_is_tty)
         for step, batch in enumerate(loop, start=1):
             ids = batch["ids"].to(device, non_blocking=True)
             mask = batch["mask"].to(device, non_blocking=True)
@@ -293,7 +330,14 @@ def train(args: argparse.Namespace) -> None:
             train_correct += (preds == labels).sum().item()
             train_total += labels.size(0)
             train_loss_sum += loss.item() * grad_acc_steps
-            loop.set_postfix(acc=f"{(train_correct / max(1, train_total)) * 100:.2f}%")
+            current_acc = (train_correct / max(1, train_total)) * 100
+            loop.set_postfix(acc=f"{current_acc:.2f}%")
+            if not progress_is_tty and (step % log_interval == 0 or step == len(train_loader)):
+                print(
+                    f"[*] Epoch {epoch + 1}/{args.epochs} step {step}/{len(train_loader)} "
+                    f"train_acc={current_acc:.2f}%",
+                    flush=True,
+                )
 
         train_acc = train_correct / max(1, train_total)
         train_loss = train_loss_sum / max(1, len(train_loader))
@@ -305,10 +349,10 @@ def train(args: argparse.Namespace) -> None:
         print(
             f"\n[Epoch {epoch + 1}] train_loss={train_loss:.4f} train_acc={train_acc * 100:.2f}% "
             f"| val_acc={val_metrics['accuracy'] * 100:.2f}% val_macro_f1={val_metrics['macro_f1']:.4f}"
-        )
+        , flush=True)
         for cls_name in LABEL_NAMES:
             cm = val_metrics["per_class"][cls_name]
-            print(f"  {cls_name:20s}  P={cm['precision']:.4f}  R={cm['recall']:.4f}  F1={cm['f1']:.4f}")
+            print(f"  {cls_name:20s}  P={cm['precision']:.4f}  R={cm['recall']:.4f}  F1={cm['f1']:.4f}", flush=True)
 
         ranking = (val_metrics["macro_f1"], val_metrics["accuracy"])
         if best_bundle is None or ranking > best_bundle["ranking"]:
@@ -321,8 +365,8 @@ def train(args: argparse.Namespace) -> None:
                 "train_accuracy": train_acc,
             }
             torch.save(raw_model.state_dict(), model_save_path)
-            print(f"[+] Gatekeeper improved. Saved weights to {model_save_path}")
-        print("-" * 72)
+            print(f"[+] Gatekeeper improved. Saved weights to {model_save_path}", flush=True)
+        print("-" * 72, flush=True)
 
     assert best_bundle is not None
     raw_model.load_state_dict(torch.load(model_save_path, map_location=device))
@@ -340,6 +384,10 @@ def train(args: argparse.Namespace) -> None:
         "max_len": args.max_len,
         "learning_rate": args.lr,
         "weight_decay": args.weight_decay,
+        "label_smoothing": args.label_smoothing,
+        "balanced_sampling": args.balanced_sampling,
+        "sampling_power": args.sampling_power,
+        "class_weight_power": args.class_weight_power,
         "num_classes": NUM_CLASSES,
         "label_names": LABEL_NAMES,
         "best_epoch": best_bundle["epoch"],
@@ -351,9 +399,9 @@ def train(args: argparse.Namespace) -> None:
     with open(meta_save_path, "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2)
 
-    print("\n[*] Final Gatekeeper results")
-    print(json.dumps(meta, indent=2))
-    print(f"[+] Metadata saved to {meta_save_path}")
+    print("\n[*] Final Gatekeeper results", flush=True)
+    print(json.dumps(meta, indent=2), flush=True)
+    print(f"[+] Metadata saved to {meta_save_path}", flush=True)
 
 
 if __name__ == "__main__":
@@ -364,8 +412,13 @@ if __name__ == "__main__":
     parser.add_argument("--max-len", type=int, default=int(os.getenv("GENOS_T1_MAX_LEN", "256")))
     parser.add_argument("--micro-batch-size", type=int, default=int(os.getenv("GENOS_T1_MICRO_BATCH", "32")))
     parser.add_argument("--effective-batch-size", type=int, default=int(os.getenv("GENOS_T1_EFFECTIVE_BATCH", "256")))
-    parser.add_argument("--num-workers", type=int, default=int(os.getenv("GENOS_T1_NUM_WORKERS", "4")))
+    parser.add_argument("--num-workers", type=int, default=int(os.getenv("GENOS_T1_NUM_WORKERS", "0")))
     parser.add_argument("--seed", type=int, default=int(os.getenv("GENOS_T1_SEED", "42")))
+    parser.add_argument("--label-smoothing", type=float, default=float(os.getenv("GENOS_T1_LABEL_SMOOTHING", "0.05")))
+    parser.add_argument("--balanced-sampling", action="store_true", default=os.getenv("GENOS_T1_BALANCED_SAMPLING", "1") == "1")
+    parser.add_argument("--sampling-power", type=float, default=float(os.getenv("GENOS_T1_SAMPLING_POWER", "1.0")))
+    parser.add_argument("--class-weight-power", type=float, default=float(os.getenv("GENOS_T1_CLASS_WEIGHT_POWER", "0.5")))
+    parser.add_argument("--log-interval", type=int, default=int(os.getenv("GENOS_T1_LOG_INTERVAL", "100")))
     parser.add_argument("--use-compile", action="store_true", default=os.getenv("GENOS_T1_USE_COMPILE", "0") == "1")
     parser.add_argument("--deterministic", action="store_true", default=os.getenv("GENOS_T1_DETERMINISTIC", "0") == "1")
     train(parser.parse_args())

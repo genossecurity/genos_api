@@ -85,6 +85,11 @@ def _to_percentage(value):
     return round(value, 2)
 
 
+def _api_label(label):
+    """Map internal labels to the public API contract."""
+    return "Suspicious" if label == "Context_Dependent" else label
+
+
 def _run_inference(command, include_flags=None):
     """Run engine, normalize response, and apply include flags.
 
@@ -122,6 +127,8 @@ def _run_inference(command, include_flags=None):
     if label is None or label_conf is None:
         raise ValueError(f"Unexpected engine payload keys: {list(raw_result.keys())}")
 
+    public_label = _api_label(label)
+
     # --- Build default flags (all on) ---
     flags = {
         "evidence": True,
@@ -137,9 +144,14 @@ def _run_inference(command, include_flags=None):
 
     # --- Core fields (always returned) ---
     result = {
-        "label": label,
+        "label": public_label,
+        "canonical_label": label,
         "label_confidence": round(float(label_conf), 2),
     }
+
+    for key in ("class_probabilities", "decision_margin", "reason", "triggered_features", "routing_policy", "should_run_specialist", "gatekeeper"):
+        if key in raw_result:
+            result[key] = raw_result[key]
 
     # --- Context_Dependent action hint ---
     if "action" in raw_result:
@@ -147,7 +159,10 @@ def _run_inference(command, include_flags=None):
 
     # --- Label probabilities ---
     if "label_probabilities" in raw_result:
-        result["label_probabilities"] = raw_result["label_probabilities"]
+        probabilities = dict(raw_result["label_probabilities"])
+        if "context_dependent" in probabilities and "suspicious" not in probabilities:
+            probabilities["suspicious"] = probabilities["context_dependent"]
+        result["label_probabilities"] = probabilities
 
     # --- MITRE codes ---
     if flags["mitre"]:
