@@ -105,18 +105,62 @@ def _find_matching_paren(text: str, start_index: int) -> int:
 # ── layer decoders ────────────────────────────────────────────────────────────
 
 def decode_powershell_encoded_command(text: str) -> str:
-    """Detect -Enc[odedCommand] <blob> and replace the whole command with the decoded payload."""
+    """Detect -Enc[odedCommand] <blob> and replace the whole command with the decoded payload.
+
+    Real PowerShell -EncodedCommand blobs are UTF-16LE.  We try that first;
+    if the result is mostly NUL bytes the blob was probably plain UTF-8
+    (legacy payloads / test fixtures), so we fall back.
+    """
     match = _ENCODED_CMD_RE.search(text)
     if not match:
         return text
     blob = match.group(1)
     try:
-        decoded = base64.b64decode(blob).decode("utf-8", errors="ignore")
+        raw = base64.b64decode(blob)
+        # Try UTF-16LE first (correct encoding for PS -EncodedCommand)
+        try:
+            utf16 = raw.decode("utf-16-le")
+            # Check for ASCII-range printable chars (real PS output is ASCII / Latin)
+            ascii_printable = sum(1 for c in utf16 if '\x20' <= c <= '\x7e' or c in '\r\n\t')
+            if ascii_printable > len(utf16) * 0.6 and len(utf16) > 3:
+                return utf16
+        except (UnicodeDecodeError, ValueError):
+            pass
+        # Fallback: plain UTF-8 blob (legacy / non-standard payloads)
+        decoded = raw.decode("utf-8", errors="ignore")
         if len(decoded) > 3:
             return decoded
     except Exception:
         pass
     return text
+
+
+_SHELL_B64_PIPE_RE = re.compile(
+    r"""(?:echo|printf|echo\s+-[neE]+)\s+  # echo / printf
+        ['"]?                                # optional quote
+        ([A-Za-z0-9+/]{20,}={0,2})           # base64 blob
+        ['"]?                                # optional quote
+        \s*\|\s*base64\s+-d""",
+    re.X | re.I,
+)
+
+
+def decode_shell_base64_pipe(text: str) -> str:
+    """Decode shell patterns like `echo <b64> | base64 -d | sh`.
+
+    Replaces the base64 blob inline so the model sees the real payload.
+    """
+    def _repl(m):
+        blob = m.group(1)
+        try:
+            decoded = base64.b64decode(blob).decode("utf-8", errors="ignore")
+            printable = sum(1 for c in decoded if c.isprintable() or c in '\r\n\t')
+            if printable > len(decoded) * 0.7 and len(decoded) > 3:
+                return m.group(0).replace(blob, decoded)
+        except Exception:
+            pass
+        return m.group(0)
+    return _SHELL_B64_PIPE_RE.sub(_repl, text)
 
 
 def universal_decoder(text: str) -> str:
@@ -265,6 +309,7 @@ def extract_powershell_payload(text: str):
 def deobfuscate_layer(text: str) -> str:
     """Apply one round of deobfuscation transforms."""
     text = decode_powershell_encoded_command(text)
+    text = decode_shell_base64_pipe(text)
     text = universal_decoder(text)
     text = decode_embedded_base64(text)
 

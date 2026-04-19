@@ -723,6 +723,7 @@ class GenosEngine:
             r"\+[ ]*'",
             r"\$[a-z0-9_]{10,}",
             r"\\x[0-9a-f]{2}",
+            r"(?i)-enc(?:odedcommand)?\s+[A-Za-z0-9+/=]{20,}",
         ]
         if any(re.search(p, text, re.I) for p in patterns):
             return True
@@ -730,7 +731,22 @@ class GenosEngine:
             return True
         return False
 
+    _ENCODED_CMD_RE = re.compile(
+        r"(?i)-(?:enc(?:odedcommand)?)\s+([A-Za-z0-9+/=]{20,})"
+    )
+
+    _SHELL_B64_PIPE_RE = re.compile(
+        r"""(?:echo|printf|echo\s+-[neE]+)\s+
+            ['"]?
+            ([A-Za-z0-9+/]{20,}={0,2})
+            ['"]?
+            \s*\|\s*base64\s+-d""",
+        re.X | re.I,
+    )
+
     def deobfuscate_layer(self, text: str) -> str:
+        text = self._decode_powershell_encoded_command(text)
+        text = self._decode_shell_base64_pipe(text)
         text = self.universal_decoder(text)
         text = self.decode_embedded_base64(text)
 
@@ -751,6 +767,40 @@ class GenosEngine:
         text = self.clean_concatenation(text)
 
         return text
+
+    def _decode_powershell_encoded_command(self, text: str) -> str:
+        match = self._ENCODED_CMD_RE.search(text)
+        if not match:
+            return text
+        blob = match.group(1)
+        try:
+            raw = base64.b64decode(blob)
+            try:
+                utf16 = raw.decode("utf-16-le")
+                ascii_printable = sum(1 for c in utf16 if '\x20' <= c <= '\x7e' or c in '\r\n\t')
+                if ascii_printable > len(utf16) * 0.6 and len(utf16) > 3:
+                    return utf16
+            except (UnicodeDecodeError, ValueError):
+                pass
+            decoded = raw.decode("utf-8", errors="ignore")
+            if len(decoded) > 3:
+                return decoded
+        except Exception:
+            pass
+        return text
+
+    def _decode_shell_base64_pipe(self, text: str) -> str:
+        def _repl(m):
+            blob = m.group(1)
+            try:
+                decoded = base64.b64decode(blob).decode("utf-8", errors="ignore")
+                printable = sum(1 for c in decoded if c.isprintable() or c in '\r\n\t')
+                if printable > len(decoded) * 0.7 and len(decoded) > 3:
+                    return m.group(0).replace(blob, decoded)
+            except Exception:
+                pass
+            return m.group(0)
+        return self._SHELL_B64_PIPE_RE.sub(_repl, text)
 
     def deobfuscate_char_constructions(self, text: str) -> str:
         range_loop_pattern = re.compile(
@@ -951,6 +1001,45 @@ class GenosEngine:
             "threshold_used": threshold_used,
         }
 
+    # ── Hard-override patterns (unambiguously malicious, bypass gatekeeper) ──
+
+    _HARD_OVERRIDE_PATTERNS = [
+        # Base64-decode piped to shell interpreter
+        (re.compile(
+            r"""(?:echo|printf)\s+['"]?[A-Za-z0-9+/]{16,}={0,2}['"]?
+               \s*\|\s*base64\s+-d\s*\|\s*(?:ba)?sh\b""",
+            re.X | re.I,
+        ), "encoded_payload_to_shell", 0.97),
+        # curl / wget piped to shell interpreter
+        (re.compile(
+            r"(?:curl|wget)\s+.*\|\s*(?:ba)?sh\b", re.I,
+        ), "download_and_execute", 0.96),
+        # Reverse shell – bash /dev/tcp
+        (re.compile(
+            r"(?:ba)?sh\s+-i\s*>\s*&?\s*/dev/tcp/", re.I,
+        ), "reverse_shell_dev_tcp", 0.98),
+        # Reverse shell – netcat exec
+        (re.compile(
+            r"\bnc(?:at)?\b.*-e\s*/bin/(?:ba)?sh\b", re.I,
+        ), "reverse_shell_nc", 0.98),
+        # Credential harvesting – reading shadow / passwd
+        (re.compile(
+            r"\b(?:cat|less|more|head|tail|tac|nl|xxd|strings)\s+/etc/(?:shadow|passwd|sudoers)\b",
+            re.I,
+        ), "credential_file_read", 0.95),
+        # mkfifo reverse shell
+        (re.compile(
+            r"mkfifo\s+.*\bnc(?:at)?\b.*(?:ba)?sh\b", re.I | re.S,
+        ), "reverse_shell_mkfifo", 0.98),
+    ]
+
+    def _check_hard_overrides(self, raw_cmd, deobfuscated_cmd):
+        """Return an override dict if a deterministic pattern matches, else None."""
+        for rx, tag, conf in self._HARD_OVERRIDE_PATTERNS:
+            if rx.search(raw_cmd) or (deobfuscated_cmd and rx.search(deobfuscated_cmd)):
+                return {"tag": tag, "confidence": conf}
+        return None
+
     def scan(self, raw_cmd):
         current_cmd = raw_cmd.strip()
         was_obfuscated = self.is_obfuscated(current_cmd)
@@ -980,14 +1069,49 @@ class GenosEngine:
             max_length=self.max_length,
         ).to(self.device)
 
+        # When the command was deobfuscated, also tokenize the raw form so we
+        # can run the gatekeeper on both and take the worse (higher-malicious)
+        # score.  This ensures base64-wrapped payloads get properly classified
+        # because the model sees the decoded plaintext.
+        raw_inputs = None
+        if was_obfuscated:
+            raw_processed = raw_cmd.strip().lower()
+            if raw_processed != processed_cmd:
+                raw_inputs = self.tokenizer(
+                    raw_processed,
+                    return_tensors="pt",
+                    truncation=True,
+                    padding="max_length",
+                    max_length=self.max_length,
+                ).to(self.device)
+
         device_type = "cuda" if "cuda" in self.device.type else "cpu"
         autocast_dtype = torch.float16 if device_type == "cuda" else torch.bfloat16
 
         with torch.no_grad():
             with autocast(device_type=device_type, dtype=autocast_dtype):
+                # Run gatekeeper on the deobfuscated command
                 g_logits = self.t1(inputs["input_ids"], inputs["attention_mask"])
                 g_probs = F.softmax(g_logits, dim=1)
                 gate = self._tier1_decision(g_probs)
+
+                # If deobfuscated, also score the raw command and keep the
+                # higher malicious probability (worst-case of both views).
+                if raw_inputs is not None:
+                    raw_g_logits = self.t1(raw_inputs["input_ids"], raw_inputs["attention_mask"])
+                    raw_g_probs = F.softmax(raw_g_logits, dim=1)
+                    raw_gate = self._tier1_decision(raw_g_probs)
+                    if raw_gate["malicious_prob"] > gate["malicious_prob"]:
+                        gate = raw_gate
+
+                # Hard-override: catch unambiguously malicious patterns the
+                # gatekeeper may under-score (e.g. base64→sh, reverse shells).
+                if not gate["is_malicious"]:
+                    _ho = self._check_hard_overrides(raw_cmd, current_cmd if was_obfuscated else None)
+                    if _ho:
+                        gate["is_malicious"] = True
+                        gate["label_conf"] = max(gate["malicious_prob"], _ho["confidence"])
+                        gate["decision_mode"] = f"rule_override:{_ho['tag']}"
 
                 response = {
                     "label": "Malicious" if gate["is_malicious"] else "Benign",
@@ -1039,25 +1163,151 @@ class GenosEngine:
                         s_probs, k=min(3, len(s_probs)), largest=True, sorted=True
                     )
 
-                    response["MITRE_codes"] = [
+                    raw_codes = [
                         {"code": self.s_map[idx.item()], "confidence": round(val.item() * 100, 2)}
                         for idx, val in zip(top_idxs, top_vals)
                     ]
 
-                    # Build evidence from parser pipeline
-                    if self.use_residual_format and rule_result is not None:
+                    # ── Second-pass: run T2 on the deobfuscated payload ──
+                    # When the command was obfuscated, the first pass captures
+                    # the *wrapper* techniques (T1140/T1027). This second pass
+                    # classifies the *inner payload* so we also surface what
+                    # the decoded command actually does (e.g. credential access,
+                    # discovery, execution techniques).
+                    deob_codes = []
+                    deob_rule_result = None
+                    payload_for_t2 = None
+                    if was_obfuscated and current_cmd != raw_cmd.strip():
+                        # Extract the *pure* decoded payload, not the in-place
+                        # substituted command.  _decode_shell_base64_pipe does
+                        # an in-place blob swap which garbles shell structure;
+                        # we need the raw decoded bytes instead.
+                        decoded_payload = None
+                        b64m = self._SHELL_B64_PIPE_RE.search(raw_cmd.strip())
+                        if b64m:
+                            try:
+                                decoded_payload = base64.b64decode(b64m.group(1)).decode("utf-8", errors="ignore")
+                            except Exception:
+                                pass
+                        if not decoded_payload:
+                            enc_m = self._ENCODED_CMD_RE.search(raw_cmd.strip())
+                            if enc_m:
+                                try:
+                                    _raw_b = base64.b64decode(enc_m.group(1))
+                                    try:
+                                        decoded_payload = _raw_b.decode("utf-16-le")
+                                    except Exception:
+                                        decoded_payload = _raw_b.decode("utf-8", errors="ignore")
+                                except Exception:
+                                    pass
+                        # Fall back to current_cmd only if no clean extraction
+                        payload_for_t2 = decoded_payload or current_cmd
+
                         try:
+                            if self.use_residual_format:
+                                deob_t2_text, deob_rule_result = self._build_variant_a_text(payload_for_t2)
+                                deob_t2_inputs = self.tokenizer(
+                                    deob_t2_text,
+                                    return_tensors="pt",
+                                    truncation=True,
+                                    padding="max_length",
+                                    max_length=self.max_length,
+                                ).to(self.device)
+                            else:
+                                deob_t2_inputs = self.tokenizer(
+                                    payload_for_t2.lower().strip(),
+                                    return_tensors="pt",
+                                    truncation=True,
+                                    padding="max_length",
+                                    max_length=self.max_length,
+                                ).to(self.device)
+
+                            deob_s_logits = self.t2(deob_t2_inputs["input_ids"], deob_t2_inputs["attention_mask"])
+
+                            if deob_rule_result is not None:
+                                deob_pv = _build_prior_vector(
+                                    deob_rule_result,
+                                    self._specialist_map_fwd,
+                                    alpha_overrides=self.prior_alphas,
+                                )
+                                deob_pv_tensor = torch.tensor(
+                                    deob_pv["prior_vector"], dtype=deob_s_logits.dtype, device=self.device
+                                ).unsqueeze(0)
+                                deob_s_logits = deob_s_logits + deob_pv_tensor
+
+                            deob_s_probs = F.softmax(deob_s_logits / 0.5, dim=1).squeeze(0)
+                            deob_top_vals, deob_top_idxs = torch.topk(
+                                deob_s_probs, k=min(3, len(deob_s_probs)), largest=True, sorted=True
+                            )
+                            deob_codes = [
+                                {"code": self.s_map[idx.item()], "confidence": round(val.item() * 100, 2)}
+                                for idx, val in zip(deob_top_idxs, deob_top_vals)
+                            ]
+                        except Exception:
+                            deob_codes = []
+
+                    # Merge: keep best confidence per code, raw-pass first,
+                    # then fold in any new payload-pass codes.
+                    merged = {}
+                    for entry in raw_codes + deob_codes:
+                        code = entry["code"]
+                        if code not in merged or entry["confidence"] > merged[code]["confidence"]:
+                            merged[code] = entry
+                    # Sort by confidence descending, cap at 5
+                    response["MITRE_codes"] = sorted(
+                        merged.values(), key=lambda e: e["confidence"], reverse=True
+                    )[:5]
+
+                    # Expose the clean decoded payload and its own MITRE codes
+                    # so the dashboard can render a distinct "Decoded Payload"
+                    # section when obfuscation was present.
+                    if was_obfuscated and deob_codes and payload_for_t2:
+                        response["decoded_payload"] = payload_for_t2
+                        response["payload_mitre_codes"] = deob_codes
+
+                    # Build evidence from parser pipeline
+                    # Use deob rule_result if available and richer
+                    ev_rule = rule_result
+                    if deob_rule_result is not None:
+                        deob_fired = len(deob_rule_result.get("fired_rules", []))
+                        raw_fired = len((rule_result or {}).get("fired_rules", []))
+                        if deob_fired > raw_fired:
+                            ev_rule = deob_rule_result
+                    if self.use_residual_format and (rule_result is not None or ev_rule is not None):
+                        try:
+                            # Parse both raw and deobfuscated; use the richer one for evidence
                             _parsed_ev = _parse_command(raw_cmd.strip())
                             _sem_ev    = _build_semantic_features(_parsed_ev)
+                            if was_obfuscated and current_cmd != raw_cmd.strip():
+                                try:
+                                    _parsed_deob = _parse_command(current_cmd)
+                                    _sem_deob    = _build_semantic_features(_parsed_deob)
+                                    # Merge semantic features: union of both
+                                    for k, v in _sem_deob.items():
+                                        if v and not _sem_ev.get(k):
+                                            _sem_ev[k] = v
+                                    # Merge parsed lists (file_paths, etc.)
+                                    for list_key in ("file_paths", "registry_paths", "urls", "domains", "ips", "ports"):
+                                        raw_list = _parsed_ev.get(list_key) or []
+                                        deob_list = _parsed_deob.get(list_key) or []
+                                        if deob_list:
+                                            seen = set(str(x) for x in raw_list)
+                                            for item in deob_list:
+                                                if str(item) not in seen:
+                                                    raw_list.append(item)
+                                                    seen.add(str(item))
+                                            _parsed_ev[list_key] = raw_list
+                                except Exception:
+                                    pass
                             response["evidence"] = self._build_evidence(
-                                _parsed_ev, _sem_ev, rule_result,
+                                _parsed_ev, _sem_ev, ev_rule or rule_result,
                                 was_obfuscated=was_obfuscated,
                                 deobfuscated_cmd=current_cmd if was_obfuscated else None,
                             )
                             top_code = response["MITRE_codes"][0]["code"] if response["MITRE_codes"] else None
                             response.update(
                                 self._build_response_enrichment(
-                                    top_code, response["evidence"], rule_result,
+                                    top_code, response["evidence"], ev_rule or rule_result,
                                     label_conf=response["label_confidence"],
                                 )
                             )

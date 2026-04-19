@@ -95,7 +95,17 @@ def _run_inference(command, include_flags=None):
     # --- Try auto-decode Base64 commands ---
     try:
         decoded_bytes = base64.b64decode(command, validate=True)
-        command = decoded_bytes.decode('utf-8')
+        # Try UTF-16LE first (PowerShell -EncodedCommand format)
+        try:
+            utf16 = decoded_bytes.decode('utf-16-le')
+            ascii_printable = sum(1 for c in utf16 if '\x20' <= c <= '\x7e' or c in '\r\n\t')
+            if ascii_printable > len(utf16) * 0.6 and len(utf16) > 3:
+                command = utf16
+            else:
+                raise ValueError("not utf-16le")
+        except (UnicodeDecodeError, ValueError):
+            # Fallback to UTF-8
+            command = decoded_bytes.decode('utf-8')
     except Exception:
         pass  # Assume plain text if decode fails
 
@@ -149,6 +159,10 @@ def _run_inference(command, include_flags=None):
     if flags["analysis"]:
         for key in ("mapping_reasons", "why_mapped", "confidence_driver", "analyst_hint"):
             if key in raw_result:
+                result[key] = raw_result[key]
+        # Decoded payload data (present when obfuscation was detected)
+        for key in ("decoded_payload", "payload_mitre_codes", "deobfuscated_cmd"):
+            if key in raw_result and raw_result[key] is not None:
                 result[key] = raw_result[key]
 
     # --- IOC summary ---

