@@ -555,7 +555,126 @@ class GenosEngine:
             return "This command uses concealment patterns that are commonly associated with evasive execution."
         return None
 
-    def _build_response_enrichment(self, top_code: str | None, evidence: dict, rule_result: dict | None) -> dict:
+    # ── MITRE technique → ATT&CK tactic (attack stage) ──────────────────
+    _TECHNIQUE_TO_TACTIC = {
+        "T1001": "Command and Control", "T1003": "Credential Access",
+        "T1005": "Collection", "T1006": "Defense Evasion",
+        "T1007": "Discovery", "T1010": "Discovery",
+        "T1012": "Discovery", "T1014": "Defense Evasion",
+        "T1016": "Discovery", "T1018": "Discovery",
+        "T1020": "Exfiltration", "T1021": "Lateral Movement",
+        "T1025": "Collection", "T1027": "Defense Evasion",
+        "T1030": "Exfiltration", "T1033": "Discovery",
+        "T1036": "Defense Evasion", "T1037": "Persistence",
+        "T1039": "Collection", "T1040": "Credential Access",
+        "T1041": "Exfiltration", "T1046": "Discovery",
+        "T1047": "Execution", "T1048": "Exfiltration",
+        "T1049": "Discovery", "T1053": "Execution",
+        "T1055": "Defense Evasion", "T1056": "Collection",
+        "T1057": "Discovery", "T1059": "Execution",
+        "T1069": "Discovery", "T1070": "Defense Evasion",
+        "T1071": "Command and Control", "T1072": "Lateral Movement",
+        "T1074": "Collection", "T1078": "Persistence",
+        "T1082": "Discovery", "T1083": "Discovery",
+        "T1087": "Discovery", "T1090": "Command and Control",
+        "T1091": "Lateral Movement", "T1095": "Command and Control",
+        "T1098": "Persistence", "T1105": "Command and Control",
+        "T1106": "Execution", "T1110": "Credential Access",
+        "T1112": "Defense Evasion", "T1113": "Collection",
+        "T1114": "Collection", "T1115": "Collection",
+        "T1119": "Collection", "T1120": "Discovery",
+        "T1123": "Collection", "T1124": "Discovery",
+        "T1125": "Collection", "T1127": "Defense Evasion",
+        "T1129": "Execution", "T1132": "Command and Control",
+        "T1133": "Persistence", "T1134": "Defense Evasion",
+        "T1135": "Discovery", "T1136": "Persistence",
+        "T1137": "Persistence", "T1140": "Defense Evasion",
+        "T1176": "Persistence", "T1187": "Credential Access",
+        "T1195": "Initial Access", "T1197": "Defense Evasion",
+        "T1201": "Discovery", "T1202": "Defense Evasion",
+        "T1204": "Execution", "T1207": "Defense Evasion",
+        "T1216": "Defense Evasion", "T1217": "Discovery",
+        "T1218": "Defense Evasion", "T1219": "Command and Control",
+        "T1220": "Defense Evasion", "T1221": "Execution",
+        "T1222": "Defense Evasion", "T1482": "Discovery",
+        "T1484": "Defense Evasion", "T1485": "Impact",
+        "T1486": "Impact", "T1489": "Impact",
+        "T1490": "Impact", "T1491": "Impact",
+        "T1496": "Impact", "T1497": "Defense Evasion",
+        "T1505": "Persistence", "T1518": "Discovery",
+        "T1526": "Discovery", "T1528": "Credential Access",
+        "T1529": "Impact", "T1530": "Collection",
+        "T1531": "Impact", "T1539": "Credential Access",
+        "T1542": "Persistence", "T1543": "Persistence",
+        "T1546": "Persistence", "T1547": "Persistence",
+        "T1548": "Privilege Escalation", "T1550": "Lateral Movement",
+        "T1552": "Credential Access", "T1553": "Defense Evasion",
+        "T1555": "Credential Access", "T1556": "Persistence",
+        "T1557": "Credential Access", "T1558": "Credential Access",
+        "T1559": "Execution", "T1560": "Collection",
+        "T1562": "Defense Evasion", "T1563": "Lateral Movement",
+        "T1564": "Defense Evasion", "T1566": "Initial Access",
+        "T1567": "Exfiltration", "T1569": "Execution",
+        "T1570": "Lateral Movement", "T1571": "Command and Control",
+        "T1572": "Command and Control", "T1573": "Command and Control",
+        "T1574": "Persistence", "T1578": "Defense Evasion",
+        "T1580": "Discovery", "T1592": "Reconnaissance",
+        "T1595": "Reconnaissance", "T1606": "Credential Access",
+        "T1609": "Execution", "T1610": "Execution",
+        "T1611": "Privilege Escalation", "T1612": "Defense Evasion",
+        "T1613": "Discovery", "T1614": "Discovery",
+        "T1615": "Discovery", "T1619": "Discovery",
+        "T1620": "Defense Evasion", "T1622": "Defense Evasion",
+        "T1648": "Execution", "T1649": "Credential Access",
+        "T1651": "Execution", "T1652": "Discovery",
+        "T1654": "Discovery",
+    }
+
+    # Tactic severity ranking
+    _TACTIC_SEVERITY = {
+        "Reconnaissance": "Low",
+        "Initial Access": "High",
+        "Execution": "Medium",
+        "Persistence": "Medium",
+        "Privilege Escalation": "High",
+        "Defense Evasion": "Medium",
+        "Credential Access": "High",
+        "Discovery": "Low",
+        "Lateral Movement": "High",
+        "Collection": "Medium",
+        "Command and Control": "High",
+        "Exfiltration": "High",
+        "Impact": "Critical",
+    }
+
+    _SEVERITY_RANK = {"Low": 0, "Medium": 1, "High": 2, "Critical": 3}
+
+    def _derive_attack_stage(self, top_code: str | None) -> str | None:
+        if not top_code:
+            return None
+        return self._TECHNIQUE_TO_TACTIC.get(top_code)
+
+    def _derive_severity(self, top_code: str | None, label_conf: float,
+                         evidence: dict | None) -> str:
+        tactic = self._TECHNIQUE_TO_TACTIC.get(top_code or "")
+        base_severity = self._TACTIC_SEVERITY.get(tactic, "Medium")
+        rank = self._SEVERITY_RANK[base_severity]
+
+        # Promote severity if confidence is very high and evidence is strong
+        if label_conf >= 95.0 and evidence:
+            strength = evidence.get("rule_strength", "none")
+            if strength == "strong" and rank < 3:
+                rank = min(rank + 1, 3)
+
+        # Promote if obfuscation detected
+        if evidence and (evidence.get("uses_obfuscation") or evidence.get("uses_encoded_payload")):
+            if rank < 2:
+                rank = min(rank + 1, 3)
+
+        return {0: "Low", 1: "Medium", 2: "High", 3: "Critical"}[rank]
+
+    def _build_response_enrichment(self, top_code: str | None, evidence: dict, rule_result: dict | None,
+                                   label_conf: float = 0.0) -> dict:
         mapping_reasons = self._build_mapping_reasons(top_code, evidence)
         return {
             "mapping_reasons": mapping_reasons,
@@ -563,6 +682,8 @@ class GenosEngine:
             "ioc_summary": self._build_ioc_summary(evidence),
             "confidence_driver": self._derive_confidence_driver(rule_result),
             "analyst_hint": self._build_analyst_hint(top_code, evidence),
+            "attack_stage": self._derive_attack_stage(top_code),
+            "severity": self._derive_severity(top_code, label_conf, evidence),
         }
 
     def _build_variant_a_text(self, cmd: str):
@@ -935,7 +1056,10 @@ class GenosEngine:
                             )
                             top_code = response["MITRE_codes"][0]["code"] if response["MITRE_codes"] else None
                             response.update(
-                                self._build_response_enrichment(top_code, response["evidence"], rule_result)
+                                self._build_response_enrichment(
+                                    top_code, response["evidence"], rule_result,
+                                    label_conf=response["label_confidence"],
+                                )
                             )
                         except Exception:
                             pass

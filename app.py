@@ -3,6 +3,7 @@ import os
 import base64
 import logging
 import json
+import time
 from datetime import datetime
 from flask import Flask, request, Response, jsonify
 from pymongo import MongoClient
@@ -84,8 +85,13 @@ def _to_percentage(value):
     return round(value, 2)
 
 
-def _run_inference(command):
-    """Run engine and normalize response payload schema."""
+def _run_inference(command, include_flags=None):
+    """Run engine, normalize response, and apply include flags.
+
+    include_flags is an optional dict of section booleans:
+      evidence, mitre, analysis, ioc, meta
+    All sections are included by default when include_flags is None.
+    """
     # --- Try auto-decode Base64 commands ---
     try:
         decoded_bytes = base64.b64decode(command, validate=True)
@@ -94,7 +100,9 @@ def _run_inference(command):
         pass  # Assume plain text if decode fails
 
     # --- Run Genos engine ---
+    t_start = time.perf_counter()
     raw_result = engine.scan(command)
+    elapsed_ms = round((time.perf_counter() - t_start) * 1000, 1)
 
     # Support both legacy and updated engine payload keys.
     label = raw_result.get('label', raw_result.get('status'))
@@ -104,21 +112,57 @@ def _run_inference(command):
     if label is None or label_conf is None:
         raise ValueError(f"Unexpected engine payload keys: {list(raw_result.keys())}")
 
+    # --- Build default flags (all on) ---
+    flags = {
+        "evidence": True,
+        "mitre": True,
+        "analysis": True,
+        "ioc": True,
+        "meta": True,
+    }
+    if include_flags and isinstance(include_flags, dict):
+        for key in flags:
+            if key in include_flags:
+                flags[key] = bool(include_flags[key])
+
+    # --- Core fields (always returned) ---
     result = {
         "label": label,
-        # engine.scan() already returns percentages (multiplied by 100); pass through directly.
         "label_confidence": round(float(label_conf), 2),
-        "MITRE_codes": [
+    }
+
+    # --- MITRE codes ---
+    if flags["mitre"]:
+        result["MITRE_codes"] = [
             {
                 "code": t["code"],
                 "confidence": round(float(t["confidence"]), 2)
             }
             for t in mitre_predictions
-        ],
-    }
-    for key in ("evidence", "mapping_reasons", "why_mapped", "ioc_summary", "confidence_driver", "analyst_hint"):
-        if key in raw_result:
-            result[key] = raw_result[key]
+        ]
+
+    # --- Evidence ---
+    if flags["evidence"] and "evidence" in raw_result:
+        result["evidence"] = raw_result["evidence"]
+
+    # --- Analysis ---
+    if flags["analysis"]:
+        for key in ("mapping_reasons", "why_mapped", "confidence_driver", "analyst_hint"):
+            if key in raw_result:
+                result[key] = raw_result[key]
+
+    # --- IOC summary ---
+    if flags["ioc"] and "ioc_summary" in raw_result:
+        result["ioc_summary"] = raw_result["ioc_summary"]
+
+    # --- Meta ---
+    if flags["meta"]:
+        if "attack_stage" in raw_result:
+            result["attack_stage"] = raw_result["attack_stage"]
+        if "severity" in raw_result:
+            result["severity"] = raw_result["severity"]
+        result["elapsed_ms"] = elapsed_ms
+
     return result
 
 # -----------------------
@@ -157,7 +201,8 @@ def scan():
         return jsonify({"error": "Key Not Valid"}), 401
 
     try:
-        response = _run_inference(data['command'])
+        include_flags = data.get('include')
+        response = _run_inference(data['command'], include_flags=include_flags)
 
         # --- Log usage ---
         usage_collection.update_one(
@@ -195,7 +240,8 @@ def scan_free():
         return jsonify({"error": "Missing parameters: command"}), 400
 
     try:
-        response = _run_inference(data['command'])
+        include_flags = data.get('include')
+        response = _run_inference(data['command'], include_flags=include_flags)
         return app.response_class(
             response=json.dumps(response, indent=2),
             mimetype='application/json'
