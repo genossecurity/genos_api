@@ -59,7 +59,7 @@ def _resolve_asset_path(path_value: str, fallback_relpaths: list[str] | None = N
 
 
 class Tier1_Gatekeeper(nn.Module):
-    def __init__(self):
+    def __init__(self, num_classes=3):
         super().__init__()
         self.encoder = RobertaModel.from_pretrained("microsoft/codebert-base", use_safetensors=True)
         self.classifier = nn.Sequential(
@@ -67,7 +67,7 @@ class Tier1_Gatekeeper(nn.Module):
             nn.Linear(768, 1024),
             nn.GELU(),
             nn.Dropout(0.2),
-            nn.Linear(1024, 2),
+            nn.Linear(1024, num_classes),
         )
 
     def forward(self, input_ids, attention_mask):
@@ -977,28 +977,32 @@ class GenosEngine:
             pass
         return text
 
+    # Class indices: 0=Benign, 1=Malicious, 2=Context_Dependent
+    _GATE_LABELS = ["Benign", "Malicious", "Context_Dependent"]
+
     def _tier1_decision(self, probs: torch.Tensor):
         probs = probs.squeeze(0)
         benign_prob = float(probs[0].item())
         malicious_prob = float(probs[1].item())
+        ctx_prob = float(probs[2].item()) if probs.size(0) > 2 else 0.0
 
-        if self.gatekeeper_threshold is not None:
-            is_malicious = malicious_prob >= self.gatekeeper_threshold
-            decision_mode = "threshold"
-            threshold_used = self.gatekeeper_threshold
-        else:
-            is_malicious = malicious_prob >= benign_prob
-            decision_mode = "argmax"
-            threshold_used = None
+        predicted_idx = int(probs.argmax().item())
+        label = self._GATE_LABELS[predicted_idx]
+        label_conf = float(probs[predicted_idx].item())
 
-        label_conf = malicious_prob if is_malicious else benign_prob
+        is_malicious = label == "Malicious"
+        is_context_dependent = label == "Context_Dependent"
+
         return {
             "is_malicious": is_malicious,
+            "is_context_dependent": is_context_dependent,
+            "label": label,
             "benign_prob": benign_prob,
             "malicious_prob": malicious_prob,
+            "ctx_prob": ctx_prob,
             "label_conf": label_conf,
-            "decision_mode": decision_mode,
-            "threshold_used": threshold_used,
+            "decision_mode": "argmax",
+            "threshold_used": None,
         }
 
     # ── Hard-override patterns (unambiguously malicious, bypass gatekeeper) ──
@@ -1110,15 +1114,18 @@ class GenosEngine:
                     _ho = self._check_hard_overrides(raw_cmd, current_cmd if was_obfuscated else None)
                     if _ho:
                         gate["is_malicious"] = True
+                        gate["is_context_dependent"] = False
+                        gate["label"] = "Malicious"
                         gate["label_conf"] = max(gate["malicious_prob"], _ho["confidence"])
                         gate["decision_mode"] = f"rule_override:{_ho['tag']}"
 
                 response = {
-                    "label": "Malicious" if gate["is_malicious"] else "Benign",
+                    "label": gate["label"],
                     "label_confidence": round(gate["label_conf"] * 100, 2),
                     "label_probabilities": {
                         "benign": round(gate["benign_prob"] * 100, 2),
                         "malicious": round(gate["malicious_prob"] * 100, 2),
+                        "context_dependent": round(gate["ctx_prob"] * 100, 2),
                     },
                     "gatekeeper": {
                         "decision_mode": gate["decision_mode"],
@@ -1128,7 +1135,12 @@ class GenosEngine:
                     "deobfuscated_cmd": current_cmd if was_obfuscated else None,
                 }
 
-                if gate["is_malicious"]:
+                # Context_Dependent: add action hint, then run specialist
+                # for informational MITRE mapping
+                if gate["is_context_dependent"]:
+                    response["action"] = "requires_context"
+
+                if gate["is_malicious"] or gate["is_context_dependent"]:
                     # Build T2 input: Variant A format when pipeline is available
                     if self.use_residual_format:
                         t2_text, rule_result = self._build_variant_a_text(raw_cmd.strip())

@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import random
+from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -49,8 +50,13 @@ def set_seed(seed: int) -> None:
     torch.cuda.manual_seed_all(seed)
 
 
+NUM_CLASSES = 3
+LABEL_NAMES = ["Benign", "Malicious", "Context_Dependent"]
+LABEL_TO_IDX = {name: i for i, name in enumerate(LABEL_NAMES)}
+
+
 class GatekeeperModel(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, num_classes: int = NUM_CLASSES) -> None:
         super().__init__()
         self.encoder = RobertaModel.from_pretrained("microsoft/codebert-base", use_safetensors=True)
         self.classifier = nn.Sequential(
@@ -58,7 +64,7 @@ class GatekeeperModel(nn.Module):
             nn.Linear(768, 1024),
             nn.GELU(),
             nn.Dropout(0.2),
-            nn.Linear(1024, 2),
+            nn.Linear(1024, num_classes),
         )
 
     def forward(self, ids: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
@@ -66,17 +72,15 @@ class GatekeeperModel(nn.Module):
         return self.classifier(out.last_hidden_state[:, 0, :])
 
 
-class BinaryDataset(Dataset):
-    def __init__(self, benign_csv: str, malicious_csv: str, tokenizer: RobertaTokenizer, max_len: int = 256, phase: str = "Train"):
-        print(f"[*] Loading and pre-tokenizing Gatekeeper dataset ({phase})...")
-        benign_df = pd.read_csv(benign_csv).dropna(subset=["command"])
-        malicious_df = pd.read_csv(malicious_csv).dropna(subset=["command"])
+class ThreeClassDataset(Dataset):
+    """Load a unified 3-class CSV (command, label, original_label, mitre_id)."""
 
-        benign_cmds = [str(c).lower().strip() for c in benign_df["command"].tolist()]
-        malicious_cmds = [str(c).lower().strip() for c in malicious_df["command"].tolist()]
+    def __init__(self, csv_path: str, tokenizer: RobertaTokenizer, max_len: int = 256, phase: str = "Train"):
+        print(f"[*] Loading and pre-tokenizing Gatekeeper 3-class dataset ({phase})...")
+        df = pd.read_csv(csv_path).dropna(subset=["command"])
 
-        self.texts = benign_cmds + malicious_cmds
-        self.labels = [0] * len(benign_cmds) + [1] * len(malicious_cmds)
+        self.texts = [str(c).lower().strip() for c in df["command"].tolist()]
+        self.labels = [LABEL_TO_IDX[lbl] for lbl in df["label"].tolist()]
         self.encodings = tokenizer(
             self.texts,
             padding="max_length",
@@ -84,7 +88,9 @@ class BinaryDataset(Dataset):
             max_length=max_len,
             return_tensors="pt",
         )
-        print(f"[+] {phase} load complete: {len(benign_cmds)} benign | {len(malicious_cmds)} malicious")
+        counts = Counter(self.labels)
+        parts = " | ".join(f"{counts.get(i, 0)} {LABEL_NAMES[i].lower()}" for i in range(NUM_CLASSES))
+        print(f"[+] {phase} load complete: {parts}")
 
     def __len__(self) -> int:
         return len(self.labels)
@@ -98,15 +104,16 @@ class BinaryDataset(Dataset):
 
 
 @torch.no_grad()
-def collect_binary_outputs(
+def collect_outputs(
     model: nn.Module,
     loader: DataLoader,
     device: torch.device,
     amp_enabled: bool,
-) -> Tuple[List[int], List[float], float]:
+) -> Tuple[List[int], List[List[float]], float]:
+    """Collect ground-truth labels and full softmax probability vectors."""
     model.eval()
     targets: List[int] = []
-    probs: List[float] = []
+    all_probs: List[List[float]] = []
     total_loss = 0.0
     total_items = 0
     criterion = nn.CrossEntropyLoss(reduction="sum")
@@ -120,88 +127,53 @@ def collect_binary_outputs(
             logits = model(ids, mask)
             loss = criterion(logits, labels)
 
-        batch_probs = torch.softmax(logits, dim=1)[:, 1]
+        batch_probs = torch.softmax(logits, dim=1)
         targets.extend(labels.cpu().tolist())
-        probs.extend(batch_probs.cpu().tolist())
+        all_probs.extend(batch_probs.cpu().tolist())
         total_loss += loss.item()
         total_items += labels.size(0)
 
     avg_loss = total_loss / max(1, total_items)
-    return targets, probs, avg_loss
+    return targets, all_probs, avg_loss
 
 
-def binary_metrics(targets: List[int], probs: List[float], threshold: float) -> Dict[str, float]:
-    preds = [1 if p >= threshold else 0 for p in probs]
-    tp = sum(1 for y, p in zip(targets, preds) if y == 1 and p == 1)
-    tn = sum(1 for y, p in zip(targets, preds) if y == 0 and p == 0)
-    fp = sum(1 for y, p in zip(targets, preds) if y == 0 and p == 1)
-    fn = sum(1 for y, p in zip(targets, preds) if y == 1 and p == 0)
+def multiclass_metrics(targets: List[int], all_probs: List[List[float]]) -> Dict[str, float]:
+    """Compute per-class and overall metrics from argmax predictions."""
+    preds = [max(range(NUM_CLASSES), key=lambda c: p[c]) for p in all_probs]
     total = max(1, len(targets))
 
-    accuracy = (tp + tn) / total
-    precision = tp / max(1, tp + fp)
-    recall = tp / max(1, tp + fn)
-    specificity = tn / max(1, tn + fp)
-    f1 = 0.0 if (precision + recall) == 0 else 2 * precision * recall / (precision + recall)
-    balanced_accuracy = (recall + specificity) / 2.0
+    # Overall accuracy
+    accuracy = sum(1 for y, p in zip(targets, preds) if y == p) / total
 
-    metrics = {
+    # Per-class precision, recall, F1
+    per_class = {}
+    for c in range(NUM_CLASSES):
+        tp = sum(1 for y, p in zip(targets, preds) if y == c and p == c)
+        fp = sum(1 for y, p in zip(targets, preds) if y != c and p == c)
+        fn = sum(1 for y, p in zip(targets, preds) if y == c and p != c)
+        prec = tp / max(1, tp + fp)
+        rec = tp / max(1, tp + fn)
+        f1 = 0.0 if (prec + rec) == 0 else 2 * prec * rec / (prec + rec)
+        per_class[LABEL_NAMES[c]] = {"precision": prec, "recall": rec, "f1": f1, "tp": tp, "fp": fp, "fn": fn}
+
+    macro_f1 = sum(v["f1"] for v in per_class.values()) / NUM_CLASSES
+    macro_prec = sum(v["precision"] for v in per_class.values()) / NUM_CLASSES
+    macro_rec = sum(v["recall"] for v in per_class.values()) / NUM_CLASSES
+
+    return {
         "accuracy": accuracy,
-        "precision": precision,
-        "recall": recall,
-        "specificity": specificity,
-        "f1": f1,
-        "balanced_accuracy": balanced_accuracy,
-        "tp": tp,
-        "tn": tn,
-        "fp": fp,
-        "fn": fn,
-        "threshold": threshold,
+        "macro_f1": macro_f1,
+        "macro_precision": macro_prec,
+        "macro_recall": macro_rec,
+        "per_class": per_class,
     }
-    if roc_auc_score is not None and len(set(targets)) > 1:
-        try:
-            metrics["roc_auc"] = float(roc_auc_score(targets, probs))
-        except Exception:
-            pass
-    if average_precision_score is not None and len(set(targets)) > 1:
-        try:
-            metrics["pr_auc"] = float(average_precision_score(targets, probs))
-        except Exception:
-            pass
-    return metrics
 
 
-def choose_threshold(targets: List[int], probs: List[float]) -> Dict[str, float]:
-    best = None
-    for i in range(5, 96):
-        threshold = i / 100.0
-        metrics = binary_metrics(targets, probs, threshold)
-        score = (metrics["f1"], metrics["balanced_accuracy"], metrics["precision"], metrics["accuracy"])
-        if best is None or score > best[0]:
-            best = (score, metrics)
-    assert best is not None
-    return best[1]
-
-
-def compute_class_weights(labels: List[int], device: torch.device) -> torch.Tensor:
-    counts = torch.bincount(torch.tensor(labels, dtype=torch.long), minlength=2).float()
+def compute_class_weights(labels: List[int], device: torch.device, num_classes: int = NUM_CLASSES) -> torch.Tensor:
+    counts = torch.bincount(torch.tensor(labels, dtype=torch.long), minlength=num_classes).float()
     total = counts.sum()
-    weights = total / (len(counts) * counts.clamp_min(1.0))
+    weights = total / (num_classes * counts.clamp_min(1.0))
     return weights.to(device)
-
-
-@torch.no_grad()
-def evaluate_binary(
-    model: nn.Module,
-    loader: DataLoader,
-    device: torch.device,
-    amp_enabled: bool,
-    threshold: float,
-) -> Dict[str, float]:
-    targets, probs, avg_loss = collect_binary_outputs(model, loader, device, amp_enabled)
-    metrics = binary_metrics(targets, probs, threshold)
-    metrics["loss"] = avg_loss
-    return metrics
 
 
 def train(args: argparse.Namespace) -> None:
@@ -218,23 +190,20 @@ def train(args: argparse.Namespace) -> None:
 
     tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
 
-    train_dataset = BinaryDataset(
-        resolve_data_path("gatekeeper_train.csv"),
-        resolve_data_path("specialist_train.csv"),
+    train_dataset = ThreeClassDataset(
+        resolve_data_path("gatekeeper_3class_train.csv"),
         tokenizer,
         max_len=args.max_len,
         phase="Train",
     )
-    val_dataset = BinaryDataset(
-        resolve_data_path("gatekeeper_val.csv"),
-        resolve_data_path("specialist_val.csv"),
+    val_dataset = ThreeClassDataset(
+        resolve_data_path("gatekeeper_3class_val.csv"),
         tokenizer,
         max_len=args.max_len,
         phase="Validation",
     )
-    test_dataset = BinaryDataset(
-        resolve_data_path("gatekeeper_test.csv"),
-        resolve_data_path("specialist_test.csv"),
+    test_dataset = ThreeClassDataset(
+        resolve_data_path("gatekeeper_3class_test.csv"),
         tokenizer,
         max_len=args.max_len,
         phase="Test",
@@ -282,7 +251,8 @@ def train(args: argparse.Namespace) -> None:
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     class_weights = compute_class_weights(train_dataset.labels, device)
-    print(f"[*] Dynamic class weights: benign={class_weights[0].item():.4f}, malicious={class_weights[1].item():.4f}")
+    wt_str = ", ".join(f"{LABEL_NAMES[i]}={class_weights[i].item():.4f}" for i in range(NUM_CLASSES))
+    print(f"[*] Dynamic class weights: {wt_str}")
     criterion = nn.CrossEntropyLoss(weight=class_weights)
     scaler = GradScaler(enabled=amp_enabled)
 
@@ -328,23 +298,24 @@ def train(args: argparse.Namespace) -> None:
         train_acc = train_correct / max(1, train_total)
         train_loss = train_loss_sum / max(1, len(train_loader))
 
-        val_targets, val_probs, val_loss = collect_binary_outputs(model, val_loader, device, amp_enabled)
-        tuned_val = choose_threshold(val_targets, val_probs)
-        tuned_val["loss"] = val_loss
+        val_targets, val_probs, val_loss = collect_outputs(model, val_loader, device, amp_enabled)
+        val_metrics = multiclass_metrics(val_targets, val_probs)
+        val_metrics["loss"] = val_loss
 
         print(
             f"\n[Epoch {epoch + 1}] train_loss={train_loss:.4f} train_acc={train_acc * 100:.2f}% "
-            f"| val_f1={tuned_val['f1']:.4f} val_bal_acc={tuned_val['balanced_accuracy']:.4f} "
-            f"| val_precision={tuned_val['precision']:.4f} val_recall={tuned_val['recall']:.4f} "
-            f"| val_threshold={tuned_val['threshold']:.2f}"
+            f"| val_acc={val_metrics['accuracy'] * 100:.2f}% val_macro_f1={val_metrics['macro_f1']:.4f}"
         )
+        for cls_name in LABEL_NAMES:
+            cm = val_metrics["per_class"][cls_name]
+            print(f"  {cls_name:20s}  P={cm['precision']:.4f}  R={cm['recall']:.4f}  F1={cm['f1']:.4f}")
 
-        ranking = (tuned_val["f1"], tuned_val["balanced_accuracy"], tuned_val["precision"], tuned_val["accuracy"])
+        ranking = (val_metrics["macro_f1"], val_metrics["accuracy"])
         if best_bundle is None or ranking > best_bundle["ranking"]:
             best_bundle = {
                 "ranking": ranking,
                 "epoch": epoch + 1,
-                "val_metrics": tuned_val,
+                "val_metrics": val_metrics,
                 "class_weights": [float(x) for x in class_weights.detach().cpu().tolist()],
                 "train_loss": train_loss,
                 "train_accuracy": train_acc,
@@ -357,13 +328,9 @@ def train(args: argparse.Namespace) -> None:
     raw_model.load_state_dict(torch.load(model_save_path, map_location=device))
     raw_model.to(device)
 
-    test_metrics = evaluate_binary(
-        raw_model,
-        test_loader,
-        device,
-        amp_enabled,
-        threshold=best_bundle["val_metrics"]["threshold"],
-    )
+    test_targets, test_probs, test_loss = collect_outputs(raw_model, test_loader, device, amp_enabled)
+    test_metrics = multiclass_metrics(test_targets, test_probs)
+    test_metrics["loss"] = test_loss
 
     meta = {
         "seed": args.seed,
@@ -373,6 +340,8 @@ def train(args: argparse.Namespace) -> None:
         "max_len": args.max_len,
         "learning_rate": args.lr,
         "weight_decay": args.weight_decay,
+        "num_classes": NUM_CLASSES,
+        "label_names": LABEL_NAMES,
         "best_epoch": best_bundle["epoch"],
         "class_weights": best_bundle["class_weights"],
         "val_metrics": best_bundle["val_metrics"],

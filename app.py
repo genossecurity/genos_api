@@ -141,6 +141,14 @@ def _run_inference(command, include_flags=None):
         "label_confidence": round(float(label_conf), 2),
     }
 
+    # --- Context_Dependent action hint ---
+    if "action" in raw_result:
+        result["action"] = raw_result["action"]
+
+    # --- Label probabilities ---
+    if "label_probabilities" in raw_result:
+        result["label_probabilities"] = raw_result["label_probabilities"]
+
     # --- MITRE codes ---
     if flags["mitre"]:
         result["MITRE_codes"] = [
