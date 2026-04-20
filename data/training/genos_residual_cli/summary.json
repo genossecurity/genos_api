@@ -1,0 +1,14 @@
+{
+  "train": {
+    "rows": 129,
+    "classes": 43
+  },
+  "val": {
+    "rows": 13,
+    "classes": 13
+  },
+  "test": {
+    "rows": 13,
+    "classes": 13
+  }
+}

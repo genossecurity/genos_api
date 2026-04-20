@@ -1,75 +1,158 @@
 {
   "baseline": {
-    "top1_acc": 0.4165477888730385,
-    "top3_acc": 0.5677603423680456,
-    "macro_f1": 0.3516176261569782,
-    "lat_ms": 26.981267955528836
+    "top1_acc": 0.4920828258221681,
+    "top3_acc": 0.6382460414129111,
+    "macro_f1": 0.3942470096349129,
+    "lat_ms": 28.15052765806123
   },
   "tier1": {
-    "auc": 0.9947853778143526,
-    "ap": 0.970051124670378,
-    "precision": 0.9306184012066365,
-    "recall": 0.8801711840228246,
-    "f1": 0.9046920821114369,
-    "balanced_acc": 0.9359688925304743,
-    "tn": 5541,
-    "fp": 46,
-    "fn": 84,
-    "tp": 617,
-    "threshold_used": 0.89,
-    "decision_mode": "threshold",
-    "mean_preproc_ms": 0.03573363375081029,
-    "obfuscation_flag_rate": 0.026876590330788805,
-    "deobfuscation_change_rate": 0.00047709923664122136
+    "auc": 0.9488662017075922,
+    "ap": 0.8627431121487124,
+    "precision": 0.7401015228426396,
+    "recall": 0.8879415347137637,
+    "f1": 0.8073089700996677,
+    "balanced_acc": 0.9210604398107927,
+    "tn": 5331,
+    "fp": 256,
+    "fn": 92,
+    "tp": 729,
+    "threshold_used": null,
+    "decision_mode": "argmax",
+    "mean_preproc_ms": 0.035840793778438504,
+    "obfuscation_flag_rate": 0.02949438202247191,
+    "deobfuscation_change_rate": 0.0
   },
-  "tier2": {
-    "top1_acc": 0.34522111269614836,
-    "top3_acc": 0.5164051355206848,
-    "macro_f1": 0.3232896373362785,
-    "lat_ms": 6.7941700018671325,
-    "mean_preproc_ms": 0.035299126061474034,
-    "deobfuscation_change_rate": 0.0042796005706134095,
-    "n_eval": 701,
+  "tier2_legacy_csv": {
+    "top1_acc": 0.3075980392156863,
+    "top3_acc": 0.45098039215686275,
+    "macro_f1": 0.13977177202260688,
+    "lat_ms": 6.7772707769501155,
+    "mean_preproc_ms": 0.03769707822642636,
+    "deobfuscation_change_rate": 0.0,
+    "n_eval": 816,
+    "n_skipped_missing_label": 5
+  },
+  "tier2_expanded": {
+    "top1_acc": 0.30639324487334135,
+    "top3_acc": 0.4487334137515078,
+    "macro_f1": 0.1460972374671914,
+    "lat_ms": 6.727040541415587,
+    "mean_preproc_ms": 0.03717480894667967,
+    "deobfuscation_change_rate": 0.0,
+    "n_eval": 829,
     "n_skipped_missing_label": 0
   },
-  "full_pipeline": {
+  "tier2_legacy_group": {
+    "top1_acc": 0.3075980392156863,
+    "top3_acc": 0.45098039215686275,
+    "macro_f1": 0.13977177202260688,
+    "lat_ms": 6.73513446350162,
+    "mean_preproc_ms": 0.03759901657901412,
+    "deobfuscation_change_rate": 0.0,
+    "n_eval": 816,
+    "n_skipped_missing_label": 0
+  },
+  "tier2_new_group": {
+    "top1_acc": 0.23076923076923078,
+    "top3_acc": 0.3076923076923077,
+    "macro_f1": 0.15,
+    "lat_ms": 6.757288633917387,
+    "mean_preproc_ms": 0.03849793798648394,
+    "deobfuscation_change_rate": 0.0,
+    "n_eval": 13,
+    "n_skipped_missing_label": 0
+  },
+  "tfidf_tier2_legacy_csv": {
+    "top1_acc": 0.5416164053075995,
+    "top3_acc": 0.6863691194209891,
+    "macro_f1": 0.45695590881412024,
+    "lat_ms": 89.03951830409278,
+    "n_eval": 829,
+    "n_skipped_missing_label": 0,
+    "text_col_used": "input_text"
+  },
+  "tfidf_tier2_legacy_group": {
+    "top1_acc": 0.5453431372549019,
+    "top3_acc": 0.6862745098039216,
+    "macro_f1": 0.4788533603134904,
+    "lat_ms": 89.85762312601996,
+    "n_eval": 816,
+    "n_skipped_missing_label": 0,
+    "text_col_used": "input_text"
+  },
+  "tfidf_tier2_new_group": {
+    "top1_acc": 0.3076923076923077,
+    "top3_acc": 0.6923076923076923,
+    "macro_f1": 0.21052631578947367,
+    "lat_ms": 82.86002912343695,
+    "n_eval": 13,
+    "n_skipped_missing_label": 0,
+    "text_col_used": "input_text"
+  },
+  "full_pipeline_codebert": {
     "0.5": {
-      "end_to_end_lat_ms": 9.4792277129367,
-      "mean_preproc_ms": 0.03533339113928378,
-      "tier2_trigger_rate": 0.4427,
-      "obfuscation_flag_rate": 0.1049,
-      "deobfuscation_change_rate": 0.0015,
-      "binary_acc": 0.9355,
-      "binary_bal_acc": 0.9355,
+      "end_to_end_lat_ms": 9.641979372827336,
+      "mean_preproc_ms": 0.03661459251306951,
+      "tier2_trigger_rate": 0.467,
+      "obfuscation_flag_rate": 0.1046,
+      "deobfuscation_change_rate": 0.0,
+      "binary_acc": 0.923,
+      "binary_bal_acc": 0.923,
       "n_stream": 10000
     },
     "0.9": {
-      "end_to_end_lat_ms": 7.166699400288053,
-      "mean_preproc_ms": 0.034457035711966455,
-      "tier2_trigger_rate": 0.0956,
-      "obfuscation_flag_rate": 0.0238,
-      "deobfuscation_change_rate": 0.0003,
-      "binary_acc": 0.979,
-      "binary_bal_acc": 0.9318888888888889,
+      "end_to_end_lat_ms": 7.387757722334936,
+      "mean_preproc_ms": 0.035079100355505946,
+      "tier2_trigger_rate": 0.1304,
+      "obfuscation_flag_rate": 0.0241,
+      "deobfuscation_change_rate": 0.0,
+      "binary_acc": 0.947,
+      "binary_bal_acc": 0.9203333333333333,
       "n_stream": 10000
     },
     "0.99": {
-      "end_to_end_lat_ms": 6.6384751878445964,
-      "mean_preproc_ms": 0.034214306133799256,
-      "tier2_trigger_rate": 0.0176,
-      "obfuscation_flag_rate": 0.0069,
-      "deobfuscation_change_rate": 0.0001,
-      "binary_acc": 0.9894,
-      "binary_bal_acc": 0.9204040404040403,
+      "end_to_end_lat_ms": 6.87142892787233,
+      "mean_preproc_ms": 0.03465235875919461,
+      "tier2_trigger_rate": 0.055,
+      "obfuscation_flag_rate": 0.0063,
+      "deobfuscation_change_rate": 0.0,
+      "binary_acc": 0.9522,
+      "binary_bal_acc": 0.9065656565656566,
+      "n_stream": 10000
+    }
+  },
+  "full_pipeline_tfidf": {
+    "0.5": {
+      "end_to_end_lat_ms": 48.15091757257469,
+      "mean_preproc_ms": 0.03916606097482145,
+      "tier2_trigger_rate": 0.467,
+      "binary_acc": 0.923,
+      "binary_bal_acc": 0.923,
+      "n_stream": 10000
+    },
+    "0.9": {
+      "end_to_end_lat_ms": 18.253145755734295,
+      "mean_preproc_ms": 0.0359095573425293,
+      "tier2_trigger_rate": 0.1304,
+      "binary_acc": 0.947,
+      "binary_bal_acc": 0.9203333333333333,
+      "n_stream": 10000
+    },
+    "0.99": {
+      "end_to_end_lat_ms": 11.57975086462684,
+      "mean_preproc_ms": 0.036132200015708806,
+      "tier2_trigger_rate": 0.055,
+      "binary_acc": 0.9522,
+      "binary_bal_acc": 0.9065656565656566,
       "n_stream": 10000
     }
   },
   "real_world_benign": {
     "n_total": 95,
-    "fp_count": 4,
-    "true_negative_count": 91,
-    "fp_rate": 0.042105263157894736,
-    "mean_malicious_prob": 0.16884136163586702,
+    "fp_count": 8,
+    "true_negative_count": 87,
+    "fp_rate": 0.08421052631578947,
+    "mean_malicious_prob": 0.08525749242031261,
     "csv_path": "/home/snake/genos_api/genos_api/logs/real_world_benign_results.csv"
   }
 }

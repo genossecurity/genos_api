@@ -6,6 +6,7 @@ import time
 from pathlib import Path
 from typing import Dict, List, Optional
 
+import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -31,6 +32,8 @@ BASE_DIR = BENCHMARK_DIR.parent.parent
 DATA_DIR = BASE_DIR / "data" / "training"
 LOG_DIR = BASE_DIR / "logs"
 CONFIG_DIR = BASE_DIR / "config"
+EXPANDED_TEST_PATH = DATA_DIR / "genos_residual_expanded" / "specialist_test_variant_a.jsonl"
+LEGACY_MAP_PATH = CONFIG_DIR / "specialist_map_108.json.bak"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 COMMAND_COL = "command"
@@ -116,11 +119,44 @@ def load_real_world_benign() -> Optional[pd.DataFrame]:
     return None
 
 
+def load_expanded_test_jsonl() -> Optional[pd.DataFrame]:
+    """Load genos_residual_expanded test split as a DataFrame with command/mitre_id columns."""
+    if not EXPANDED_TEST_PATH.exists():
+        print(f"[!] Expanded test JSONL not found: {EXPANDED_TEST_PATH}")
+        return None
+    rows = []
+    with open(EXPANDED_TEST_PATH, "r", encoding="utf-8") as f:
+        for line in f:
+            row = json.loads(line)
+            rows.append({
+                COMMAND_COL: row["raw_command"],
+                "input_text": row["input_text"],
+                MITRE_COL: row["label"],
+            })
+    df = pd.DataFrame(rows)
+    print(f"[+] Expanded test JSONL: {len(df)} rows, {df[MITRE_COL].nunique()} classes")
+    return df
+
+
+def load_legacy_class_set() -> set:
+    """Return the set of MITRE T-codes from the original 108-class map backup."""
+    if LEGACY_MAP_PATH.exists():
+        with open(LEGACY_MAP_PATH, "r", encoding="utf-8") as f:
+            return set(json.load(f).keys())
+    # Fallback: derive from legacy CSV
+    legacy_csv = DATA_DIR / "genos_dataset" / "specialist_test.csv"
+    if legacy_csv.exists():
+        df = pd.read_csv(legacy_csv)
+        return set(df[MITRE_COL].dropna().unique())
+    return set()
+
+
 def load_data() -> Dict[str, Optional[pd.DataFrame]]:
     return {
         "gk_test": _read_csv(DATA_DIR / "gatekeeper_test.csv", required=True),
         "sp_train": _read_csv(DATA_DIR / "specialist_train.csv", required=True),
         "sp_test": _read_csv(DATA_DIR / "specialist_test.csv", required=True),
+        "sp_test_expanded": load_expanded_test_jsonl(),
         "real_benign": load_real_world_benign(),
     }
 
@@ -509,6 +545,113 @@ def save_roc_plot(fpr, tpr, auc_score, output_path: Path) -> None:
     plt.close()
 
 
+def load_tfidf_model(model_path: Path):
+    """Load a trained TF-IDF pipeline (joblib pkl). Returns None if not found."""
+    if not model_path.exists():
+        print(f"[!] TF-IDF model not found: {model_path}")
+        return None
+    pipe = joblib.load(model_path)
+    print(f"[+] Loaded TF-IDF model from {model_path}")
+    return pipe
+
+
+def evaluate_tfidf_tier2(
+    pipe,
+    sp_test_df: pd.DataFrame,
+    label_map: Dict[str, int],
+) -> Dict[str, object]:
+    """Evaluate a TF-IDF pipeline on MITRE classification.
+    Uses 'input_text' column (residual format) when available, else falls back to COMMAND_COL.
+    pipe.classes_ contains integer class indices matching label_map values.
+    """
+    # Use residual input_text if present (model was trained on it)
+    text_col = "input_text" if "input_text" in sp_test_df.columns else COMMAND_COL
+
+    y_true, y_pred_top1, y_pred_top3 = [], [], []
+    latencies_ms = []
+    skipped = 0
+
+    texts = sp_test_df[text_col].astype(str).tolist()
+    true_labels = sp_test_df[MITRE_COL].astype(str).tolist()
+
+    for text, true_mitre in tqdm(
+        zip(texts, true_labels), total=len(texts), desc="TF-IDF Tier 2 eval"
+    ):
+        if true_mitre not in label_map:
+            skipped += 1
+            continue
+
+        start = time.perf_counter()
+        proba = pipe.predict_proba([text])[0]
+        elapsed_ms = (time.perf_counter() - start) * 1000.0
+
+        # pipe.classes_ are integer label indices
+        top3_pos = np.argsort(proba)[-3:][::-1]
+        top1_pred = int(pipe.classes_[int(np.argmax(proba))])
+        top3_preds = [int(pipe.classes_[i]) for i in top3_pos]
+
+        y_true.append(label_map[true_mitre])
+        y_pred_top1.append(top1_pred)
+        y_pred_top3.append(top3_preds)
+        latencies_ms.append(elapsed_ms)
+
+    return {
+        "top1_acc": accuracy_score(y_true, y_pred_top1),
+        "top3_acc": topk_hit_rate(y_true, y_pred_top3),
+        "macro_f1": macro_f1(y_true, y_pred_top1),
+        "lat_ms": float(np.mean(latencies_ms)) if latencies_ms else 0.0,
+        "n_eval": len(y_true),
+        "n_skipped_missing_label": skipped,
+        "text_col_used": text_col,
+    }
+
+
+def evaluate_full_pipeline_end_to_end_tfidf(
+    engine: GenosEngine,
+    tfidf_pipe,
+    benign_df: pd.DataFrame,
+    malicious_df: pd.DataFrame,
+    threshold: Optional[float],
+    benign_ratio: float = 0.99,
+    total_samples: int = 10000,
+) -> Dict[str, object]:
+    """End-to-end sweep with TF-IDF as Tier 2 (Tier 1 unchanged)."""
+    mixed_df = build_mixed_stream(benign_df, malicious_df, benign_ratio=benign_ratio, total_samples=total_samples)
+
+    total_latencies_ms = []
+    preproc_latencies_ms = []
+    tier2_trigger_count = 0
+    y_true, y_pred = [], []
+
+    for _, row in tqdm(mixed_df.iterrows(), total=len(mixed_df), desc="E2E TF-IDF Tier 2"):
+        start_total = time.perf_counter()
+        prep = preprocess_command(engine, row[COMMAND_COL])
+        t1 = infer_tier1(engine, prep["processed_cmd"], threshold=threshold)
+
+        if t1["pred_label"] == 1:
+            tier2_trigger_count += 1
+            _ = tfidf_pipe.predict([prep["processed_cmd"]])
+
+        total_elapsed_ms = (time.perf_counter() - start_total) * 1000.0
+        y_true.append(int(row["binary_label"]))
+        y_pred.append(int(t1["pred_label"]))
+        total_latencies_ms.append(total_elapsed_ms)
+        preproc_latencies_ms.append(prep["deobf_time_ms"])
+
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred, labels=[0, 1]).ravel()
+    recall = tp / max(1, tp + fn)
+    specificity = tn / max(1, tn + fp)
+
+    return {
+        "end_to_end_lat_ms": float(np.mean(total_latencies_ms)) if total_latencies_ms else 0.0,
+        "mean_preproc_ms": float(np.mean(preproc_latencies_ms)) if preproc_latencies_ms else 0.0,
+        "tier2_trigger_rate": tier2_trigger_count / len(mixed_df) if len(mixed_df) else 0.0,
+        "binary_acc": float(accuracy_score(y_true, y_pred)),
+        "binary_bal_acc": float((recall + specificity) / 2.0),
+        "n_stream": len(mixed_df),
+    }
+
+
 def main() -> None:
     set_seed(SEED)
     print("GENOS IEEE PIPELINE BENCHMARK (THRESHOLD-AWARE)")
@@ -520,7 +663,17 @@ def main() -> None:
     gk_test = data["gk_test"]
     sp_train = data["sp_train"]
     sp_test = data["sp_test"]
+    sp_test_expanded = data["sp_test_expanded"]
     real_benign = data["real_benign"]
+    legacy_classes = load_legacy_class_set()
+
+    # Load label map for TF-IDF evaluation
+    with open(CONFIG_DIR / "specialist_map.json") as f:
+        raw_map = json.load(f)
+    label_map_str = {k: int(v) for k, v in raw_map.items()}
+
+    # Load TF-IDF model
+    tfidf_pipe = load_tfidf_model(BASE_DIR / "models" / "specialist_tfidf_char_rf.pkl")
 
     traffic_ratios = [0.50, 0.90, 0.99]
 
@@ -531,14 +684,61 @@ def main() -> None:
     print("\n[*] EVALUATING TIER 1 (THRESHOLD-AWARE)...")
     tier1_res = evaluate_tier1_pipeline(engine, gk_test, sp_test, threshold=threshold)
 
-    print("\n[*] EVALUATING TIER 2...")
+    print("\n[*] EVALUATING TIER 2 (legacy 108-class CSV)...")
     tier2_res = evaluate_tier2_pipeline(engine, sp_test)
 
-    print("\n[*] EVALUATING FULL END-TO-END PIPELINE...")
+    tier2_expanded_res = None
+    tier2_legacy_group_res = None
+    tier2_new_group_res = None
+    if sp_test_expanded is not None:
+        valid_map = set(engine.s_map.values())
+        sp_test_expanded_filtered = sp_test_expanded[sp_test_expanded[MITRE_COL].isin(valid_map)].copy()
+        print(f"\n[*] EVALUATING TIER 2 (expanded 147-class JSONL, {len(sp_test_expanded_filtered)} rows)...")
+        tier2_expanded_res = evaluate_tier2_pipeline(engine, sp_test_expanded_filtered)
+
+        # Per-group: legacy classes vs newly added classes
+        legacy_mask = sp_test_expanded_filtered[MITRE_COL].isin(legacy_classes)
+        sp_legacy_group = sp_test_expanded_filtered[legacy_mask]
+        sp_new_group = sp_test_expanded_filtered[~legacy_mask]
+        if len(sp_legacy_group) > 0:
+            print(f"\n[*] EVALUATING TIER 2 (legacy class group, {len(sp_legacy_group)} rows)...")
+            tier2_legacy_group_res = evaluate_tier2_pipeline(engine, sp_legacy_group)
+        if len(sp_new_group) > 0:
+            print(f"\n[*] EVALUATING TIER 2 (new class group, {len(sp_new_group)} rows)...")
+            tier2_new_group_res = evaluate_tier2_pipeline(engine, sp_new_group)
+
+    print("\n[*] EVALUATING FULL END-TO-END PIPELINE (CodeBERT Tier 2)...")
     full_results = {
         ratio: evaluate_full_pipeline_end_to_end(engine, gk_test, sp_test, threshold=threshold, benign_ratio=ratio)
         for ratio in traffic_ratios
     }
+
+    # TF-IDF Tier 2 evaluation
+    tfidf_tier2_res = None
+    tfidf_legacy_group_res = None
+    tfidf_new_group_res = None
+    full_results_tfidf = None
+    if tfidf_pipe is not None:
+        # TF-IDF was trained on input_text (residual format) — only evaluate on JSONL splits
+        if sp_test_expanded is not None:
+            valid_map = set(engine.s_map.values())
+            sp_exp_f = sp_test_expanded[sp_test_expanded[MITRE_COL].isin(valid_map)].copy()
+            print(f"\n[*] EVALUATING TF-IDF TIER 2 (expanded 147-class JSONL, {len(sp_exp_f)} rows)...")
+            tfidf_tier2_res = evaluate_tfidf_tier2(tfidf_pipe, sp_exp_f, label_map_str)
+            lmask = sp_exp_f[MITRE_COL].isin(legacy_classes)
+            if lmask.sum() > 0:
+                print(f"\n[*] EVALUATING TF-IDF TIER 2 (legacy class group, {lmask.sum()} rows)...")
+                tfidf_legacy_group_res = evaluate_tfidf_tier2(tfidf_pipe, sp_exp_f[lmask], label_map_str)
+            if (~lmask).sum() > 0:
+                print(f"\n[*] EVALUATING TF-IDF TIER 2 (new class group, {(~lmask).sum()} rows)...")
+                tfidf_new_group_res = evaluate_tfidf_tier2(tfidf_pipe, sp_exp_f[~lmask], label_map_str)
+        print("\n[*] EVALUATING FULL END-TO-END PIPELINE (TF-IDF Tier 2)...")
+        full_results_tfidf = {
+            ratio: evaluate_full_pipeline_end_to_end_tfidf(
+                engine, tfidf_pipe, gk_test, sp_test, threshold=threshold, benign_ratio=ratio
+            )
+            for ratio in traffic_ratios
+        }
 
     real_world_res = None
     if real_benign is not None:
@@ -565,6 +765,22 @@ def main() -> None:
         f"{tier2_res['macro_f1']*100:>9.2f}% | "
         f"{tier2_res['lat_ms']:>11.2f}"
     )
+    if tier2_expanded_res is not None:
+        print(
+            f"{'CodeBERT Specialist 147-class (exp)':<32} | "
+            f"{tier2_expanded_res['top1_acc']*100:>9.2f}% | "
+            f"{tier2_expanded_res['top3_acc']*100:>9.2f}% | "
+            f"{tier2_expanded_res['macro_f1']*100:>9.2f}% | "
+            f"{tier2_expanded_res['lat_ms']:>11.2f}"
+        )
+    if tfidf_tier2_res is not None:
+        print(
+            f"{'Char TF-IDF + RF (JSONL input_text)':<32} | "
+            f"{tfidf_tier2_res['top1_acc']*100:>9.2f}% | "
+            f"{tfidf_tier2_res['top3_acc']*100:>9.2f}% | "
+            f"{tfidf_tier2_res['macro_f1']*100:>9.2f}% | "
+            f"{tfidf_tier2_res['lat_ms']:>11.2f}"
+        )
     print("-" * 112)
     print(f"Tier 1 Gatekeeper AUC                : {tier1_res['auc']:.4f}")
     print(f"Tier 1 Gatekeeper AP                 : {tier1_res['ap']:.4f}")
@@ -590,7 +806,75 @@ def main() -> None:
         print(f"False Positive Rate                  : {real_world_res['fp_rate']*100:.2f}%")
         print(f"Mean Malicious Probability           : {real_world_res['mean_malicious_prob']*100:.2f}%")
 
-    print("\nEnd-to-End Sweep")
+    if tier2_expanded_res is not None:
+        print("\nTier 2 Expanded (147-class) Results")
+        print("-" * 112)
+        print(f"{'Subset':<36} | {'Top-1 Acc':<10} | {'Top-3 Acc':<10} | {'Macro F1':<10} | {'N Eval':<8} | {'Latency (ms)':<12}")
+        print("-" * 112)
+        print(
+            f"{'Full expanded test (all classes)':<36} | "
+            f"{tier2_expanded_res['top1_acc']*100:>9.2f}% | "
+            f"{tier2_expanded_res['top3_acc']*100:>9.2f}% | "
+            f"{tier2_expanded_res['macro_f1']*100:>9.2f}% | "
+            f"{tier2_expanded_res['n_eval']:>8} | "
+            f"{tier2_expanded_res['lat_ms']:>11.2f}"
+        )
+        if tier2_legacy_group_res is not None:
+            print(
+                f"{'Legacy classes (original 108)':<36} | "
+                f"{tier2_legacy_group_res['top1_acc']*100:>9.2f}% | "
+                f"{tier2_legacy_group_res['top3_acc']*100:>9.2f}% | "
+                f"{tier2_legacy_group_res['macro_f1']*100:>9.2f}% | "
+                f"{tier2_legacy_group_res['n_eval']:>8} | "
+                f"{tier2_legacy_group_res['lat_ms']:>11.2f}"
+            )
+        if tier2_new_group_res is not None:
+            print(
+                f"{'New classes (expanded 39)':<36} | "
+                f"{tier2_new_group_res['top1_acc']*100:>9.2f}% | "
+                f"{tier2_new_group_res['top3_acc']*100:>9.2f}% | "
+                f"{tier2_new_group_res['macro_f1']*100:>9.2f}% | "
+                f"{tier2_new_group_res['n_eval']:>8} | "
+                f"{tier2_new_group_res['lat_ms']:>11.2f}"
+            )
+        print("-" * 112)
+        if tier2_expanded_res.get("n_skipped_missing_label", 0):
+            print(f"Skipped (label not in map)           : {tier2_expanded_res['n_skipped_missing_label']}")
+
+    if tfidf_tier2_res is not None:
+        print("\nChar TF-IDF + RF Tier 2 (expanded JSONL, residual input_text)")
+        print("-" * 112)
+        print(f"{'Subset':<36} | {'Top-1 Acc':<10} | {'Top-3 Acc':<10} | {'Macro F1':<10} | {'N Eval':<8} | {'Latency (ms)':<12}")
+        print("-" * 112)
+        print(
+            f"{'Full expanded test (all classes)':<36} | "
+            f"{tfidf_tier2_res['top1_acc']*100:>9.2f}% | "
+            f"{tfidf_tier2_res['top3_acc']*100:>9.2f}% | "
+            f"{tfidf_tier2_res['macro_f1']*100:>9.2f}% | "
+            f"{tfidf_tier2_res['n_eval']:>8} | "
+            f"{tfidf_tier2_res['lat_ms']:>11.2f}"
+        )
+        if tfidf_legacy_group_res is not None:
+            print(
+                f"{'Legacy class group (original 108)':<36} | "
+                f"{tfidf_legacy_group_res['top1_acc']*100:>9.2f}% | "
+                f"{tfidf_legacy_group_res['top3_acc']*100:>9.2f}% | "
+                f"{tfidf_legacy_group_res['macro_f1']*100:>9.2f}% | "
+                f"{tfidf_legacy_group_res['n_eval']:>8} | "
+                f"{tfidf_legacy_group_res['lat_ms']:>11.2f}"
+            )
+        if tfidf_new_group_res is not None:
+            print(
+                f"{'New class group (expanded 39)':<36} | "
+                f"{tfidf_new_group_res['top1_acc']*100:>9.2f}% | "
+                f"{tfidf_new_group_res['top3_acc']*100:>9.2f}% | "
+                f"{tfidf_new_group_res['macro_f1']*100:>9.2f}% | "
+                f"{tfidf_new_group_res['n_eval']:>8} | "
+                f"{tfidf_new_group_res['lat_ms']:>11.2f}"
+            )
+        print("-" * 112)
+
+    print("\nEnd-to-End Sweep (CodeBERT Tier 2)")
     print("-" * 112)
     print(f"{'Benign Ratio':<14} | {'Latency (ms)':<12} | {'Tier 2 Trigger':<14} | {'Binary Acc':<11} | {'Balanced Acc':<13}")
     print("-" * 112)
@@ -603,6 +887,21 @@ def main() -> None:
             f"{full_res['binary_acc']*100:>10.2f}% | "
             f"{full_res['binary_bal_acc']*100:>12.2f}%"
         )
+
+    if full_results_tfidf is not None:
+        print("\nEnd-to-End Sweep (TF-IDF Char RF Tier 2)")
+        print("-" * 112)
+        print(f"{'Benign Ratio':<14} | {'Latency (ms)':<12} | {'Tier 2 Trigger':<14} | {'Binary Acc':<11} | {'Balanced Acc':<13}")
+        print("-" * 112)
+        for ratio in traffic_ratios:
+            full_res = full_results_tfidf[ratio]
+            print(
+                f"{ratio:<14.2f} | "
+                f"{full_res['end_to_end_lat_ms']:>11.2f} | "
+                f"{full_res['tier2_trigger_rate']*100:>13.2f}% | "
+                f"{full_res['binary_acc']*100:>10.2f}% | "
+                f"{full_res['binary_bal_acc']*100:>12.2f}%"
+            )
     print("=" * 112)
 
     roc_path = LOG_DIR / "ieee_roc_curve_threshold_aware.png"
@@ -628,8 +927,15 @@ def main() -> None:
             "obfuscation_flag_rate": tier1_res["obfuscation_flag_rate"],
             "deobfuscation_change_rate": tier1_res["deobfuscation_change_rate"],
         },
-        "tier2": tier2_res,
-        "full_pipeline": full_results,
+        "tier2_legacy_csv": tier2_res,
+        "tier2_expanded": tier2_expanded_res,
+        "tier2_legacy_group": tier2_legacy_group_res,
+        "tier2_new_group": tier2_new_group_res,
+        "tfidf_tier2_legacy_csv": tfidf_tier2_res,
+        "tfidf_tier2_legacy_group": tfidf_legacy_group_res,
+        "tfidf_tier2_new_group": tfidf_new_group_res,
+        "full_pipeline_codebert": full_results,
+        "full_pipeline_tfidf": full_results_tfidf,
         "real_world_benign": real_world_res,
     }
 

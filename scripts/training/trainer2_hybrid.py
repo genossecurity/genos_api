@@ -30,7 +30,7 @@ from typing import Dict, List, Sequence, Tuple
 import torch
 import torch.nn as nn
 from torch.amp import GradScaler, autocast
-from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
+from torch.utils.data import DataLoader, Dataset, Subset
 from tqdm import tqdm
 from transformers import AutoTokenizer, RobertaModel, get_cosine_schedule_with_warmup
 
@@ -148,18 +148,33 @@ class ResidualDataset(Dataset):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Sampler / metrics
+# Balanced oversampling / metrics
 # ─────────────────────────────────────────────────────────────────────────────
 
-def build_weighted_sampler(
-    labels: Sequence[int], num_classes: int,
-) -> Tuple[WeightedRandomSampler, torch.Tensor]:
-    lt = torch.tensor(labels, dtype=torch.long)
-    counts = torch.bincount(lt, minlength=num_classes).float().clamp_min(1.0)
-    cw = torch.sqrt(counts.sum() / (num_classes * counts))
-    sw = cw[lt]
-    sampler = WeightedRandomSampler(sw.double(), len(lt), replacement=True)
-    return sampler, cw
+def build_balanced_indices(
+    labels: Sequence[int], num_classes: int, seed: int = 42,
+) -> List[int]:
+    """Return indices that oversample minority classes so every class has the
+    same count (= the median class count, capped at the majority class size)."""
+    rng = random.Random(seed)
+    class_indices: Dict[int, List[int]] = {c: [] for c in range(num_classes)}
+    for idx, lbl in enumerate(labels):
+        class_indices[lbl].append(idx)
+
+    counts = [len(v) for v in class_indices.values() if v]
+    target = int(sorted(counts)[len(counts) // 2])  # median count
+    target = max(target, min(counts) * 4)            # at least 4x the smallest class
+
+    balanced: List[int] = []
+    for cls, idxs in class_indices.items():
+        if not idxs:
+            continue
+        needed = target - len(idxs)
+        balanced.extend(idxs)
+        if needed > 0:
+            balanced.extend(rng.choices(idxs, k=needed))
+    rng.shuffle(balanced)
+    return balanced
 
 
 def macro_metrics(targets, preds, topk_preds, num_classes) -> dict:
@@ -236,12 +251,15 @@ def evaluate_model(
 # Resolve paths
 # ─────────────────────────────────────────────────────────────────────────────
 
-def resolve_jsonl(filename: str) -> Path:
-    candidates = [
+def resolve_jsonl(filename: str, data_dir: str | None = None) -> Path:
+    candidates = []
+    if data_dir:
+        candidates.append(Path(data_dir) / filename)
+    candidates.extend([
         BASE_DIR / "data" / "training" / "genos_residual" / filename,
         BASE_DIR / "data" / "training" / "genos_dataset" / filename,
         Path(filename),
-    ]
+    ])
     for c in candidates:
         if c.exists():
             return c
@@ -296,26 +314,30 @@ def train_residual(args: argparse.Namespace) -> None:
     # Datasets
     train_f, val_f, test_f = variant_filenames(v)
     train_ds = ResidualDataset(
-        resolve_jsonl(train_f), label_map, tokenizer,
+        resolve_jsonl(train_f, args.data_dir), label_map, tokenizer,
         max_len=args.max_len, phase="Train",
     )
     val_ds = ResidualDataset(
-        resolve_jsonl(val_f), label_map, tokenizer,
+        resolve_jsonl(val_f, args.data_dir), label_map, tokenizer,
         max_len=args.max_len, phase="Val",
     )
     test_ds = ResidualDataset(
-        resolve_jsonl(test_f), label_map, tokenizer,
+        resolve_jsonl(test_f, args.data_dir), label_map, tokenizer,
         max_len=args.max_len, phase="Test",
     )
 
-    sampler, sampler_cw = build_weighted_sampler(train_ds.labels, num_classes)
+    balanced_indices = build_balanced_indices(train_ds.labels, num_classes, seed=args.seed)
+    balanced_train_ds = Subset(train_ds, balanced_indices)
+    print(f"[*] Balanced train set: {len(balanced_train_ds)} samples "
+          f"(from {len(train_ds.labels)} original, target per class = "
+          f"{len(balanced_train_ds) // num_classes})")
 
-    mkloader = lambda ds, samp=None, shuf=False: DataLoader(
-        ds, batch_size=args.micro_batch_size, sampler=samp,
+    mkloader = lambda ds, shuf=False: DataLoader(
+        ds, batch_size=args.micro_batch_size,
         shuffle=shuf, pin_memory=pin, num_workers=args.num_workers,
         persistent_workers=args.num_workers > 0,
     )
-    train_loader = mkloader(train_ds, samp=sampler)
+    train_loader = mkloader(balanced_train_ds, shuf=True)
     val_loader   = mkloader(val_ds)
     test_loader  = mkloader(test_ds)
 
@@ -347,8 +369,7 @@ def train_residual(args: argparse.Namespace) -> None:
         {"params": model.classifier.parameters(), "lr": args.head_lr},
     ], weight_decay=args.weight_decay)
 
-    ce_w = (sampler_cw / sampler_cw.mean()).to(device)
-    criterion = nn.CrossEntropyLoss(weight=ce_w, label_smoothing=args.label_smoothing)
+    criterion = nn.CrossEntropyLoss(label_smoothing=args.label_smoothing)
 
     grad_acc = max(1, args.effective_batch_size // args.micro_batch_size)
     steps_per_ep = math.ceil(len(train_loader) / grad_acc)
@@ -516,11 +537,11 @@ def eval_only(args: argparse.Namespace) -> None:
     _, val_f, test_f = variant_filenames(v)
 
     val_ds = ResidualDataset(
-        resolve_jsonl(val_f), label_map, tokenizer,
+        resolve_jsonl(val_f, args.data_dir), label_map, tokenizer,
         max_len=args.max_len, phase="Val",
     )
     test_ds = ResidualDataset(
-        resolve_jsonl(test_f), label_map, tokenizer,
+        resolve_jsonl(test_f, args.data_dir), label_map, tokenizer,
         max_len=args.max_len, phase="Test",
     )
 
@@ -598,6 +619,8 @@ if __name__ == "__main__":
     p.add_argument("--deterministic", action="store_true")
     p.add_argument("--eval-only", action="store_true",
                    help="Skip training; evaluate existing checkpoint")
+    p.add_argument("--data-dir", type=str, default=None,
+                   help="Optional directory containing specialist_*_variant_{a,b,c}.jsonl")
 
     args = p.parse_args()
     if args.eval_only:

@@ -5,6 +5,7 @@ import math
 import os
 import re
 
+import joblib
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -534,9 +535,12 @@ class GenosEngine:
         self.t1.load_state_dict(torch.load(t1_path, map_location=self.device, weights_only=True), strict=False)
         self.t1.eval()
 
-        self.t2 = Tier2_Specialist(num_classes=len(self.s_map)).to(self.device)
-        self.t2.load_state_dict(torch.load(t2_path, map_location=self.device, weights_only=True), strict=False)
-        self.t2.eval()
+        # Tier-2: TF-IDF char n-gram + RF pipeline (replaces CodeBERT specialist)
+        tfidf_path = _resolve_asset_path("models/specialist_tfidf_char_rf.pkl")
+        self.t2 = joblib.load(tfidf_path)
+        # Build idx→label mapping aligned with the sklearn pipeline's class order
+        tfidf_classes = self.t2.classes_  # int indices in s_map
+        self._tfidf_idx_to_label = {int(c): self.s_map[int(c)] for c in tfidf_classes if int(c) in self.s_map}
 
         self.max_deobfuscation_layers = 5
         self.use_residual_format = use_residual_format and _RESIDUAL_PIPELINE_AVAILABLE
@@ -1545,7 +1549,7 @@ class GenosEngine:
                 reason="Simple operational or health-check command with no strong security-risk features.",
                 policy="benign_operational_override",
                 features=features,
-                should_run_specialist=False,
+                should_run_specialist=True,
             )
 
         high_precision_benign = (
@@ -1578,7 +1582,7 @@ class GenosEngine:
                 reason="High-precision operational admin workflow without attack-oriented indicators.",
                 policy="benign_high_precision_override",
                 features=features,
-                should_run_specialist=False,
+                should_run_specialist=True,
             )
 
         # Admin workflow override: commands matching known admin patterns
@@ -1596,7 +1600,7 @@ class GenosEngine:
                 reason="Recognized admin workflow command with no attack-oriented indicators.",
                 policy="benign_admin_workflow_override",
                 features=features,
-                should_run_specialist=False,
+                should_run_specialist=True,
             )
 
         return None
@@ -1686,16 +1690,10 @@ class GenosEngine:
         features: dict,
         suspicious_signals: list[str],
     ) -> bool:
-        if final_label == "Malicious":
-            return True
-        if final_label != "Suspicious":
-            return False
-        return (
-            class_probs["Suspicious"] >= specialist_suspicious_conf_threshold
-            or high_risk
-            or features.get("has_offensive_tooling")
-            or len(suspicious_signals) >= 2
-        )
+        # Always run the TF-IDF specialist to provide MITRE codes regardless
+        # of gatekeeper label.  The TF-IDF model is lightweight (~90 ms) so
+        # there is no meaningful latency cost.
+        return True
 
     def _route_gatekeeper(self, gate: dict, features: dict, raw_cmd: str, deobfuscated_cmd: str | None = None) -> dict:
         hard_override = self._check_hard_overrides(raw_cmd, deobfuscated_cmd)
@@ -1982,42 +1980,18 @@ class GenosEngine:
                     response["action"] = "requires_context"
 
                 if routed["should_run_specialist"]:
-                    if self.use_residual_format:
-                        t2_text, rule_result = self._build_variant_a_text(raw_cmd.strip())
-                        t2_inputs = self.tokenizer(
-                            t2_text,
-                            return_tensors="pt",
-                            truncation=True,
-                            padding="max_length",
-                            max_length=self.max_length,
-                        ).to(self.device)
-                    else:
-                        t2_inputs = inputs
-                        rule_result = None
+                    t2_text, rule_result = self._build_variant_a_text(raw_cmd.strip())
 
-                    s_logits = self.t2(t2_inputs["input_ids"], t2_inputs["attention_mask"])
-
-                    # Soft prior fusion — additive only, no hard masking
-                    if rule_result is not None:
-                        pv = _build_prior_vector(
-                            rule_result,
-                            self._specialist_map_fwd,
-                            alpha_overrides=self.prior_alphas,
-                        )
-                        pv_tensor = torch.tensor(
-                            pv["prior_vector"], dtype=s_logits.dtype, device=self.device
-                        ).unsqueeze(0)
-                        s_logits = s_logits + pv_tensor
-
-                    s_probs = F.softmax(s_logits / 0.5, dim=1).squeeze(0)
-
-                    top_vals, top_idxs = torch.topk(
-                        s_probs, k=min(3, len(s_probs)), largest=True, sorted=True
-                    )
-
+                    # TF-IDF specialist inference
+                    tfidf_proba = self.t2.predict_proba([t2_text])[0]
+                    top3_pos = tfidf_proba.argsort()[-3:][::-1]
                     raw_codes = [
-                        {"code": self.s_map[idx.item()], "confidence": round(val.item() * 100, 2)}
-                        for idx, val in zip(top_idxs, top_vals)
+                        {
+                            "code": self._tfidf_idx_to_label.get(int(self.t2.classes_[i]), "?"),
+                            "confidence": round(float(tfidf_proba[i]) * 100, 2),
+                        }
+                        for i in top3_pos
+                        if self._tfidf_idx_to_label.get(int(self.t2.classes_[i]))
                     ]
 
                     deob_codes = []
@@ -2045,44 +2019,18 @@ class GenosEngine:
                         payload_for_t2 = decoded_payload or current_cmd
 
                         try:
-                            if self.use_residual_format:
-                                deob_t2_text, deob_rule_result = self._build_variant_a_text(payload_for_t2)
-                                deob_t2_inputs = self.tokenizer(
-                                    deob_t2_text,
-                                    return_tensors="pt",
-                                    truncation=True,
-                                    padding="max_length",
-                                    max_length=self.max_length,
-                                ).to(self.device)
-                            else:
-                                deob_t2_inputs = self.tokenizer(
-                                    payload_for_t2.lower().strip(),
-                                    return_tensors="pt",
-                                    truncation=True,
-                                    padding="max_length",
-                                    max_length=self.max_length,
-                                ).to(self.device)
+                            deob_t2_text, deob_rule_result = self._build_variant_a_text(payload_for_t2)
 
-                            deob_s_logits = self.t2(deob_t2_inputs["input_ids"], deob_t2_inputs["attention_mask"])
-
-                            if deob_rule_result is not None:
-                                deob_pv = _build_prior_vector(
-                                    deob_rule_result,
-                                    self._specialist_map_fwd,
-                                    alpha_overrides=self.prior_alphas,
-                                )
-                                deob_pv_tensor = torch.tensor(
-                                    deob_pv["prior_vector"], dtype=deob_s_logits.dtype, device=self.device
-                                ).unsqueeze(0)
-                                deob_s_logits = deob_s_logits + deob_pv_tensor
-
-                            deob_s_probs = F.softmax(deob_s_logits / 0.5, dim=1).squeeze(0)
-                            deob_top_vals, deob_top_idxs = torch.topk(
-                                deob_s_probs, k=min(3, len(deob_s_probs)), largest=True, sorted=True
-                            )
+                            # TF-IDF inference on deobfuscated payload
+                            deob_proba = self.t2.predict_proba([deob_t2_text])[0]
+                            deob_top3_pos = deob_proba.argsort()[-3:][::-1]
                             deob_codes = [
-                                {"code": self.s_map[idx.item()], "confidence": round(val.item() * 100, 2)}
-                                for idx, val in zip(deob_top_idxs, deob_top_vals)
+                                {
+                                    "code": self._tfidf_idx_to_label.get(int(self.t2.classes_[i]), "?"),
+                                    "confidence": round(float(deob_proba[i]) * 100, 2),
+                                }
+                                for i in deob_top3_pos
+                                if self._tfidf_idx_to_label.get(int(self.t2.classes_[i]))
                             ]
                         except Exception:
                             deob_codes = []
