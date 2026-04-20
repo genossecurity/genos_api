@@ -6,7 +6,7 @@
   PODIUM
   ──────────────────────────────────────────────────────────────────────────────
    🥇  1st   Claude Opus 4-7  (Anthropic)     590 / 711   83.0%    1730ms avg
-   🥈  2nd   Genos   (Local Model)   577 / 711   81.2%      18ms avg
+   🥈  2nd   Genos            (Local Model)   577 / 711   81.2%      18ms avg
    🥉  3rd   GPT-5.4          (OpenAI)        573 / 711   80.6%    1066ms avg
   ──────────────────────────────────────────────────────────────────────────────
 
@@ -59,7 +59,7 @@
 
   CORPUS: 711 deduplicated commands (251 Benign, 252 Suspicious, 208 Malicious)
   GRADING: easy/medium/hard difficulty labels assigned per-command
-  MODEL:   Genos = CodeBERT fine-tuned (125M params), local GPU inference
+  MODEL:   Genos = fine-tuned (125M params), local GPU inference
            GPT-5.4 = OpenAI API, Claude Opus 4-7 = Anthropic API
 
 ══════════════════════════════════════════════════════════════════════════════════
