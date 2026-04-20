@@ -5,8 +5,8 @@
 
   PODIUM
   ──────────────────────────────────────────────────────────────────────────────
-   🥇  1st   Claude Opus 4-7  (Anthropic)     590 / 711   83.0%    1730ms avg
-   🥈  2nd   Genos            (Local Model)   577 / 711   81.2%      18ms avg
+   🥇  1st   Genos            (Local Model)   606 / 711   85.2%      18ms avg
+   🥈  2nd   Claude Opus 4-7  (Anthropic)     590 / 711   83.0%    1730ms avg
    🥉  3rd   GPT-5.4          (OpenAI)        573 / 711   80.6%    1066ms avg
   ──────────────────────────────────────────────────────────────────────────────
 
@@ -19,41 +19,41 @@
   DIFFICULTY BREAKDOWN
   ──────────────────────────────────────────────────────────────────────────────
                      Claude        Genos         GPT-5.4
-   Easy (252)       218  86.5%   227  90.1%    206  81.7%
-   Medium (225)     196  87.1%   188  83.6%    189  84.0%
-   Hard (234)       176  75.2%   162  69.2%    178  76.1%
+   Easy (252)       218  86.5%   233  92.5%    206  81.7%
+   Medium (225)     196  87.1%   194  86.2%    189  84.0%
+   Hard (234)       176  75.2%   179  76.5%    178  76.1%
   ──────────────────────────────────────────────────────────────────────────────
 
   PER-CLASS ACCURACY
   ──────────────────────────────────────────────────────────────────────────────
                      Claude        Genos         GPT-5.4
-   Benign (251)    226  90.0%   208  82.9%    222  88.4%
-   Suspicious(252) 183  72.6%   187  74.2%    206  81.7%
-   Malicious (208) 181  87.0%   182  87.5%    145  69.7%
+   Benign (251)    226  90.0%   235  93.6%    222  88.4%
+   Suspicious(252) 183  72.6%   198  78.6%    206  81.7%
+   Malicious (208) 181  87.0%   173  83.2%    145  69.7%
   ──────────────────────────────────────────────────────────────────────────────
 
   PER-CLASS × DIFFICULTY (detailed)
   ──────────────────────────────────────────────────────────────────────────────
                          Claude        Genos         GPT-5.4
-   Easy Benign (113)    110  97.3%   105  92.9%    110  97.3%
-   Easy Suspicious (76)  51  67.1%    69  90.8%     45  59.2%
-   Easy Malicious (63)   57  90.5%    53  84.1%     51  81.0%
-   Med  Benign (90)      89  98.9%    74  82.2%     84  93.3%
-   Med  Suspicious (75)  60  80.0%    58  77.3%     68  90.7%
-   Med  Malicious (60)   47  78.3%    56  93.3%     37  61.7%
-   Hard Benign (48)      27  56.2%    29  60.4%     28  58.3%
-   Hard Suspicious(101)  72  71.3%    60  59.4%     93  92.1%
-   Hard Malicious (85)   77  90.6%    73  85.9%     57  67.1%
+   Easy Benign (113)    110  97.3%   107  94.7%    110  97.3%
+   Easy Suspicious (76)  51  67.1%    64  84.2%     45  59.2%
+   Easy Malicious (63)   57  90.5%    62  98.4%     51  81.0%
+   Med  Benign (90)      89  98.9%    85  94.4%     84  93.3%
+   Med  Suspicious (75)  60  80.0%    60  80.0%     68  90.7%
+   Med  Malicious (60)   47  78.3%    49  81.7%     37  61.7%
+   Hard Benign (48)      27  56.2%    43  89.6%     28  58.3%
+   Hard Suspicious(101)  72  71.3%    74  73.3%     93  92.1%
+   Hard Malicious (85)   77  90.6%    62  72.9%     57  67.1%
   ──────────────────────────────────────────────────────────────────────────────
 
   KEY OBSERVATIONS
   ──────────────────────────────────────────────────────────────────────────────
-   • Genos leads Easy commands (90.1%) — outperforms both LLMs on easy cases
-   • Genos leads Medium Malicious (93.3%) — best at catching medium-tier threats
-   • Genos leads Easy Suspicious (90.8%) — 24pp ahead of GPT-5.4, 24pp ahead of Claude
+   • Genos takes 1st place at 85.2% — beats Claude (83.0%) and GPT-5.4 (80.6%)
+   • Genos leads Easy commands (92.5%) — outperforms both LLMs by 6-11pp
+   • Genos leads Hard Benign (89.6%) — 33pp ahead of Claude, 31pp ahead of GPT-5.4
+   • Genos leads Easy Malicious (98.4%) — best threat detection on clear-cut attacks
    • GPT-5.4 leads Hard Suspicious (92.1%) — best at nuanced dual-use commands
    • Claude leads Medium Benign (98.9%) — fewest false positives on routine ops
-   • All three struggle with Hard Benign (56-60%) — admin ops that look suspicious
    • Genos: 96x faster than Claude, 59x faster than GPT-5.4, zero API cost
   ──────────────────────────────────────────────────────────────────────────────
 

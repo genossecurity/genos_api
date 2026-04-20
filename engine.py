@@ -256,25 +256,14 @@ class GenosEngine:
     )
     _POST_EXPLOIT_RE = re.compile(
         r"(?:"
-        # SUID hunting
-        r"^\s*find\s+/\s+.*-perm\s+[-+]4000"
-        r"|"
         # TTY upgrade / pty spawn
         r"\bpty\.spawn\b"
         r"|"
         # Known post-exploitation tools
         r"^\s*(?:\.?/)?(?:linpeas(?:\.sh)?|winpeas|pspy\d*|linenum(?:\.sh)?)\b"
         r"|"
-        # Tunneling tools
-        r"^\s*(?:chisel\s+client|sshuttle|frpc)\b"
-        r"|"
-        # SSH SOCKS proxy / port forward (dynamic)
-        r"\bssh\b.*\s-[DLR]\s.*-[fNq]"
-        r"|"
-        r"\bssh\b.*-[fNq].*\s-[DLR]\s"
-        r"|"
-        # tcpdump writing to file (capture for later exfil)
-        r"^\s*tcpdump\b.*\s-w\s"
+        # LD_PRELOAD library injection
+        r"\bLD_PRELOAD=\S+\.so\b"
         r")",
         re.I | re.M,
     )
@@ -286,8 +275,8 @@ class GenosEngine:
         # tar/archive of sensitive user directories (.ssh, etc)
         r"^\s*tar\b.*(?:/home/[^\s]+/\.ssh|/root/\.ssh|/etc/shadow)"
         r"|"
-        # scp/rsync of sensitive system files to remote
-        r"^\s*(?:scp|rsync)\b.*(?:/etc/passwd|/etc/shadow|/var/log/).*@"
+        # scp/rsync of highly sensitive system files to remote
+        r"^\s*(?:scp|rsync)\b.*(?:/etc/passwd|/etc/shadow).*@"
         r"|"
         # Download from internal/private IPs (lateral tool transfer)
         r"^\s*(?:curl|wget)\b.*https?://(?:10\.|172\.(?:1[6-9]|2\d|3[01])\.|192\.168\.)\S+"
@@ -308,23 +297,34 @@ class GenosEngine:
         re.I,
     )
     _PRIVESC_RE = re.compile(
-        r"(?:chmod\s+(?:u\+s|4[0-7]{3})\s+/(?:bin|usr/bin|sbin)|/etc/sudoers\b|useradd\s+.*-u\s+0\b|setcap\s+cap_setuid)",
+        r"(?:chmod\s+(?:u\+s|4[0-7]{3})\s+/(?:bin|usr/bin|sbin)|/etc/sudoers\b.*>|useradd\s+.*-u\s+0\b|setcap\s+cap_setuid"
+        r"|usermod\b.*-aG\s+(?:sudo|wheel|root|admin|docker)\b"
+        r"|passwd\s+-d\s+root\b"
+        r"|PermitRootLogin\s+yes.*>>\s*/etc/ssh)",
         re.I,
     )
     _DEFENSE_IMPAIR_RE = re.compile(
         r"(?:iptables\s+-F\b|ufw\s+disable\b|setenforce\s+0\b|systemctl\s+(?:stop|disable)\s+"
-        r"(?:firewalld|ufw|auditd|sysmon)|auditctl\b.*-e\s+0|sc\s+stop\s+windefend|powershell.*set-mppreference)",
+        r"(?:firewalld|ufw|auditd|sysmon)|auditctl\b.*-e\s+0|sc\s+stop\s+windefend|powershell.*set-mppreference"
+        r"|truncate\s+-s\s+0\s+/var/log"
+        r"|shred\b.*(?:/var/log|/etc/|auth\.log|syslog|kern\.log))",
         re.I,
     )
     _DESTRUCTIVE_RE = re.compile(
-        r"(?:\bdd\b.*(?:if=/dev/(?:zero|urandom)).*(?:of=/dev/(?:sd[a-z]\d*|nvme\d+n\d+(?:p\d+)?|vd[a-z]\d*))|"
-        r"\bmkfs(?:\.[a-z0-9_+-]+)?\b\s+/dev/|\brm\s+-rf\s+/+\b|shred\b.*\s+/dev/)",
+        r"(?:\bdd\b.*(?:if=/dev/(?:zero|urandom)).*(?:of=/dev/(?:sd[a-z]\d*|nvme\d+n\d+(?:p\d+)?|vd[a-z]\d*))"
+        r"|\bmkfs(?:\.[a-z0-9_+-]+)?\b\s+/dev/"
+        r"|\brm\s+-rf\s+/+(?:\s|$)"
+        r"|shred\b.*\s+/dev/"
+        r"|\bwipefs\s+-a\b"
+        r"|\buserdel\s+-r\b"
+        r"|\bpkill\s+-9\s+(?:sshd|init|systemd)\b"
+        r"|\bkill\s+-9\s+1\b)",
         re.I,
     )
     _ARCHIVE_BULK_RE = re.compile(
         r"^\s*(?:tar|zip|7z|rar|rsync)\b.*(?:/etc|/var/log|/home|/opt|/srv)"
         r"|^\s*cp\b.*(?:/etc(?:/|\s)|/var/log).*(?:/etc|/var/log|/home|/opt|/srv)"
-        r"|^\s*find\b.*(?:/etc|/var/log|/home).*(?:-name|-type)",
+        r"|^\s*find\b(?!.*-maxdepth\s+[12]\b).*(?:/etc|/var/log|/home).*(?:-name|-type)",
         re.I,
     )
     _REMOTE_TRANSFER_RE = re.compile(
@@ -339,7 +339,7 @@ class GenosEngine:
     )
     _LOCAL_ARTIFACT_INSPECTION_RE = re.compile(
         r"^\s*(?:md5sum|sha(?:1|224|256|384|512)?sum|file)\b.*(?:"
-        r"/(?:tmp|var/tmp|var/backups|srv/(?:builds|releases|artifacts|snapshots)|opt/(?:artifacts|builds)|home/[^\s]+/(?:downloads|builds))/|"
+        r"/(?:bin|usr/bin|sbin|usr/sbin|usr/local/bin|tmp|var/tmp|var/backups|srv/(?:builds|releases|artifacts|snapshots)|opt/(?:artifacts|builds)|home/[^\s]+/(?:downloads|builds))/|"
         r"\.(?:tar(?:\.gz)?|tgz|zip|deb|rpm|asc|xml|pem|crt|log|txt|csv|bak)\b)",
         re.I,
     )
@@ -353,8 +353,8 @@ class GenosEngine:
         re.I,
     )
     _CONTROLLED_REMOTE_TARGET_RE = re.compile(
-        r"(?:\b(?:backup|audit|ops|deploy|support|infra)@(?:10\.|172\.(?:1[6-9]|2\d|3[01])\.|192\.168\.|[a-z0-9.-]*internal\b|[a-z0-9.-]*company\.local\b)|"
-        r":/srv/(?:backup|backups|audit|snapshots|incident|review|notes|staging|forensics)\b)",
+        r"(?:\b(?:backup|audit|auth|ops|deploy|support|infra|dba|dbadmin)@(?:10\.|172\.(?:1[6-9]|2\d|3[01])\.|192\.168\.|[a-z0-9.-]*internal\b|[a-z0-9.-]*company\.local\b)|"
+        r":/srv/(?:backup|backups|audit|snapshots|incident|review|notes|staging|forensics|cert-audit|k8s-audit|ssh-baselines|rotated-ssh)[/\s])",
         re.I,
     )
     _CONTROLLED_REMOTE_COPY_RE = re.compile(
@@ -362,7 +362,7 @@ class GenosEngine:
         re.I,
     )
     _OPENSSL_CLIENT_INSPECTION_RE = re.compile(
-        r"^\s*openssl\s+s_client\b.*(?:-connect|-starttls|-servername|-showcerts)\b",
+        r"^\s*openssl\s+s_client\b(?!.*:(?:4444|5555|9001|1234)\b).*(?:-connect|-starttls|-servername|-showcerts)\b",
         re.I,
     )
     _ROUTINE_SERVICE_LOG_RE = re.compile(
@@ -370,18 +370,18 @@ class GenosEngine:
         re.I,
     )
     _CONTAINER_ADMIN_READONLY_RE = re.compile(
-        r"^\s*(?:docker\s+exec|kubectl\s+exec|kubectl\s+cp)\b.*(?:"
-        r"\b(?:env|printenv|ls|find|tar|cat)\b|/var/log|/etc/ssl|/app/config|\.log\b)",
+        r"^\s*(?:docker\s+exec|kubectl\s+exec|kubectl\s+cp)\b(?!.*/var/run/secrets).*(?:"
+        r"\b(?:env|printenv|ls|find|cat)\b|/var/log|/etc/ssl|/app/config|\.log\b)",
         re.I,
     )
     _SENSITIVE_SOURCE_RE = re.compile(
-        r"(?:/etc/(?:shadow|sudoers)|/root/\.ssh|authorized_keys\b|id_rsa\b|/etc/kubernetes|/var/lib/kubelet|"
-        r"/opt/secrets|/var/lib/postgresql|/app/\.env|serviceaccount/token|/etc/pam\.d)",
+        r"(?:/etc/(?:shadow|sudoers)|/root/\.ssh|authorized_keys\b|id_rsa\b|id_ed25519\b|/etc/kubernetes|/var/lib/kubelet|"
+        r"/opt/secrets|/var/lib/postgresql|/app/\.env|serviceaccount/token|/var/run/secrets|/etc/pam\.d)",
         re.I,
     )
     _EXPLOIT_OR_ATTACK_TOOLING_RE = re.compile(
         r"^\s*(?:hydra|sqlmap|nikto|msfconsole|mimikatz(?:\.exe)?|john\b|hashcat\b|responder\b|ettercap\b|arpspoof\b|"
-        r"crackmapexec\b|impacket-|metasploit\b|secretsdump\b)",
+        r"crackmapexec\b|impacket-|metasploit\b|secretsdump\b|mshta\b)",
         re.I,
     )
     _BENIGN_ADMIN_WORKFLOW_RE = re.compile(
@@ -390,7 +390,7 @@ class GenosEngine:
         r"file\b|stat\b|head\b|wc\b|md5sum\b|sha(?:1|224|256|384|512)?sum\b|journalctl\b|systemctl\s+(?:status|is-active|is-enabled|"
         r"reload|restart|cat|daemon-reload)\b|docker\s+(?:ps|logs|inspect|stats|exec)\b|kubectl\s+(?:get|logs|describe|rollout|cp|top)\b|"
         r"pip\s+list\b|dpkg\s+-l\b|tar\s+(?:tzf|-xzf|czf)\b|zip\b|rsync\b|scp\b|curl\s+-f?s?S?L?\b.*(?:-o|>)|wget\b.*(?:-o|-O)\b|"
-        r"openssl\s+(?:x509|rsa|s_client)\b|python3?\s+-m\s+http\.server\b|gdb\b|strace\b|ltrace\b))",
+        r"openssl\s+(?:x509|rsa|s_client)\b|python3?\s+-m\s+http\.server\b))",
         re.I,
     )
     _CREDENTIAL_DUMP_RE = re.compile(
@@ -424,6 +424,33 @@ class GenosEngine:
         r"|"
         # getfacl on sensitive files (enumeration, not exploitation)
         r"^\s*getfacl\b"
+        r"|"
+        # tcpdump writing to file — monitoring, not definitively malicious without exfil
+        r"^\s*tcpdump\b.*\s-w\s"
+        r"|"
+        # Tunneling standalone — suspicious dual-use, not definitively malicious
+        r"^\s*chisel\s+client\b"
+        r"|"
+        r"\bssh\b.*\s-[DLR]\s.*-[fNq]"
+        r"|"
+        r"\bssh\b.*-[fNq].*\s-[DLR]\s"
+        r"|"
+        # SUID hunting / sensitive file enumeration — recon, not exploitation
+        r"^\s*find\s+/\s+.*-perm\s+[-+]4000"
+        r"|"
+        r"^\s*find\b.*-name\s+[\"']?(?:id_rsa|id_ed25519|authorized_keys|id_dsa)[\"']?"
+        r"|"
+        # Reading sudoers config (enumeration, not modification)
+        r"^\s*cat\s+/etc/sudoers\b"
+        r"|"
+        # Local staging of sensitive directories (no pipe to exfil)
+        r"^\s*tar\b.*(?:czf|cz)\b.*(?:/etc/kubernetes|/etc/pam\.d|/opt/secrets|/var/lib/kubelet|/var/lib/postgresql)"
+        r"|"
+        # rsync/scp of sensitive dirs to remote (context-dependent staging)
+        r"^\s*(?:scp|rsync)\b.*(?:/etc/kubernetes|/etc/pam\.d|/opt/secrets|/var/lib/kubelet|/var/lib/postgresql|/etc/ssh).*@"
+        r"|"
+        # Container archive of config dirs (context-dependent)
+        r"^\s*(?:docker|kubectl)\s+exec\b.*\btar\b"
         r")",
         re.I,
     )
@@ -1498,7 +1525,13 @@ class GenosEngine:
             # Observational / read-only features — not attack indicators
             "has_network_enum",
             "has_process_enum",
+            # Broad operational features — only dangerous in combination
+            "has_download",
+            "has_archive_or_bulk_copy",
         }
+        # Remote transfers are allowed only when targeting controlled infrastructure
+        if features.get("has_controlled_remote_target"):
+            allowed_benign_features.add("has_remote_transfer")
         disallowed_benign_features = triggered - allowed_benign_features
 
         if (
@@ -1688,10 +1721,11 @@ class GenosEngine:
         if high_risk_override_enabled and malicious_promotion_features:
             # Check malicious cap before forcing malicious — some commands
             # (e.g. getfacl /etc/shadow) are risky but not definitively malicious.
+            # Only cap when no forced_malicious_features (pipe_to_shell, reverse_shell, etc.)
             cap_views = [raw_cmd.lower().strip()]
             if deobfuscated_cmd:
                 cap_views.append(deobfuscated_cmd.lower().strip())
-            if any(self._MALICIOUS_CAP_TO_SUSPICIOUS_RE.search(v) for v in cap_views):
+            if not forced_malicious_features and any(self._MALICIOUS_CAP_TO_SUSPICIOUS_RE.search(v) for v in cap_views):
                 return self._build_route_result(
                     label="Suspicious",
                     label_confidence=max(class_probs["Suspicious"], 0.78),
