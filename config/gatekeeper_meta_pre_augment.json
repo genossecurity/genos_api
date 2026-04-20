@@ -1,0 +1,92 @@
+{
+  "seed": 42,
+  "epochs": 5,
+  "micro_batch_size": 32,
+  "effective_batch_size": 256,
+  "max_len": 256,
+  "learning_rate": 1e-05,
+  "weight_decay": 0.01,
+  "label_smoothing": 0.05,
+  "balanced_sampling": true,
+  "sampling_power": 1.0,
+  "class_weight_power": 0.5,
+  "num_classes": 3,
+  "label_names": [
+    "Benign",
+    "Malicious",
+    "Context_Dependent"
+  ],
+  "best_epoch": 5,
+  "class_weights": [
+    0.7786038517951965,
+    1.0539189577102661,
+    1.4904664754867554
+  ],
+  "val_metrics": {
+    "accuracy": 0.9604879628630033,
+    "macro_f1": 0.95445256669059,
+    "macro_precision": 0.9457747888574316,
+    "macro_recall": 0.9641477401162444,
+    "per_class": {
+      "Benign": {
+        "precision": 0.9887960888164595,
+        "recall": 0.9528857479387515,
+        "f1": 0.9705088473457962,
+        "tp": 4854,
+        "fp": 55,
+        "fn": 240
+      },
+      "Malicious": {
+        "precision": 0.9377174669450243,
+        "recall": 0.9697732997481109,
+        "f1": 0.9534760304263222,
+        "tp": 2695,
+        "fp": 179,
+        "fn": 84
+      },
+      "Context_Dependent": {
+        "precision": 0.9108108108108108,
+        "recall": 0.9697841726618706,
+        "f1": 0.9393728222996516,
+        "tp": 1348,
+        "fp": 132,
+        "fn": 42
+      }
+    },
+    "loss": 0.1300474634492782
+  },
+  "test_metrics": {
+    "accuracy": 0.94734161743736,
+    "macro_f1": 0.9346595027167733,
+    "macro_precision": 0.9316207930088112,
+    "macro_recall": 0.9382147784024273,
+    "per_class": {
+      "Benign": {
+        "precision": 0.9739047619047619,
+        "recall": 0.9470272272643082,
+        "f1": 0.9602779603718659,
+        "tp": 5113,
+        "fp": 137,
+        "fn": 286
+      },
+      "Malicious": {
+        "precision": 0.9282945736434108,
+        "recall": 0.9755600814663951,
+        "f1": 0.9513406156901688,
+        "tp": 2874,
+        "fp": 222,
+        "fn": 72
+      },
+      "Context_Dependent": {
+        "precision": 0.8926630434782609,
+        "recall": 0.8920570264765784,
+        "f1": 0.8923599320882851,
+        "tp": 1314,
+        "fp": 158,
+        "fn": 159
+      }
+    },
+    "loss": 0.1658505509501442
+  },
+  "model_path": "/home/snake/genos_api/genos_api/models/gatekeeper.pt"
+}

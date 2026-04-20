@@ -92,27 +92,41 @@ class TestResult:
 
 def load_commands(path: str) -> List[CommandCase]:
     cases: List[CommandCase] = []
+    known_difficulties = {"easy", "medium", "hard", "unspecified"}
+    known_labels = {"benign", "suspicious", "malicious"}
     with open(path, "r", encoding="utf-8") as f:
         idx = 0
         for line in f:
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
-            parts = line.split("|", 2)
-            if len(parts) not in (2, 3):
-                continue
-            idx += 1
-            if len(parts) == 3:
-                difficulty, label, command = parts
+            # Try graded format first: difficulty|label|command
+            parts3 = line.split("|", 2)
+            if (
+                len(parts3) == 3
+                and parts3[0].strip().lower() in known_difficulties
+                and parts3[1].strip().lower() in known_labels
+            ):
+                difficulty = parts3[0].strip().lower()
+                label = parts3[1].strip().lower()
+                command = parts3[2].strip()
             else:
+                # Legacy format: label|command (command may contain |)
+                parts2 = line.split("|", 1)
+                if len(parts2) != 2:
+                    continue
+                if parts2[0].strip().lower() not in known_labels:
+                    continue
                 difficulty = "unspecified"
-                label, command = parts
+                label = parts2[0].strip().lower()
+                command = parts2[1].strip()
+            idx += 1
             cases.append(
                 CommandCase(
                     id=idx,
-                    difficulty=difficulty.strip().lower(),
-                    label=label.strip().lower(),
-                    command=command.strip(),
+                    difficulty=difficulty,
+                    label=label,
+                    command=command,
                 )
             )
     return cases

