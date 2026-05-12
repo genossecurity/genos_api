@@ -68,7 +68,7 @@ Uses `RobertaTokenizer` from `microsoft/codebert-base`:
 - `truncation`: enabled
 - `return_tensors`: `"pt"`
 
-### Tier 1 — Gatekeeper (binary classifier)
+### Tier 1 — Gatekeeper (3-class neural classifier)
 
 Architecture:
 
@@ -78,39 +78,47 @@ CodeBERT CLS token (768-d)
 → Linear(768, 1024)
 → GELU
 → Dropout(0.2)
-→ Linear(1024, 2)
+→ Linear(1024, 3)
 ```
 
 Inference runs under `torch.no_grad()` and `torch.amp.autocast`:
 - CUDA device: `float16`
 - CPU device: `bfloat16`
 
-`softmax(logits)` → `argmax` → `"Benign"` (index 0) or `"Malicious"` (index 1). Confidence is the raw softmax probability multiplied by 100 (percentage, 2 d.p.).
+The model outputs three class probabilities mapped as:
 
-If the prediction is **Benign**, inference stops here and the result is returned immediately.
+| Model index | Internal label | Public label |
+|---|---|---|
+| 0 | Benign | Benign |
+| 1 | Malicious | Malicious |
+| 2 | Context_Dependent | Suspicious |
 
-### Tier 2 — Specialist (MITRE attribution)
+After the neural forward pass, a **rule-based routing layer** applies over the raw class probabilities. Routing can override the model output based on:
 
-Only runs when Tier 1 predicts Malicious.
+- **Hard overrides** — deterministic pattern matches (e.g. base64-decode piped to shell, reverse shell patterns, credential file reads) that force `Malicious` regardless of model confidence
+- **Malicious promotion** — high-risk behavioral features (e.g. exploit tooling, sensitive sources) that promote weak `Benign`/`Suspicious` predictions to `Malicious`
+- **Malicious cap** — commands that are risky but lack definitive attack indicators (e.g. `chmod 777`, `crontab -l`) are downgraded from `Malicious` to `Suspicious`
+- **Benign safe overrides** — high-confidence benign predictions with no suspicious signals pass through directly
+- **Probability routing** — remaining cases route by thresholds, margin, suspicious signal count, and feature set
 
-Architecture:
+The final public label is one of: `Benign`, `Suspicious`, `Malicious`, or `Context_Dependent` (requires_context action).
+
+### Tier 2 — Specialist (TF-IDF char n-gram + Random Forest)
+
+Tier 2 **always runs**, regardless of the Tier 1 label. Because it uses a TF-IDF + RF pipeline rather than a neural model, inference takes approximately 90 ms and adds negligible overhead.
+
+Model file: `models/specialist_tfidf_char_rf.pkl` (scikit-learn pipeline, loaded with `joblib`).
+
+Input text is built by `_build_variant_a_text()`, which calls the `parser/` module to produce a structured "Variant A" representation of the command:
 
 ```
-CodeBERT CLS token (768-d)
-→ Linear(768, 1024)
-→ LayerNorm(1024)
-→ GELU
-→ Dropout(0.3)
-→ Linear(1024, 1024)
-→ GELU
-→ Linear(1024, num_classes)
+RAW: <normalised command>
+RESIDUAL: <parser-extracted residual tokens>
 ```
 
-`num_classes` comes from the loaded specialist label map (108 classes in the current `config/specialist_map.json`).
+For obfuscated commands the engine runs Tier 2 **twice** — once on the original text, once on the decoded payload — and merges results by taking the highest confidence score per MITRE code. The final response caps at **5** codes.
 
-Temperature scaling is applied before softmax: `softmax(logits / 0.5)`. Temperature `T=0.5` sharpens the distribution, concentrating probability mass on the top predictions.
-
-The top **5** predictions by probability are returned.
+Classes come from `config/specialist_map.json` (108 MITRE techniques). The pipeline's integer class indices are mapped back to MITRE IDs via `_tfidf_idx_to_label`.
 
 ### Engine output schema
 
@@ -119,7 +127,7 @@ The top **5** predictions by probability are returned.
 ```json
 {
   "label": "Malicious",
-  "label_confidence": 99.81,
+  "label_confidence": 0.9981,
   "deobfuscated_cmd": "invoke-expression ...",
   "MITRE_codes": [
     { "code": "T1059", "confidence": 97.43 },
@@ -131,25 +139,46 @@ The top **5** predictions by probability are returned.
 }
 ```
 
+For obfuscated commands with a decoded payload, two additional fields are populated:
+
+```json
+{
+  "decoded_payload": "<deobfuscated text>",
+  "payload_mitre_codes": [ ... ]
+}
+```
+
+For `Context_Dependent` labels:
+
+```json
+{
+  "label": "Context_Dependent",
+  "action": "requires_context",
+  ...
+}
+```
+
 Notes:
-- `label_confidence` is a percentage with 2 decimal places
-- `deobfuscated_cmd` is only populated when the input was flagged as obfuscated; it is `null` otherwise
-- `MITRE_codes` is an empty array for benign results
-- `label_confidence` is already a percentage when it leaves the engine; `app.py`'s `_to_percentage()` normalises legacy values that arrived as raw probabilities (0–1) for backward compatibility
+- `label` is one of: `Benign`, `Suspicious`, `Malicious`, `Context_Dependent`
+- `label_confidence` is a raw probability (0–1) from the engine; `app.py`'s `_to_percentage()` converts it to a percentage for the HTTP response
+- `MITRE_codes` is present on all responses (Tier 2 always runs); it may be empty if no codes exceed the classifier's threshold
+- `deobfuscated_cmd` is `null` when the input was not flagged as obfuscated
 
 ---
 
 ## Models
 
-Both models share the `microsoft/codebert-base` encoder (RoBERTa pre-trained on code, 768-d hidden states). Weights are loaded once at startup and kept resident for the lifetime of the process.
+Tier 1 uses a CodeBERT neural model. Tier 2 uses a TF-IDF char n-gram + Random Forest sklearn pipeline.
 
 | File | Purpose |
 |---|---|
-| `models/gatekeeper.pt` | Tier 1 binary classifier |
-| `models/specialist.pt` | Tier 2 MITRE attribution classifier |
-| `config/specialist_map.json` | Maps integer class indices to MITRE technique IDs |
+| `models/gatekeeper.pt` | Tier 1 — 3-class CodeBERT gatekeeper (Benign / Suspicious / Malicious) |
+| `models/specialist_tfidf_char_rf.pkl` | Tier 2 — active MITRE attribution model (char n-gram TF-IDF + RF) |
+| `models/specialist_tfidf_rf.pkl` | Tier 2 alternative — word-level TF-IDF + RF variant (not loaded by default) |
+| `config/specialist_map.json` | Maps integer class indices to MITRE technique IDs (108 classes) |
+| `config/gatekeeper_meta.json` | Gatekeeper threshold and training metadata read at startup |
 
-Model weights and large training artefacts are tracked with Git LFS (`.gitattributes`).
+Model weights and large artefacts are tracked with Git LFS (`.gitattributes`). The pkl files are excluded from git entirely via `.gitignore` due to their size (2.4–2.8 GB); they must be provided out-of-band (e.g. direct copy, shared storage, or LFS if migrated).
 
 ---
 
@@ -454,15 +483,14 @@ config/
     ...
 
 models/
-  gatekeeper.pt                     Tier 1 binary classifier — active weights (Git LFS)
-  specialist.pt                     Tier 2 MITRE attribution — active weights (Git LFS)
+  gatekeeper.pt                     Tier 1 3-class CodeBERT gatekeeper weights (Git LFS)
+  specialist_tfidf_char_rf.pkl      Tier 2 active model — char n-gram TF-IDF + RF (not in git, >2 GB)
+  specialist_tfidf_rf.pkl           Tier 2 word-level variant (not in git, >2 GB)
   archive/                          Historical and experimental checkpoints (Git LFS)
     gatekeeper_pre_augment.pt
     gatekeeper_pre_context_augment.pt
     specialist_residual_a.pt
     specialist_residual_b.pt
-    specialist_tfidf_char_rf.pkl
-    specialist_tfidf_rf.pkl
 
 data/training/
   genos_dataset/                    Primary train / val / test splits (CSV)
