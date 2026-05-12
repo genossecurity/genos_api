@@ -1,0 +1,28 @@
+# Core API runtime
+Flask==3.1.3
+gunicorn==25.1.0
+python-dotenv==1.2.2
+pymongo==4.16.0
+
+# ML inference
+# Note: torch is pinned to the major.minor only.
+# For GPU deployments install the CUDA-specific wheel first:
+#   pip install torch==2.5.1+cu121 --index-url https://download.pytorch.org/whl/cu121
+# CPU-only inference also works without a CUDA toolkit.
+torch>=2.5,<2.6
+transformers==5.3.0
+safetensors==0.7.0
+numpy==2.2.6
+
+# Data handling — used by engine, training scripts, and benchmark tooling
+pandas==2.3.3
+tqdm==4.67.3
+
+# Benchmark and research scripts
+aiohttp==3.13.3
+matplotlib==3.10.8
+scikit-learn==1.7.2
+
+# Optional: PowerShell AST deobfuscation enhancement
+# Silently skipped at runtime if not installed.
+# pyminusone
