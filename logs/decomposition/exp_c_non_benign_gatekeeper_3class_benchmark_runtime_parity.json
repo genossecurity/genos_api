@@ -1,0 +1,122 @@
+{
+  "probe": {
+    "total": 101,
+    "correct": 62,
+    "accuracy": 0.6138613861386139,
+    "macro_f1": 0.6173137207619966,
+    "per_class": {
+      "Benign": {
+        "precision": 0.85,
+        "recall": 0.4473684210526316,
+        "f1": 0.5862068965517242,
+        "tp": 17,
+        "fp": 3,
+        "fn": 21,
+        "support": 38
+      },
+      "Malicious": {
+        "precision": 0.5853658536585366,
+        "recall": 0.96,
+        "f1": 0.7272727272727272,
+        "tp": 24,
+        "fp": 17,
+        "fn": 1,
+        "support": 25
+      },
+      "Context_Dependent": {
+        "precision": 0.525,
+        "recall": 0.5526315789473685,
+        "f1": 0.5384615384615385,
+        "tp": 21,
+        "fp": 19,
+        "fn": 17,
+        "support": 38
+      }
+    },
+    "confusion_matrix": {
+      "Benign": {
+        "Benign": 17,
+        "Malicious": 3,
+        "Context_Dependent": 18
+      },
+      "Malicious": {
+        "Benign": 0,
+        "Malicious": 24,
+        "Context_Dependent": 1
+      },
+      "Context_Dependent": {
+        "Benign": 3,
+        "Malicious": 14,
+        "Context_Dependent": 21
+      }
+    },
+    "routing_distribution": {
+      "Benign": 0.19801980198019803,
+      "Malicious": 0.40594059405940597,
+      "Context_Dependent": 0.39603960396039606
+    },
+    "avg_latency_ms": 13.356138396078011,
+    "p50_latency_ms": 12.308049997955095,
+    "p95_latency_ms": 13.290582999616163
+  },
+  "test": {
+    "total": 10039,
+    "correct": 9491,
+    "accuracy": 0.9454128897300528,
+    "macro_f1": 0.9308620092220038,
+    "per_class": {
+      "Benign": {
+        "precision": 0.97249907715024,
+        "recall": 0.9488564739780299,
+        "f1": 0.9605323124601222,
+        "tp": 5269,
+        "fp": 149,
+        "fn": 284,
+        "support": 5553
+      },
+      "Malicious": {
+        "precision": 0.9373572593800978,
+        "recall": 0.9631243714381496,
+        "f1": 0.9500661375661376,
+        "tp": 2873,
+        "fp": 192,
+        "fn": 110,
+        "support": 2983
+      },
+      "Context_Dependent": {
+        "precision": 0.8669665809768637,
+        "recall": 0.8975382568196939,
+        "f1": 0.8819875776397517,
+        "tp": 1349,
+        "fp": 207,
+        "fn": 154,
+        "support": 1503
+      }
+    },
+    "confusion_matrix": {
+      "Benign": {
+        "Benign": 5269,
+        "Malicious": 137,
+        "Context_Dependent": 147
+      },
+      "Malicious": {
+        "Benign": 50,
+        "Malicious": 2873,
+        "Context_Dependent": 60
+      },
+      "Context_Dependent": {
+        "Benign": 99,
+        "Malicious": 55,
+        "Context_Dependent": 1349
+      }
+    },
+    "routing_distribution": {
+      "Benign": 0.539695188763821,
+      "Malicious": 0.305309293754358,
+      "Context_Dependent": 0.1549955174818209
+    },
+    "avg_latency_ms": 9.027652779269655,
+    "p50_latency_ms": 5.990083998767659,
+    "p95_latency_ms": 12.798749998182757
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "archive_data": 0,
+  "download_remote_resource": 1,
+  "execute_inline_code": 2,
+  "execute_interpreter": 3,
+  "extract_archive": 4,
+  "remote_execution": 5,
+  "use_encoded_payload": 6,
+  "use_obfuscation": 7,
+  "use_signed_proxy_binary": 8
+}

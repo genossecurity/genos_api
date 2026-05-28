@@ -1,0 +1,122 @@
+{
+  "probe": {
+    "total": 101,
+    "correct": 39,
+    "accuracy": 0.38613861386138615,
+    "macro_f1": 0.4137022397891963,
+    "per_class": {
+      "Benign": {
+        "precision": 0.8823529411764706,
+        "recall": 0.39473684210526316,
+        "f1": 0.5454545454545454,
+        "tp": 15,
+        "fp": 2,
+        "fn": 23,
+        "support": 38
+      },
+      "Malicious": {
+        "precision": 0.5454545454545454,
+        "recall": 0.96,
+        "f1": 0.6956521739130435,
+        "tp": 24,
+        "fp": 20,
+        "fn": 1,
+        "support": 25
+      },
+      "Context_Dependent": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 38,
+        "support": 38
+      }
+    },
+    "confusion_matrix": {
+      "Benign": {
+        "Benign": 15,
+        "Malicious": 4,
+        "Context_Dependent": 0
+      },
+      "Malicious": {
+        "Benign": 0,
+        "Malicious": 24,
+        "Context_Dependent": 0
+      },
+      "Context_Dependent": {
+        "Benign": 2,
+        "Malicious": 16,
+        "Context_Dependent": 0
+      }
+    },
+    "routing_distribution": {
+      "Benign": 0.16831683168316833,
+      "Malicious": 0.43564356435643564,
+      "Context_Dependent": 0.0
+    },
+    "avg_latency_ms": 13.547286108792598,
+    "p50_latency_ms": 12.337699998170137,
+    "p95_latency_ms": 13.286128996696789
+  },
+  "test": {
+    "total": 10039,
+    "correct": 8143,
+    "accuracy": 0.81113656738719,
+    "macro_f1": 0.6374304696870533,
+    "per_class": {
+      "Benign": {
+        "precision": 0.973268980879896,
+        "recall": 0.9441743201872862,
+        "f1": 0.9585009140767824,
+        "tp": 5243,
+        "fp": 144,
+        "fn": 310,
+        "support": 5553
+      },
+      "Malicious": {
+        "precision": 0.9360877985797289,
+        "recall": 0.9721756620851492,
+        "f1": 0.9537904949843776,
+        "tp": 2900,
+        "fp": 198,
+        "fn": 83,
+        "support": 2983
+      },
+      "Context_Dependent": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 1503,
+        "support": 1503
+      }
+    },
+    "confusion_matrix": {
+      "Benign": {
+        "Benign": 5243,
+        "Malicious": 146,
+        "Context_Dependent": 0
+      },
+      "Malicious": {
+        "Benign": 37,
+        "Malicious": 2900,
+        "Context_Dependent": 0
+      },
+      "Context_Dependent": {
+        "Benign": 107,
+        "Malicious": 52,
+        "Context_Dependent": 0
+      }
+    },
+    "routing_distribution": {
+      "Benign": 0.5366072317959956,
+      "Malicious": 0.30859647375236576,
+      "Context_Dependent": 0.0
+    },
+    "avg_latency_ms": 9.053697197637716,
+    "p50_latency_ms": 5.999189001158811,
+    "p95_latency_ms": 12.801772998500383
+  }
+}

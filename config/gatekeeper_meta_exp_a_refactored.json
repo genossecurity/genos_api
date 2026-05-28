@@ -1,0 +1,122 @@
+{
+  "seed": 42,
+  "epochs": 5,
+  "micro_batch_size": 32,
+  "effective_batch_size": 256,
+  "max_len": 256,
+  "learning_rate": 1e-05,
+  "weight_decay": 0.01,
+  "label_smoothing": 0.05,
+  "balanced_sampling": true,
+  "sampling_power": 1.0,
+  "class_weight_power": 0.5,
+  "num_classes": 3,
+  "label_names": [
+    "Benign",
+    "Malicious",
+    "Context_Dependent"
+  ],
+  "model_architecture": "shared_codebert_with_decision_decomposition",
+  "decision_heads": [
+    "verdict_logits",
+    "non_benign_logit",
+    "malicious_given_non_benign_logit",
+    "ordinal_risk_logit"
+  ],
+  "non_benign_supervision_source": "verdict_label_projection",
+  "malicious_given_non_benign_supervision_source": "verdict_label_projection",
+  "ordinal_risk_supervision_source": "verdict_label_projection",
+  "non_benign_loss_weight": 0.0,
+  "malicious_context_loss_weight": 0.0,
+  "ordinal_risk_loss_weight": 0.0,
+  "stage_loss_weight": 0.0,
+  "action_loss_weight": 0.0,
+  "contrastive_loss_weight": 0.0,
+  "best_epoch": 5,
+  "class_weights": [
+    0.7757131457328796,
+    1.059149146080017,
+    1.4962072372436523
+  ],
+  "val_metrics": {
+    "accuracy": 0.9557288921682302,
+    "macro_f1": 0.9476384663155368,
+    "macro_precision": 0.9353450108581661,
+    "macro_recall": 0.9623580319603392,
+    "per_class": {
+      "Benign": {
+        "precision": 0.9888022395520896,
+        "recall": 0.9458684009181332,
+        "f1": 0.9668589304917392,
+        "tp": 4945,
+        "fp": 56,
+        "fn": 283
+      },
+      "Malicious": {
+        "precision": 0.9450243562978428,
+        "recall": 0.9620970598653914,
+        "f1": 0.9534842899771809,
+        "tp": 2716,
+        "fp": 158,
+        "fn": 107
+      },
+      "Context_Dependent": {
+        "precision": 0.8722084367245657,
+        "recall": 0.979108635097493,
+        "f1": 0.9225721784776901,
+        "tp": 1406,
+        "fp": 206,
+        "fn": 30
+      }
+    },
+    "loss": 0.1514411549102246,
+    "auxiliary": {
+      "non_benign_auc": 0.15829678741431125,
+      "non_benign_ap": 0.2942504739383891,
+      "malicious_given_non_benign_auc": 0.01733929017215333,
+      "malicious_given_non_benign_ap": 0.45226277735283893,
+      "ordinal_mae": 0.5109641966885606
+    }
+  },
+  "test_metrics": {
+    "accuracy": 0.9450144436696882,
+    "macro_f1": 0.9305282779958528,
+    "macro_precision": 0.9247405481081632,
+    "macro_recall": 0.9368538530395809,
+    "per_class": {
+      "Benign": {
+        "precision": 0.973268980879896,
+        "recall": 0.9441743201872862,
+        "f1": 0.9585009140767824,
+        "tp": 5243,
+        "fp": 144,
+        "fn": 310
+      },
+      "Malicious": {
+        "precision": 0.9360877985797289,
+        "recall": 0.9721756620851492,
+        "f1": 0.9537904949843776,
+        "tp": 2900,
+        "fp": 198,
+        "fn": 83
+      },
+      "Context_Dependent": {
+        "precision": 0.8648648648648649,
+        "recall": 0.8942115768463074,
+        "f1": 0.8792934249263984,
+        "tp": 1344,
+        "fp": 210,
+        "fn": 159
+      }
+    },
+    "loss": 0.18799091532525106,
+    "auxiliary": {
+      "non_benign_auc": 0.1835034887336628,
+      "non_benign_ap": 0.2979793872679377,
+      "malicious_given_non_benign_auc": 0.03152026486751607,
+      "malicious_given_non_benign_ap": 0.4549132745617671,
+      "ordinal_mae": 0.5113067338162417
+    }
+  },
+  "model_path": "/home/sam/genos/genos_api/models/gatekeeper.pt"
+}

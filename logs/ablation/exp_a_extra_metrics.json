@@ -1,0 +1,136 @@
+{
+  "test": {
+    "auc_malicious_one_vs_rest": 0.9946088112303811,
+    "ap_malicious_one_vs_rest": 0.9917982248832584,
+    "auc_non_benign": 0.9918836672894499,
+    "ap_non_benign": 0.990066838541906,
+    "balanced_accuracy": 0.9305885874104853,
+    "per_class": {
+      "Benign": {
+        "precision": 0.9671172816952868,
+        "recall": 0.9533585449306681,
+        "f1": 0.9601886279133037,
+        "support": 5553
+      },
+      "Malicious": {
+        "precision": 0.940677966101695,
+        "recall": 0.9674824002681864,
+        "f1": 0.9538919186911254,
+        "support": 2983
+      },
+      "Context_Dependent": {
+        "precision": 0.8744154976619907,
+        "recall": 0.8709248170326015,
+        "f1": 0.8726666666666667,
+        "support": 1503
+      }
+    }
+  },
+  "benign_fp_local": {
+    "n": 95,
+    "fp_count": 25,
+    "fp_rate": 0.2631578947368421,
+    "examples": [
+      {
+        "command": "pwd",
+        "label": "Malicious",
+        "confidence": 46.36
+      },
+      {
+        "command": "cat /etc/hostname",
+        "label": "Context_Dependent",
+        "confidence": 98.09
+      },
+      {
+        "command": "head -n 20 access.log",
+        "label": "Context_Dependent",
+        "confidence": 94.9
+      },
+      {
+        "command": "tail -f /var/log/syslog",
+        "label": "Context_Dependent",
+        "confidence": 89.13
+      },
+      {
+        "command": "top -bn1 | head -20",
+        "label": "Context_Dependent",
+        "confidence": 63.57
+      },
+      {
+        "command": "uptime",
+        "label": "Malicious",
+        "confidence": 47.97
+      },
+      {
+        "command": "hostname",
+        "label": "Context_Dependent",
+        "confidence": 74.17
+      },
+      {
+        "command": "ps aux | grep python",
+        "label": "Context_Dependent",
+        "confidence": 97.83
+      },
+      {
+        "command": "lsblk",
+        "label": "Context_Dependent",
+        "confidence": 97.5
+      },
+      {
+        "command": "ifconfig",
+        "label": "Context_Dependent",
+        "confidence": 96.83
+      },
+      {
+        "command": "ip addr show",
+        "label": "Context_Dependent",
+        "confidence": 97.86
+      },
+      {
+        "command": "netstat -tlnp",
+        "label": "Context_Dependent",
+        "confidence": 97.8
+      },
+      {
+        "command": "ss -tuln",
+        "label": "Context_Dependent",
+        "confidence": 96.11
+      },
+      {
+        "command": "dig example.com",
+        "label": "Context_Dependent",
+        "confidence": 97.59
+      },
+      {
+        "command": "nslookup google.com",
+        "label": "Context_Dependent",
+        "confidence": 91.05
+      },
+      {
+        "command": "docker ps",
+        "label": "Context_Dependent",
+        "confidence": 91.64
+      },
+      {
+        "command": "docker images",
+        "label": "Context_Dependent",
+        "confidence": 96.82
+      },
+      {
+        "command": "docker volume ls",
+        "label": "Context_Dependent",
+        "confidence": 88.44
+      },
+      {
+        "command": "docker network ls",
+        "label": "Context_Dependent",
+        "confidence": 97.47
+      },
+      {
+        "command": "python3 -c 'print(\"hello world\")'",
+        "label": "Context_Dependent",
+        "confidence": 91.47
+      }
+    ]
+  }
+}

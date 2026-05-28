@@ -43,7 +43,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app.logger.info("Loading Genos engine — this may take a moment...")
 engine = GenosEngine(
     t1_path=os.path.join(BASE_DIR, "models/gatekeeper.pt"),
-    t2_path=os.path.join(BASE_DIR, "models/specialist_residual_a.pt"),
+    t2_path=os.path.join(BASE_DIR, "models/behavior_encoder.pt"),
 )
 
 # Warm-up inference
@@ -149,7 +149,7 @@ def _run_inference(command, include_flags=None):
         "label_confidence": round(float(label_conf), 2),
     }
 
-    for key in ("class_probabilities", "decision_margin", "reason", "triggered_features", "routing_policy", "should_run_specialist", "gatekeeper"):
+    for key in ("class_probabilities", "decision_margin", "reason", "triggered_features", "routing_policy", "should_run_specialist", "gatekeeper", "behavior"):
         if key in raw_result:
             result[key] = raw_result[key]
 

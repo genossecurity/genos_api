@@ -5,7 +5,6 @@ import math
 import os
 import re
 
-import joblib
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -72,6 +71,26 @@ def _resolve_asset_path(path_value: str, fallback_relpaths: list[str] | None = N
     return path_value
 
 
+def _resolve_behavior_model_path(primary_path: str | None = None) -> str:
+    """Prefer a behavior-encoder checkpoint over legacy Tier-2 specialist files."""
+    candidates = []
+    if primary_path:
+        candidates.append(primary_path)
+    candidates.append("models/behavior_encoder.pt")
+
+    for candidate in candidates:
+        resolved = _resolve_asset_path(candidate)
+        if not os.path.exists(resolved):
+            continue
+        meta_candidate = os.path.splitext(resolved)[0] + ".json"
+        if os.path.basename(resolved).startswith("behavior_") or os.path.exists(meta_candidate):
+            return resolved
+
+    if primary_path:
+        return _resolve_asset_path(primary_path, ["models/behavior_encoder.pt"])
+    return _resolve_asset_path("models/behavior_encoder.pt")
+
+
 class Tier1_Gatekeeper(nn.Module):
     def __init__(self, num_classes=3):
         super().__init__()
@@ -83,11 +102,19 @@ class Tier1_Gatekeeper(nn.Module):
             nn.Dropout(0.2),
             nn.Linear(1024, num_classes),
         )
+        self.non_benign_head = nn.Linear(768, 1)
+        self.malicious_given_non_benign_head = nn.Linear(768, 1)
+        self.ordinal_risk_head = nn.Linear(768, 1)
 
     def forward(self, input_ids, attention_mask):
         outputs = self.encoder(input_ids=input_ids, attention_mask=attention_mask)
-        logits = self.classifier(outputs.last_hidden_state[:, 0, :])
-        return logits
+        pooled = outputs.last_hidden_state[:, 0, :]
+        return {
+            "verdict_logits": self.classifier(pooled),
+            "non_benign_logit": self.non_benign_head(pooled).squeeze(-1),
+            "malicious_given_non_benign_logit": self.malicious_given_non_benign_head(pooled).squeeze(-1),
+            "ordinal_risk_logit": self.ordinal_risk_head(pooled).squeeze(-1),
+        }
 
 
 class _MeanPool(nn.Module):
@@ -116,6 +143,20 @@ class Tier2_Specialist(nn.Module):
         pooled = self.pool(outputs.last_hidden_state, attention_mask)
         logits = self.classifier(pooled)
         return logits
+
+
+class BehaviorEncoderModel(nn.Module):
+    def __init__(self, num_stages: int, num_actions: int):
+        super().__init__()
+        self.encoder = RobertaModel.from_pretrained("microsoft/codebert-base", use_safetensors=True)
+        self.dropout = nn.Dropout(0.2)
+        self.stage_head = nn.Linear(768, num_stages)
+        self.action_head = nn.Linear(768, num_actions)
+
+    def forward(self, input_ids, attention_mask):
+        outputs = self.encoder(input_ids=input_ids, attention_mask=attention_mask)
+        pooled = self.dropout(outputs.last_hidden_state[:, 0, :])
+        return self.stage_head(pooled), self.action_head(pooled)
 
 
 class GenosEngine:
@@ -156,6 +197,10 @@ class GenosEngine:
         "Context_Dependent": "Suspicious",
     }
     _INTERNAL_LABEL_MAP = {value: key for key, value in _PUBLIC_LABEL_MAP.items()}
+
+    @classmethod
+    def _to_public_label(cls, label: str) -> str:
+        return cls._PUBLIC_LABEL_MAP.get(label, label)
 
     _DOWNLOAD_RE = re.compile(
         r"\b(?:curl|wget|invoke-webrequest|iwr|bitsadmin|certutil(?:\.exe)?|aria2c|fetch)\b",
@@ -489,6 +534,9 @@ class GenosEngine:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
         self.max_length = int(os.getenv("GENOS_MAX_TOKENS", "256"))
+        self.gatekeeper_meta_path = None
+        self.gatekeeper_meta = {}
+        self._gate_labels = list(self._GATE_LABELS)
 
         t1_path = _resolve_asset_path(t1_path, ["models/gatekeeper.pt"])
         t2_path = _resolve_asset_path(t2_path, ["models/specialist.pt"])
@@ -525,6 +573,11 @@ class GenosEngine:
         for candidate in meta_candidates:
             resolved = _resolve_asset_path(candidate, ["config/gatekeeper_meta.json"])
             if os.path.exists(resolved):
+                self.gatekeeper_meta = self._load_gatekeeper_meta(resolved)
+                self.gatekeeper_meta_path = resolved
+                gate_labels = self._load_gatekeeper_labels(self.gatekeeper_meta)
+                if gate_labels:
+                    self._gate_labels = gate_labels
                 threshold = self._load_gatekeeper_threshold(resolved)
                 if threshold is not None:
                     self.gatekeeper_threshold = float(threshold)
@@ -535,18 +588,109 @@ class GenosEngine:
         self.t1.load_state_dict(torch.load(t1_path, map_location=self.device, weights_only=True), strict=False)
         self.t1.eval()
 
-        # Tier-2: TF-IDF char n-gram + RF pipeline (replaces CodeBERT specialist)
-        tfidf_path = _resolve_asset_path("models/specialist_tfidf_char_rf.pkl")
-        self.t2 = joblib.load(tfidf_path)
-        # Build idx→label mapping aligned with the sklearn pipeline's class order
-        tfidf_classes = self.t2.classes_  # int indices in s_map
-        self._tfidf_idx_to_label = {int(c): self.s_map[int(c)] for c in tfidf_classes if int(c) in self.s_map}
+        # Tier-2 is now behavior-first. The trainable encoder is trained
+        # separately; runtime loads it when present and otherwise falls back
+        # to deterministic behavior staging.
+        self.behavior_model_path = _resolve_behavior_model_path(t2_path)
+        self.behavior_meta_path = None
+        self.behavior_model = None
+        self.behavior_stage_map = {}
+        self.behavior_action_map = {}
+        self.behavior_stage_labels = {}
+        self.behavior_action_labels = {}
+        self.behavior_action_threshold = float(os.getenv("GENOS_BEHAVIOR_ACTION_THRESHOLD", "0.5"))
+        self._load_behavior_model()
 
         self.max_deobfuscation_layers = 5
         self.use_residual_format = use_residual_format and _RESIDUAL_PIPELINE_AVAILABLE
         self.prior_alphas = prior_alphas or {"strong": 2.0, "weak": 1.5, "none": 0.0}
         # Forward map {mitre_id: int_index} used by build_prior_vector
         self._specialist_map_fwd = {mitre: idx for idx, mitre in self.s_map.items()}
+
+    def _load_optional_json_dict(self, json_path: str) -> dict:
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                loaded = json.load(f)
+            if isinstance(loaded, dict):
+                return loaded
+        except Exception:
+            pass
+        return {}
+
+    def _load_gatekeeper_meta(self, json_path: str) -> dict:
+        return self._load_optional_json_dict(json_path)
+
+    def _load_gatekeeper_labels(self, meta: dict) -> list[str] | None:
+        label_names = meta.get("label_names")
+        if isinstance(label_names, list) and label_names:
+            return [str(label) for label in label_names]
+
+        id_to_label = meta.get("id_to_label")
+        if isinstance(id_to_label, dict) and id_to_label:
+            labels = []
+            try:
+                for idx in sorted(id_to_label.keys(), key=lambda value: int(value)):
+                    labels.append(str(id_to_label[idx]))
+            except (TypeError, ValueError):
+                return None
+            return labels if labels else None
+
+        label_map = meta.get("label_map")
+        if isinstance(label_map, dict) and label_map:
+            labels = [None] * len(label_map)
+            for label, idx in label_map.items():
+                try:
+                    labels[int(idx)] = str(label)
+                except (TypeError, ValueError, IndexError):
+                    return None
+            return labels if all(label is not None for label in labels) else None
+
+        return None
+
+    def _normalize_index_map(self, raw_map: dict) -> dict:
+        normalized = {}
+        for key, value in (raw_map or {}).items():
+            try:
+                normalized[str(key)] = int(value)
+            except (TypeError, ValueError):
+                continue
+        return normalized
+
+    def _load_behavior_model(self) -> None:
+        if not os.path.exists(self.behavior_model_path):
+            return
+
+        meta_candidate = os.path.splitext(self.behavior_model_path)[0] + ".json"
+        meta = self._load_optional_json_dict(meta_candidate)
+        stage_map = self._normalize_index_map(meta.get("stage_map") or {})
+        action_map = self._normalize_index_map(meta.get("action_map") or {})
+
+        if not stage_map:
+            stage_map = self._normalize_index_map(
+                self._load_optional_json_dict(_resolve_asset_path("config/behavior_stage_map.json"))
+            )
+        if not action_map:
+            action_map = self._normalize_index_map(
+                self._load_optional_json_dict(_resolve_asset_path("config/behavior_action_map.json"))
+            )
+
+        if not stage_map or not action_map:
+            return
+
+        try:
+            model = BehaviorEncoderModel(len(stage_map), len(action_map)).to(self.device)
+            state_dict = torch.load(self.behavior_model_path, map_location=self.device, weights_only=True)
+            model.load_state_dict(state_dict, strict=True)
+            model.eval()
+        except Exception:
+            return
+
+        self.behavior_model = model
+        self.behavior_meta_path = meta_candidate if os.path.exists(meta_candidate) else None
+        self.behavior_stage_map = stage_map
+        self.behavior_action_map = action_map
+        self.behavior_stage_labels = {index: label for label, index in stage_map.items()}
+        self.behavior_action_labels = {index: label for label, index in action_map.items()}
 
     def _load_map_from_json(self, json_path: str) -> dict:
         """Load specialist label map from JSON file as {int_index: mitre_id}."""
@@ -992,6 +1136,51 @@ class GenosEngine:
 
     _SEVERITY_RANK = {"Low": 0, "Medium": 1, "High": 2, "Critical": 3}
 
+    _TACTIC_TO_BEHAVIOR_STAGE = {
+        "Reconnaissance": "Discovery / Recon",
+        "Discovery": "Discovery / Recon",
+        "Execution": "Execution",
+        "Persistence": "Persistence",
+        "Privilege Escalation": "Privilege Escalation",
+        "Defense Evasion": "Defense Evasion",
+        "Credential Access": "Credential Access",
+        "Collection": "Collection / Staging",
+        "Command and Control": "C2 / Remote Access",
+        "Lateral Movement": "Lateral Movement",
+        "Exfiltration": "Exfiltration",
+        "Impact": "Impact",
+        "Initial Access": "Context Required",
+    }
+
+    _SEMANTIC_TO_ACTION_TAG = {
+        "downloads_remote_resource": "download_remote_resource",
+        "writes_executable_like_file": "write_executable_like_file",
+        "modifies_registry_autorun": "modify_autorun",
+        "creates_scheduled_task": "create_scheduled_task",
+        "creates_or_modifies_service": "modify_service",
+        "archive_create": "archive_data",
+        "archive_extract": "extract_archive",
+        "deletes_shadow_copies": "delete_shadow_copies",
+        "remote_execution_or_session": "remote_execution",
+        "transfers_file_to_remote": "transfer_file_remote",
+        "runs_interpreter": "execute_interpreter",
+        "executes_inline_code": "execute_inline_code",
+        "enumerates_identity": "enumerate_identity",
+        "enumerates_network_config": "enumerate_network_config",
+        "reads_credential_store": "read_credential_store",
+        "uses_encoded_payload": "use_encoded_payload",
+        "uses_obfuscation": "use_obfuscation",
+        "uses_signed_proxy_binary": "use_signed_proxy_binary",
+    }
+
+    _RULE_TAG_TO_ACTION_TAG = {
+        "encoded_execution": "use_encoded_payload",
+        "scripting_builtins": "execute_interpreter",
+        "interpreter_general": "execute_interpreter",
+        "signed_binary_proxy_execution": "use_signed_proxy_binary",
+        "obfuscated_files_or_information": "use_obfuscation",
+    }
+
     def _derive_attack_stage(self, top_code: str | None) -> str | None:
         if not top_code:
             return None
@@ -1029,14 +1218,8 @@ class GenosEngine:
             "severity": self._derive_severity(top_code, label_conf, evidence),
         }
 
-    def _build_variant_a_text(self, cmd: str):
-        """
-        Build Variant A specialist input text and return (text, rule_result).
-        Format matches training exactly:
-          RAW: {cmd}
-          RESIDUAL: {residual}
-          FEATURES: {tags}   (line omitted when no tags fire)
-        """
+    def _build_behavior_input(self, cmd: str):
+        """Build the canonical behavior-model input text and return (text, rule_result)."""
         parsed = _parse_command(cmd)
         sem = _build_semantic_features(parsed)
         rules = _build_rule_result(parsed, sem)
@@ -1046,6 +1229,133 @@ class GenosEngine:
         if feature_tags:
             parts.append(f"FEATURES: {' '.join(feature_tags)}")
         return "\n".join(parts), rules
+
+    def _build_variant_a_text(self, cmd: str):
+        """Backward-compatible alias for the previous specialist input builder."""
+        return self._build_behavior_input(cmd)
+
+    def _extract_behavior_action_tags(self, sem: dict, rules: dict, features: dict) -> list[str]:
+        tags = {
+            mapped for key, mapped in self._SEMANTIC_TO_ACTION_TAG.items() if sem.get(key)
+        }
+
+        for raw_rule in rules.get("fired_rules") or []:
+            normalized = raw_rule.replace("_rule_", "")
+            mapped = self._RULE_TAG_TO_ACTION_TAG.get(normalized)
+            if mapped:
+                tags.add(mapped)
+
+        feature_tag_map = {
+            "has_pipe_to_shell": "pipe_to_shell",
+            "has_reverse_shell_pattern": "reverse_shell",
+            "has_download": "download_remote_resource",
+            "has_remote_transfer": "transfer_file_remote",
+            "has_sensitive_file_read": "access_sensitive_file",
+            "has_persistence_change": "establish_persistence",
+            "has_privilege_escalation": "attempt_privilege_escalation",
+            "has_defense_impairment": "disable_defenses",
+            "has_destructive_write": "destructive_write",
+            "has_archive_or_bulk_copy": "archive_or_stage_data",
+            "has_tunneling": "establish_tunnel",
+            "has_exfil_data_movement": "exfiltrate_data",
+            "has_enumeration_recon": "enumerate_environment",
+            "has_exploit_or_attack_tooling": "use_attack_tooling",
+        }
+        for feature_name, mapped in feature_tag_map.items():
+            if features.get(feature_name):
+                tags.add(mapped)
+
+        return sorted(tags)
+
+    def _infer_behavior_stage(self, label: str, sem: dict, rules: dict, features: dict) -> str:
+        if label == "Benign":
+            return "Benign Administration"
+        if label == "Context_Dependent":
+            return "Context Required"
+
+        priority_checks = [
+            (features.get("has_destructive_write") or sem.get("deletes_shadow_copies"), "Impact"),
+            (features.get("has_credential_dumping_pattern") or sem.get("reads_credential_store"), "Credential Access"),
+            (features.get("has_privilege_escalation"), "Privilege Escalation"),
+            (features.get("has_persistence_change") or sem.get("creates_scheduled_task") or sem.get("modifies_registry_autorun"), "Persistence"),
+            (features.get("has_exfil_data_movement"), "Exfiltration"),
+            (features.get("has_remote_transfer") or sem.get("downloads_remote_resource"), "Payload Retrieval"),
+            (features.get("has_tunneling") or features.get("has_reverse_shell_pattern") or sem.get("remote_execution_or_session"), "C2 / Remote Access"),
+            (features.get("has_enumeration_recon") or sem.get("enumerates_identity") or sem.get("enumerates_network_config"), "Discovery / Recon"),
+            (features.get("has_base64_or_encoded_exec") or sem.get("uses_encoded_payload") or sem.get("uses_obfuscation"), "Defense Evasion"),
+            (sem.get("runs_interpreter") or sem.get("executes_inline_code") or features.get("has_shell_spawn"), "Execution"),
+        ]
+        for matched, stage in priority_checks:
+            if matched:
+                return stage
+
+        if (rules or {}).get("rule_strength") in {"weak", "strong"}:
+            return "Execution"
+        return "Context Required"
+
+    def _predict_behavior(self, cmd: str, routed_label: str, features: dict) -> tuple[dict, dict]:
+        behavior_text, rule_result = self._build_behavior_input(cmd)
+        parsed = _parse_command(cmd)
+        sem = _build_semantic_features(parsed)
+
+        learned_behavior = self._predict_behavior_with_model(behavior_text)
+        if learned_behavior is not None:
+            learned_behavior["input_text"] = behavior_text
+            return learned_behavior, rule_result
+
+        stage = self._infer_behavior_stage(routed_label, sem, rule_result, features)
+        action_tags = self._extract_behavior_action_tags(sem, rule_result, features)
+
+        return {
+            "stage": stage,
+            "stage_confidence": None,
+            "action_tags": action_tags,
+            "model_type": "heuristic_bootstrap",
+            "input_text": behavior_text,
+        }, rule_result
+
+    def _predict_behavior_with_model(self, behavior_text: str) -> dict | None:
+        if self.behavior_model is None:
+            return None
+
+        encoded = self.tokenizer(
+            behavior_text,
+            return_tensors="pt",
+            truncation=True,
+            padding="max_length",
+            max_length=self.max_length,
+        ).to(self.device)
+
+        device_type = "cuda" if "cuda" in self.device.type else "cpu"
+        autocast_dtype = torch.float16 if device_type == "cuda" else torch.bfloat16
+
+        with torch.no_grad():
+            with autocast(device_type=device_type, dtype=autocast_dtype):
+                stage_logits, action_logits = self.behavior_model(
+                    encoded["input_ids"],
+                    encoded["attention_mask"],
+                )
+
+        stage_probs = F.softmax(stage_logits, dim=1).squeeze(0)
+        action_probs = torch.sigmoid(action_logits).squeeze(0)
+        stage_index = int(torch.argmax(stage_probs).item())
+        stage_label = self.behavior_stage_labels.get(stage_index)
+        if stage_label is None:
+            return None
+
+        action_tags = []
+        for action_index, probability in enumerate(action_probs.tolist()):
+            if probability >= self.behavior_action_threshold:
+                action_label = self.behavior_action_labels.get(action_index)
+                if action_label:
+                    action_tags.append(action_label)
+
+        return {
+            "stage": stage_label,
+            "stage_confidence": round(float(stage_probs[stage_index].item()) * 100, 2),
+            "action_tags": sorted(action_tags),
+            "model_type": "behavior_encoder",
+        }
 
     def calculate_entropy(self, text):
         if not text:
@@ -1331,8 +1641,8 @@ class GenosEngine:
         top_vals, top_idxs = torch.topk(probs, k=min(2, probs.size(0)), largest=True, sorted=True)
         predicted_idx = int(top_idxs[0].item())
         second_idx = int(top_idxs[1].item()) if len(top_idxs) > 1 else predicted_idx
-        label = self._GATE_LABELS[predicted_idx]
-        second_label = self._GATE_LABELS[second_idx]
+        label = self._gate_labels[predicted_idx]
+        second_label = self._gate_labels[second_idx]
         label_conf = float(top_vals[0].item())
         second_conf = float(top_vals[1].item()) if len(top_vals) > 1 else 0.0
         return {
@@ -1434,6 +1744,10 @@ class GenosEngine:
     def _triggered_features(self, features: dict) -> list[str]:
         return sorted(name for name, value in features.items() if value)
 
+    _CONFIDENCE_DRIVER_MAP = {
+        "model_top_class": "model_aligned",
+    }
+
     def _build_route_result(
         self,
         label: str,
@@ -1442,49 +1756,20 @@ class GenosEngine:
         policy: str,
         features: dict,
         should_run_specialist: bool,
+        class_probs: dict | None = None,
     ) -> dict:
+        model_confidence = class_probs[label] if class_probs is not None else label_confidence
+        confidence_driver = self._CONFIDENCE_DRIVER_MAP.get(policy, "model_aligned")
         return {
             "label": self._INTERNAL_LABEL_MAP[label],
             "label_confidence": label_confidence,
+            "model_confidence": model_confidence,
+            "confidence_driver": confidence_driver,
             "reason": reason,
             "routing_policy": policy,
             "triggered_features": self._triggered_features(features),
             "should_run_specialist": should_run_specialist,
         }
-
-    def _malicious_promotion_features(self, features: dict) -> tuple[list[str], list[str]]:
-        forced_malicious_features = [
-            name for name in (
-                "has_pipe_to_shell",
-                "has_reverse_shell_pattern",
-                "has_persistence_change",
-                "has_privilege_escalation",
-                "has_defense_impairment",
-                "has_destructive_write",
-                "has_credential_dumping_pattern",
-            )
-            if features.get(name)
-        ]
-
-        malicious_promotion_features = list(forced_malicious_features)
-        if features.get("has_exploit_or_attack_tooling"):
-            malicious_promotion_features.append("has_exploit_or_attack_tooling")
-        if features.get("has_remote_transfer") and features.get("has_sensitive_source"):
-            malicious_promotion_features.append("remote_transfer_sensitive_source")
-        if features.get("has_archive_or_bulk_copy") and features.get("has_sensitive_source"):
-            malicious_promotion_features.append("archive_sensitive_source")
-        if features.get("has_download") and (
-            features.get("has_eval_exec")
-            or features.get("has_shell_spawn")
-            or features.get("has_base64_or_encoded_exec")
-        ):
-            malicious_promotion_features.append("download_exec_chain")
-        if features.get("has_aggressive_nmap"):
-            malicious_promotion_features.append("has_aggressive_nmap")
-        if features.get("has_post_exploit_technique"):
-            malicious_promotion_features.append("has_post_exploit_technique")
-
-        return forced_malicious_features, malicious_promotion_features
 
     def _suspicious_signals(self, features: dict) -> list[str]:
         return [
@@ -1506,182 +1791,6 @@ class GenosEngine:
             if features.get(name)
         ]
 
-    def _benign_safe_override(
-        self,
-        class_probs: dict,
-        margin: float,
-        features: dict,
-        forced_malicious_features: list[str],
-    ) -> dict | None:
-        triggered = set(self._triggered_features(features))
-        allowed_benign_features = {
-            "has_simple_benign_check",
-            "has_benign_admin_workflow",
-            "has_service_or_system_inspection",
-            "has_local_artifact_inspection",
-            "has_benign_snapshot_source",
-            "has_benign_archive_command",
-            "has_controlled_remote_target",
-            "has_controlled_remote_copy",
-            "has_openssl_client_inspection",
-            "has_routine_service_log_inspection",
-            "has_container_readonly_admin",
-            # Observational / read-only features — not attack indicators
-            "has_network_enum",
-            "has_process_enum",
-            # Broad operational features — only dangerous in combination
-            "has_download",
-            "has_archive_or_bulk_copy",
-        }
-        # Remote transfers are allowed only when targeting controlled infrastructure
-        if features.get("has_controlled_remote_target"):
-            allowed_benign_features.add("has_remote_transfer")
-        disallowed_benign_features = triggered - allowed_benign_features
-
-        if (
-            features.get("has_simple_benign_check")
-            and not disallowed_benign_features
-            and not forced_malicious_features
-        ):
-            return self._build_route_result(
-                label="Benign",
-                label_confidence=max(class_probs["Benign"], 0.78 if margin >= low_margin_threshold else 0.72),
-                reason="Simple operational or health-check command with no strong security-risk features.",
-                policy="benign_operational_override",
-                features=features,
-                should_run_specialist=True,
-            )
-
-        high_precision_benign = (
-            features.get("has_local_artifact_inspection")
-            or features.get("has_openssl_client_inspection")
-            or features.get("has_routine_service_log_inspection")
-            or features.get("has_container_readonly_admin")
-            or (
-                features.get("has_benign_archive_command")
-                and features.get("has_benign_snapshot_source")
-                and not features.get("has_sensitive_source")
-            )
-            or (
-                features.get("has_controlled_remote_copy")
-                and features.get("has_controlled_remote_target")
-                and features.get("has_benign_snapshot_source")
-                and not features.get("has_sensitive_source")
-            )
-        )
-
-        if (
-            high_precision_benign
-            and not disallowed_benign_features
-            and not forced_malicious_features
-            and class_probs["Malicious"] < 0.52
-        ):
-            return self._build_route_result(
-                label="Benign",
-                label_confidence=max(class_probs["Benign"], 0.72),
-                reason="High-precision operational admin workflow without attack-oriented indicators.",
-                policy="benign_high_precision_override",
-                features=features,
-                should_run_specialist=True,
-            )
-
-        # Admin workflow override: commands matching known admin patterns
-        # (ls, ps, ip addr, dig, history, env, docker ps, kubectl get, etc.)
-        # without any threatening features get classified Benign.
-        if (
-            features.get("has_benign_admin_workflow")
-            and not disallowed_benign_features
-            and not forced_malicious_features
-            and class_probs["Malicious"] < 0.45
-        ):
-            return self._build_route_result(
-                label="Benign",
-                label_confidence=max(class_probs["Benign"], 0.70),
-                reason="Recognized admin workflow command with no attack-oriented indicators.",
-                policy="benign_admin_workflow_override",
-                features=features,
-                should_run_specialist=True,
-            )
-
-        return None
-
-    def _probability_route(
-        self,
-        top_label: str,
-        weak_prediction: bool,
-        class_probs: dict,
-        features: dict,
-        suspicious_signals: list[str],
-        malicious_promotion_features: list[str],
-    ) -> tuple[str, str, str]:
-        if top_label == "Malicious" and (features.get("has_exploit_or_attack_tooling") or features.get("has_sensitive_source")):
-            return (
-                "Malicious",
-                "Model and attack-oriented tooling or sensitive-source handling both indicate malicious activity.",
-                "model_malicious_attack_tooling",
-            )
-
-        if top_label == "Malicious" and not weak_prediction:
-            return (
-                "Malicious",
-                "Model strongly favors Malicious with a clear confidence margin.",
-                "model_aligned_malicious",
-            )
-
-        if features.get("has_sensitive_source") and top_label != "Malicious":
-            return (
-                "Suspicious",
-                "Sensitive-source access without a strong malicious verdict is routed to Suspicious for review.",
-                "suspicious_sensitive_source_guardrail",
-            )
-
-        # Strong recon signals override Benign even with a single signal
-        strong_recon_signals = {"has_enumeration_recon", "has_exfil_data_movement"}
-        has_strong_recon = bool(set(suspicious_signals) & strong_recon_signals)
-
-        if top_label == "Benign" and suspicious_signals and (weak_prediction or len(suspicious_signals) >= 2 or has_strong_recon):
-            return (
-                "Suspicious",
-                "Benign model prediction is softened by dual-use security signals: " + ", ".join(suspicious_signals[:3]),
-                "suspicious_dual_use_guardrail",
-            )
-
-        if top_label == "Malicious" and suspicious_fallback_enabled and weak_prediction and not malicious_promotion_features:
-            return (
-                "Suspicious",
-                "Malicious model prediction was weak or low-margin without a strong attack-chain feature, so it falls back to Suspicious.",
-                "suspicious_low_margin_fallback",
-            )
-
-        if top_label == "Suspicious":
-            return (
-                "Suspicious",
-                "Model routes this command to Suspicious because the behavior remains dual-use or context dependent.",
-                "model_aligned_suspicious",
-            )
-
-        if top_label == "Benign" and not weak_prediction:
-            if suspicious_signals:
-                return (
-                    "Benign",
-                    "Model still favors Benign with sufficient confidence despite limited dual-use indicators.",
-                    "model_benign_with_caution",
-                )
-            return (
-                "Benign",
-                "Model strongly favors Benign and no security-significant features were detected.",
-                "model_aligned_benign",
-            )
-
-        if suspicious_fallback_enabled:
-            return (
-                "Suspicious",
-                "Model confidence was weak or ambiguous, so the command is routed to Suspicious for safer handling.",
-                "suspicious_confidence_fallback",
-            )
-
-        return top_label, f"Using raw model top class {top_label}.", "model_top_class"
-
     def _should_run_specialist(
         self,
         final_label: str,
@@ -1690,175 +1799,50 @@ class GenosEngine:
         features: dict,
         suspicious_signals: list[str],
     ) -> bool:
-        # Always run the TF-IDF specialist to provide MITRE codes regardless
-        # of gatekeeper label.  The TF-IDF model is lightweight (~90 ms) so
-        # there is no meaningful latency cost.
-        return True
+        # True cascade: always run for non-benign verdicts.
+        if final_label in ("Malicious", "Suspicious"):
+            return True
+        # High-risk feature forced routing — always run.
+        if high_risk:
+            return True
+        # Low confidence margin — candidate MITRE mapping useful even for benign.
+        sorted_probs = sorted(class_probs.values(), reverse=True)
+        margin = sorted_probs[0] - sorted_probs[1] if len(sorted_probs) >= 2 else 1.0
+        if margin < low_margin_threshold:
+            return True
+        # Suspicious signals despite benign verdict — surface candidate mapping.
+        if suspicious_signals:
+            return True
+        return False
 
     def _route_gatekeeper(self, gate: dict, features: dict, raw_cmd: str, deobfuscated_cmd: str | None = None) -> dict:
-        hard_override = self._check_hard_overrides(raw_cmd, deobfuscated_cmd)
         class_probs = gate["class_probabilities"]
         top_label = gate["public_label"]
         top_conf = gate["label_conf"]
         margin = gate["decision_margin"]
         weak_prediction = top_conf < self._label_threshold(top_label) or margin < low_margin_threshold
-        forced_malicious_features, malicious_promotion_features = self._malicious_promotion_features(features)
         suspicious_signals = self._suspicious_signals(features)
-        high_risk = bool(hard_override or malicious_promotion_features)
-
-        if high_risk_override_enabled and hard_override:
-            return self._build_route_result(
-                label="Suspicious" if hard_override["tag"] == "credential_file_read" and "/etc/passwd" in raw_cmd.lower() else "Malicious",
-                label_confidence=max(class_probs["Malicious"], hard_override["confidence"]),
-                reason=f"Forced malicious by deterministic high-risk pattern: {hard_override['tag']}",
-                policy="hard_override",
-                features=features,
-                should_run_specialist=True,
-            )
-
-        if high_risk_override_enabled and malicious_promotion_features:
-            # Check malicious cap before forcing malicious — some commands
-            # (e.g. getfacl /etc/shadow) are risky but not definitively malicious.
-            # Only cap when no forced_malicious_features (pipe_to_shell, reverse_shell, etc.)
-            cap_views = [raw_cmd.lower().strip()]
-            if deobfuscated_cmd:
-                cap_views.append(deobfuscated_cmd.lower().strip())
-            if not forced_malicious_features and any(self._MALICIOUS_CAP_TO_SUSPICIOUS_RE.search(v) for v in cap_views):
-                return self._build_route_result(
-                    label="Suspicious",
-                    label_confidence=max(class_probs["Suspicious"], 0.78),
-                    reason="Downgraded from Malicious: command is risky/non-standard but lacks definitive attack indicators.",
-                    policy="malicious_to_suspicious_cap",
-                    features=features,
-                    should_run_specialist=True,
-                )
-            return self._build_route_result(
-                label="Malicious",
-                label_confidence=max(class_probs["Malicious"], 0.86),
-                reason="Forced malicious by high-risk behavior: " + ", ".join(malicious_promotion_features[:3]),
-                policy="feature_force_malicious",
-                features=features,
-                should_run_specialist=True,
-            )
-
-        benign_override = self._benign_safe_override(
-            class_probs=class_probs,
-            margin=margin,
-            features=features,
-            forced_malicious_features=forced_malicious_features,
-        )
-        if benign_override is not None:
-            return benign_override
-
-        final_label, reason, policy = self._probability_route(
-            top_label=top_label,
-            weak_prediction=weak_prediction,
-            class_probs=class_probs,
-            features=features,
-            suspicious_signals=suspicious_signals,
-            malicious_promotion_features=malicious_promotion_features,
-        )
-
-        # De-escalate Malicious → Suspicious for commands that are risky but
-        # not definitively malicious (e.g. chmod 777, crontab -l, ls /etc/cron.d/).
-        if final_label == "Malicious" and not forced_malicious_features:
-            cap_views = [raw_cmd.lower().strip()]
-            if deobfuscated_cmd:
-                cap_views.append(deobfuscated_cmd.lower().strip())
-            if any(self._MALICIOUS_CAP_TO_SUSPICIOUS_RE.search(v) for v in cap_views):
-                final_label = "Suspicious"
-                reason = "Downgraded from Malicious: command is risky/non-standard but lacks definitive attack indicators."
-                policy = "malicious_to_suspicious_cap"
+        final_label = top_label
+        reason = f"Using raw model top class {top_label}."
+        policy = "model_top_class"
 
         specialist = self._should_run_specialist(
             final_label=final_label,
             class_probs=class_probs,
-            high_risk=high_risk,
+            high_risk=False,
             features=features,
             suspicious_signals=suspicious_signals,
         )
 
-        confidence_floor = {
-            "Benign": 0.68,
-            "Suspicious": 0.64,
-            "Malicious": 0.74,
-        }[final_label]
-        label_confidence = max(class_probs[final_label], confidence_floor if policy != "model_top_class" else class_probs[final_label])
-
         return self._build_route_result(
             label=final_label,
-            label_confidence=label_confidence,
+            label_confidence=class_probs[final_label],
             reason=reason,
             policy=policy,
             features=features,
             should_run_specialist=specialist,
+            class_probs=class_probs,
         )
-
-    # ── Hard-override patterns (unambiguously malicious, bypass gatekeeper) ──
-
-    _HARD_OVERRIDE_PATTERNS = [
-        # Base64-decode piped to shell interpreter
-        (re.compile(
-            r"""(?:echo|printf)\s+['"]?[A-Za-z0-9+/]{16,}={0,2}['"]?
-               \s*\|\s*base64\s+-d\s*\|\s*(?:ba)?sh\b""",
-            re.X | re.I,
-        ), "encoded_payload_to_shell", 0.97),
-        # curl / wget piped to shell interpreter
-        (re.compile(
-            r"(?:curl|wget)\s+.*\|\s*(?:ba)?sh\b", re.I,
-        ), "download_and_execute", 0.96),
-        # Reverse shell – bash /dev/tcp
-        (re.compile(
-            r"(?:ba)?sh\s+-i\s*>\s*&?\s*/dev/tcp/", re.I,
-        ), "reverse_shell_dev_tcp", 0.98),
-        # Reverse shell – netcat exec
-        (re.compile(
-            r"\bnc(?:at)?\b.*-e\s*/bin/(?:ba)?sh\b", re.I,
-        ), "reverse_shell_nc", 0.98),
-        # Credential harvesting – direct reads of highly sensitive files
-        (re.compile(
-            r"\b(?:cat|less|more|head|tail|tac|nl|xxd|strings)\s+/etc/(?:shadow|sudoers)\b",
-            re.I,
-        ), "credential_file_read", 0.95),
-        # mkfifo reverse shell
-        (re.compile(
-            r"mkfifo\s+.*\bnc(?:at)?\b.*(?:ba)?sh\b", re.I | re.S,
-        ), "reverse_shell_mkfifo", 0.98),
-        # Disk destruction / filesystem wipe
-        (re.compile(
-            r"\bdd\b.*(?:if=/dev/(?:zero|urandom|null)).*(?:of=/dev/(?:sd[a-z]\d*|nvme\d+n\d+(?:p\d+)?|vd[a-z]\d*))",
-            re.I,
-        ), "disk_destruction_dd", 0.99),
-        (re.compile(
-            r"\bmkfs(?:\.[a-z0-9_+-]+)?\b\s+/dev/(?:sd[a-z]\d*|nvme\d+n\d+(?:p\d+)?|vd[a-z]\d*)",
-            re.I,
-        ), "filesystem_format", 0.99),
-        # Exfiltration of local file content via HTTP upload (only sensitive files)
-        (re.compile(
-            r"\bcurl\b.*(?:-x\s+post|-xpost|--request\s+post|--request=post|\bpost\b).*(?:-d\s+@|--data\s+@|--data-binary\s+@|--form\s+@|--form-string\s+@)\s*/(?:etc/(?:shadow|sudoers|passwd)|root/\.ssh|home/[^\s]+/\.ssh|proc/\d+/environ)",
-            re.I,
-        ), "http_file_exfiltration", 0.97),
-        # Additional reverse shell variants missed by the gatekeeper
-        (re.compile(
-            r"\bruby\b.*tcpsocket\.open\([^)]*\).*exec\s+sprintf\([^)]*/bin/(?:ba)?sh",
-            re.I,
-        ), "reverse_shell_ruby", 0.98),
-        (re.compile(
-            r"\bopenssl\s+s_client\b.*\|\s*/bin/(?:ba)?sh\b",
-            re.I,
-        ), "reverse_shell_openssl", 0.98),
-        (re.compile(
-            r":\(\)\s*\{\s*:\|:&\s*\};:",
-            re.I,
-        ), "fork_bomb", 0.99),
-    ]
-
-    def _check_hard_overrides(self, raw_cmd, deobfuscated_cmd):
-        """Return an override dict if a deterministic pattern matches, else None."""
-        for rx, tag, conf in self._HARD_OVERRIDE_PATTERNS:
-            if rx.search(raw_cmd) or (deobfuscated_cmd and rx.search(deobfuscated_cmd)):
-                return {"tag": tag, "confidence": conf}
-        return None
 
     def scan(self, raw_cmd):
         current_cmd = raw_cmd.strip()
@@ -1910,13 +1894,13 @@ class GenosEngine:
 
         with torch.no_grad():
             with autocast(device_type=device_type, dtype=autocast_dtype):
-                g_logits = self.t1(inputs["input_ids"], inputs["attention_mask"])
-                g_probs = F.softmax(g_logits, dim=1)
+                g_outputs = self.t1(inputs["input_ids"], inputs["attention_mask"])
+                g_probs = F.softmax(g_outputs["verdict_logits"], dim=1)
                 raw_g_probs = None
 
                 if raw_inputs is not None:
-                    raw_g_logits = self.t1(raw_inputs["input_ids"], raw_inputs["attention_mask"])
-                    raw_g_probs = F.softmax(raw_g_logits, dim=1)
+                    raw_g_outputs = self.t1(raw_inputs["input_ids"], raw_inputs["attention_mask"])
+                    raw_g_probs = F.softmax(raw_g_outputs["verdict_logits"], dim=1)
 
                 gate = self._select_gate_summary(g_probs, raw_g_probs)
                 routing_features = self._extract_routing_features(
@@ -1936,14 +1920,19 @@ class GenosEngine:
                     "Malicious": round(gate["class_probabilities"]["Malicious"] * 100, 2),
                 }
 
+                public_label = self._to_public_label(routed["label"])
+
                 response = {
-                    "label": routed["label"],
+                    "label": public_label,
+                    "internal_label": routed["label"],
+                    "public_label": public_label,
                     "label_confidence": round(routed["label_confidence"] * 100, 2),
+                    "model_confidence": round(routed["model_confidence"] * 100, 2),
+                    "confidence_driver": routed["confidence_driver"],
                     "class_probabilities": raw_probabilities,
                     "label_probabilities": {
                         "benign": raw_probabilities["Benign"],
                         "malicious": raw_probabilities["Malicious"],
-                        "context_dependent": raw_probabilities["Suspicious"],
                         "suspicious": raw_probabilities["Suspicious"],
                     },
                     "decision_margin": round(gate["decision_margin"] * 100, 2),
@@ -1953,11 +1942,17 @@ class GenosEngine:
                     "should_run_specialist": routed["should_run_specialist"],
                     "gatekeeper": {
                         "decision_mode": routed["routing_policy"],
+                        "label_names": list(self._gate_labels),
+                        "model_top_internal_label": gate["label"],
                         "model_top_label": gate["public_label"],
+                        "model_top_public_label": gate["public_label"],
                         "model_top_confidence": round(gate["label_conf"] * 100, 2),
+                        "model_second_internal_label": gate["second_label"],
                         "model_second_label": gate["second_public_label"],
+                        "model_second_public_label": gate["second_public_label"],
                         "model_second_confidence": round(gate["second_conf"] * 100, 2),
                         "model_view": gate.get("model_view"),
+                        "metadata_path": self.gatekeeper_meta_path,
                         "thresholds": {
                             "benign_conf_threshold": benign_conf_threshold,
                             "suspicious_conf_threshold": suspicious_conf_threshold,
@@ -1976,86 +1971,25 @@ class GenosEngine:
                     "deobfuscated_cmd": current_cmd if was_obfuscated else None,
                 }
 
-                if routed["label"] == "Context_Dependent":
+                if public_label == "Suspicious":
                     response["action"] = "requires_context"
 
+                rule_result = None
                 if routed["should_run_specialist"]:
-                    t2_text, rule_result = self._build_variant_a_text(raw_cmd.strip())
+                    specialist_cmd = current_cmd if was_obfuscated and current_cmd != raw_cmd.strip() else raw_cmd.strip()
+                    behavior, rule_result = self._predict_behavior(
+                        specialist_cmd,
+                        routed["label"],
+                        routing_features,
+                    )
+                    response["behavior"] = behavior
+                    response["attack_stage"] = behavior["stage"]
+                    response["MITRE_codes"] = []
 
-                    # TF-IDF specialist inference
-                    tfidf_proba = self.t2.predict_proba([t2_text])[0]
-                    top3_pos = tfidf_proba.argsort()[-3:][::-1]
-                    raw_codes = [
-                        {
-                            "code": self._tfidf_idx_to_label.get(int(self.t2.classes_[i]), "?"),
-                            "confidence": round(float(tfidf_proba[i]) * 100, 2),
-                        }
-                        for i in top3_pos
-                        if self._tfidf_idx_to_label.get(int(self.t2.classes_[i]))
-                    ]
+                    if was_obfuscated and specialist_cmd != raw_cmd.strip():
+                        response["decoded_payload"] = specialist_cmd
 
-                    deob_codes = []
-                    deob_rule_result = None
-                    payload_for_t2 = None
-                    if was_obfuscated and current_cmd != raw_cmd.strip():
-                        decoded_payload = None
-                        b64m = self._SHELL_B64_PIPE_RE.search(raw_cmd.strip())
-                        if b64m:
-                            try:
-                                decoded_payload = base64.b64decode(b64m.group(1)).decode("utf-8", errors="ignore")
-                            except Exception:
-                                pass
-                        if not decoded_payload:
-                            enc_m = self._ENCODED_CMD_RE.search(raw_cmd.strip())
-                            if enc_m:
-                                try:
-                                    _raw_b = base64.b64decode(enc_m.group(1))
-                                    try:
-                                        decoded_payload = _raw_b.decode("utf-16-le")
-                                    except Exception:
-                                        decoded_payload = _raw_b.decode("utf-8", errors="ignore")
-                                except Exception:
-                                    pass
-                        payload_for_t2 = decoded_payload or current_cmd
-
-                        try:
-                            deob_t2_text, deob_rule_result = self._build_variant_a_text(payload_for_t2)
-
-                            # TF-IDF inference on deobfuscated payload
-                            deob_proba = self.t2.predict_proba([deob_t2_text])[0]
-                            deob_top3_pos = deob_proba.argsort()[-3:][::-1]
-                            deob_codes = [
-                                {
-                                    "code": self._tfidf_idx_to_label.get(int(self.t2.classes_[i]), "?"),
-                                    "confidence": round(float(deob_proba[i]) * 100, 2),
-                                }
-                                for i in deob_top3_pos
-                                if self._tfidf_idx_to_label.get(int(self.t2.classes_[i]))
-                            ]
-                        except Exception:
-                            deob_codes = []
-
-                    merged = {}
-                    for entry in raw_codes + deob_codes:
-                        code = entry["code"]
-                        if code not in merged or entry["confidence"] > merged[code]["confidence"]:
-                            merged[code] = entry
-                    # Sort by confidence descending, cap at 5
-                    response["MITRE_codes"] = sorted(
-                        merged.values(), key=lambda e: e["confidence"], reverse=True
-                    )[:5]
-
-                    if was_obfuscated and deob_codes and payload_for_t2:
-                        response["decoded_payload"] = payload_for_t2
-                        response["payload_mitre_codes"] = deob_codes
-
-                    ev_rule = rule_result
-                    if deob_rule_result is not None:
-                        deob_fired = len(deob_rule_result.get("fired_rules", []))
-                        raw_fired = len((rule_result or {}).get("fired_rules", []))
-                        if deob_fired > raw_fired:
-                            ev_rule = deob_rule_result
-                    if self.use_residual_format and (rule_result is not None or ev_rule is not None):
+                    if self.use_residual_format and rule_result is not None:
                         try:
                             _parsed_ev = _parse_command(raw_cmd.strip())
                             _sem_ev    = _build_semantic_features(_parsed_ev)
@@ -2079,7 +2013,7 @@ class GenosEngine:
                                 except Exception:
                                     pass
                             response["evidence"] = self._build_evidence(
-                                _parsed_ev, _sem_ev, ev_rule or rule_result,
+                                _parsed_ev, _sem_ev, rule_result,
                                 was_obfuscated=was_obfuscated,
                                 deobfuscated_cmd=current_cmd if was_obfuscated else None,
                             )
@@ -2088,15 +2022,11 @@ class GenosEngine:
                                 "routing_reason": routed["reason"],
                                 "routing_policy": routed["routing_policy"],
                             })
-                            top_code = response["MITRE_codes"][0]["code"] if response["MITRE_codes"] else None
-                            response.update(
-                                self._build_response_enrichment(
-                                    top_code, response["evidence"], ev_rule or rule_result,
-                                    label_conf=response["label_confidence"],
-                                )
-                            )
+                            response["analyst_hint"] = response["evidence"].get("evidence_summary")
                         except Exception:
                             pass
+                else:
+                    response["MITRE_codes"] = []
 
         return response
 

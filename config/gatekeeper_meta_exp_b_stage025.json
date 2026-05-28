@@ -1,0 +1,125 @@
+{
+  "seed": 42,
+  "epochs": 5,
+  "micro_batch_size": 32,
+  "effective_batch_size": 256,
+  "max_len": 256,
+  "learning_rate": 1e-05,
+  "weight_decay": 0.01,
+  "label_smoothing": 0.05,
+  "balanced_sampling": true,
+  "sampling_power": 1.0,
+  "class_weight_power": 0.5,
+  "num_classes": 3,
+  "label_names": [
+    "Benign",
+    "Malicious",
+    "Context_Dependent"
+  ],
+  "coarse_stage_names": [
+    "Benign Administration",
+    "Discovery",
+    "Execution",
+    "Remote Transfer",
+    "Persistence",
+    "Credential Access",
+    "Defense Evasion",
+    "Collection / Staging",
+    "C2 / Remote Access",
+    "Impact",
+    "Context Required"
+  ],
+  "action_tag_names": [
+    "has_identity_enumeration",
+    "has_network_enumeration",
+    "has_remote_resource",
+    "has_interpreter_execution",
+    "has_pipe_or_chain",
+    "has_sensitive_path",
+    "has_archive_operation",
+    "has_remote_target",
+    "has_persistence_mechanism",
+    "has_destructive_operation",
+    "has_obfuscation"
+  ],
+  "stage_supervision_source": "mitre_id_coarse_stage_mapping",
+  "action_supervision_source": "disabled",
+  "contrastive_supervision_source": "disabled",
+  "stage_loss_weight": 0.25,
+  "action_loss_weight": 0.0,
+  "contrastive_loss_weight": 0.0,
+  "contrastive_temperature": 0.1,
+  "best_epoch": 5,
+  "class_weights": [
+    0.7757131457328796,
+    1.059149146080017,
+    1.4962072372436523
+  ],
+  "val_metrics": {
+    "accuracy": 0.9595235585538104,
+    "macro_f1": 0.9513475518760903,
+    "macro_precision": 0.9417932164424491,
+    "macro_recall": 0.9622256728465937,
+    "per_class": {
+      "Benign": {
+        "precision": 0.9873367629600317,
+        "recall": 0.9544758990053558,
+        "f1": 0.970628282435324,
+        "tp": 4990,
+        "fp": 64,
+        "fn": 238
+      },
+      "Malicious": {
+        "precision": 0.9487983281086729,
+        "recall": 0.9649309245483528,
+        "f1": 0.9567966280295047,
+        "tp": 2724,
+        "fp": 147,
+        "fn": 99
+      },
+      "Context_Dependent": {
+        "precision": 0.8892445582586428,
+        "recall": 0.9672701949860725,
+        "f1": 0.9266177451634423,
+        "tp": 1389,
+        "fp": 173,
+        "fn": 47
+      }
+    },
+    "loss": 0.14003029726096194
+  },
+  "test_metrics": {
+    "accuracy": 0.9395358103396753,
+    "macro_f1": 0.9210992687230432,
+    "macro_precision": 0.921500020888602,
+    "macro_recall": 0.9211305078391548,
+    "per_class": {
+      "Benign": {
+        "precision": 0.9638224008770327,
+        "recall": 0.9499369710066631,
+        "f1": 0.9568293125340106,
+        "tp": 5275,
+        "fp": 198,
+        "fn": 278
+      },
+      "Malicious": {
+        "precision": 0.9282496782496783,
+        "recall": 0.9671471672812605,
+        "f1": 0.9472992940403874,
+        "tp": 2885,
+        "fp": 223,
+        "fn": 98
+      },
+      "Context_Dependent": {
+        "precision": 0.8724279835390947,
+        "recall": 0.846307385229541,
+        "f1": 0.8591691995947315,
+        "tp": 1272,
+        "fp": 186,
+        "fn": 231
+      }
+    },
+    "loss": 0.18805792008943442
+  },
+  "model_path": "/home/sam/genos/genos_api/models/gatekeeper.pt"
+}

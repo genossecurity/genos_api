@@ -1,0 +1,15 @@
+{
+  "C2 / Remote Access": 0,
+  "Collection / Staging": 1,
+  "Context Required": 2,
+  "Credential Access": 3,
+  "Defense Evasion": 4,
+  "Discovery / Recon": 5,
+  "Execution": 6,
+  "Exfiltration": 7,
+  "Impact": 8,
+  "Lateral Movement": 9,
+  "Payload Retrieval": 10,
+  "Persistence": 11,
+  "Privilege Escalation": 12
+}

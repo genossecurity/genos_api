@@ -54,10 +54,27 @@ def set_seed(seed: int) -> None:
 NUM_CLASSES = 3
 LABEL_NAMES = ["Benign", "Malicious", "Context_Dependent"]
 LABEL_TO_IDX = {name: i for i, name in enumerate(LABEL_NAMES)}
+NON_BENIGN_TARGET = {
+    "Benign": 0.0,
+    "Malicious": 1.0,
+    "Context_Dependent": 1.0,
+}
+MALICIOUS_GIVEN_NON_BENIGN_TARGET = {
+    "Malicious": 1.0,
+    "Context_Dependent": 0.0,
+}
+ORDINAL_RISK_TARGET = {
+    "Benign": 0.0,
+    "Context_Dependent": 0.5,
+    "Malicious": 1.0,
+}
 
 
 class GatekeeperModel(nn.Module):
-    def __init__(self, num_classes: int = NUM_CLASSES) -> None:
+    def __init__(
+        self,
+        num_classes: int = NUM_CLASSES,
+    ) -> None:
         super().__init__()
         self.encoder = RobertaModel.from_pretrained("microsoft/codebert-base", use_safetensors=True)
         self.classifier = nn.Sequential(
@@ -67,10 +84,19 @@ class GatekeeperModel(nn.Module):
             nn.Dropout(0.2),
             nn.Linear(1024, num_classes),
         )
+        self.non_benign_head = nn.Linear(768, 1)
+        self.malicious_given_non_benign_head = nn.Linear(768, 1)
+        self.ordinal_risk_head = nn.Linear(768, 1)
 
-    def forward(self, ids: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+    def forward(self, ids: torch.Tensor, mask: torch.Tensor) -> Dict[str, torch.Tensor]:
         out = self.encoder(ids, attention_mask=mask)
-        return self.classifier(out.last_hidden_state[:, 0, :])
+        pooled = out.last_hidden_state[:, 0, :]
+        return {
+            "verdict_logits": self.classifier(pooled),
+            "non_benign_logit": self.non_benign_head(pooled).squeeze(-1),
+            "malicious_given_non_benign_logit": self.malicious_given_non_benign_head(pooled).squeeze(-1),
+            "ordinal_risk_logit": self.ordinal_risk_head(pooled).squeeze(-1),
+        }
 
 
 class ThreeClassDataset(Dataset):
@@ -81,7 +107,11 @@ class ThreeClassDataset(Dataset):
         df = pd.read_csv(csv_path).dropna(subset=["command"])
 
         self.texts = [str(c).lower().strip() for c in df["command"].tolist()]
-        self.labels = [LABEL_TO_IDX[lbl] for lbl in df["label"].tolist()]
+        raw_labels = [str(label) for label in df["label"].tolist()]
+        self.labels = [LABEL_TO_IDX[lbl] for lbl in raw_labels]
+        self.non_benign_labels = [NON_BENIGN_TARGET[lbl] for lbl in raw_labels]
+        self.malicious_given_non_benign_labels = [MALICIOUS_GIVEN_NON_BENIGN_TARGET.get(lbl, 0.0) for lbl in raw_labels]
+        self.ordinal_risk_targets = [ORDINAL_RISK_TARGET[lbl] for lbl in raw_labels]
         self.encodings = tokenizer(
             self.texts,
             padding="max_length",
@@ -101,6 +131,9 @@ class ThreeClassDataset(Dataset):
             "ids": self.encodings["input_ids"][idx],
             "mask": self.encodings["attention_mask"][idx],
             "lbl": torch.tensor(self.labels[idx], dtype=torch.long),
+            "non_benign_lbl": torch.tensor(self.non_benign_labels[idx], dtype=torch.float32),
+            "malicious_given_non_benign_lbl": torch.tensor(self.malicious_given_non_benign_labels[idx], dtype=torch.float32),
+            "ordinal_risk_target": torch.tensor(self.ordinal_risk_targets[idx], dtype=torch.float32),
         }
 
 
@@ -110,32 +143,55 @@ def collect_outputs(
     loader: DataLoader,
     device: torch.device,
     amp_enabled: bool,
-) -> Tuple[List[int], List[List[float]], float]:
-    """Collect ground-truth labels and full softmax probability vectors."""
+) -> Tuple[List[int], List[List[float]], float, Dict[str, List[float]]]:
+    """Collect ground-truth labels, verdict probabilities, and auxiliary-head outputs."""
     model.eval()
     targets: List[int] = []
     all_probs: List[List[float]] = []
     total_loss = 0.0
     total_items = 0
     criterion = nn.CrossEntropyLoss(reduction="sum")
+    aux_outputs: Dict[str, List[float]] = {
+        "non_benign_targets": [],
+        "non_benign_scores": [],
+        "malicious_context_targets": [],
+        "malicious_context_scores": [],
+        "ordinal_risk_targets": [],
+        "ordinal_risk_scores": [],
+    }
 
     for batch in loader:
         ids = batch["ids"].to(device, non_blocking=True)
         mask = batch["mask"].to(device, non_blocking=True)
         labels = batch["lbl"].to(device, non_blocking=True)
+        non_benign_labels = batch["non_benign_lbl"].to(device, non_blocking=True)
+        malicious_context_labels = batch["malicious_given_non_benign_lbl"].to(device, non_blocking=True)
+        ordinal_risk_targets = batch["ordinal_risk_target"].to(device, non_blocking=True)
 
         with autocast(device_type="cuda", dtype=torch.float16, enabled=amp_enabled):
-            logits = model(ids, mask)
+            outputs = model(ids, mask)
+            logits = outputs["verdict_logits"]
             loss = criterion(logits, labels)
 
         batch_probs = torch.softmax(logits, dim=1)
+        non_benign_scores = torch.sigmoid(outputs["non_benign_logit"])
+        malicious_context_scores = torch.sigmoid(outputs["malicious_given_non_benign_logit"])
+        ordinal_risk_scores = torch.sigmoid(outputs["ordinal_risk_logit"])
+        non_benign_mask = non_benign_labels > 0.5
+
         targets.extend(labels.cpu().tolist())
         all_probs.extend(batch_probs.cpu().tolist())
+        aux_outputs["non_benign_targets"].extend(non_benign_labels.cpu().tolist())
+        aux_outputs["non_benign_scores"].extend(non_benign_scores.cpu().tolist())
+        aux_outputs["ordinal_risk_targets"].extend(ordinal_risk_targets.cpu().tolist())
+        aux_outputs["ordinal_risk_scores"].extend(ordinal_risk_scores.cpu().tolist())
+        aux_outputs["malicious_context_targets"].extend(malicious_context_labels[non_benign_mask].cpu().tolist())
+        aux_outputs["malicious_context_scores"].extend(malicious_context_scores[non_benign_mask].cpu().tolist())
         total_loss += loss.item()
         total_items += labels.size(0)
 
     avg_loss = total_loss / max(1, total_items)
-    return targets, all_probs, avg_loss
+    return targets, all_probs, avg_loss, aux_outputs
 
 
 def multiclass_metrics(targets: List[int], all_probs: List[List[float]]) -> Dict[str, float]:
@@ -167,6 +223,46 @@ def multiclass_metrics(targets: List[int], all_probs: List[List[float]]) -> Dict
         "macro_precision": macro_prec,
         "macro_recall": macro_rec,
         "per_class": per_class,
+    }
+
+
+def _safe_binary_auc_ap(targets: List[float], scores: List[float]) -> Dict[str, float | None]:
+    if not targets or average_precision_score is None or roc_auc_score is None:
+        return {"auc": None, "ap": None}
+    unique_targets = {int(round(target)) for target in targets}
+    if len(unique_targets) < 2:
+        return {"auc": None, "ap": None}
+    return {
+        "auc": float(roc_auc_score(targets, scores)),
+        "ap": float(average_precision_score(targets, scores)),
+    }
+
+
+def auxiliary_head_metrics(aux_outputs: Dict[str, List[float]]) -> Dict[str, float | None]:
+    non_benign_metrics = _safe_binary_auc_ap(
+        aux_outputs["non_benign_targets"],
+        aux_outputs["non_benign_scores"],
+    )
+    malicious_context_metrics = _safe_binary_auc_ap(
+        aux_outputs["malicious_context_targets"],
+        aux_outputs["malicious_context_scores"],
+    )
+
+    ordinal_targets = aux_outputs["ordinal_risk_targets"]
+    ordinal_scores = aux_outputs["ordinal_risk_scores"]
+    ordinal_mae = None
+    if ordinal_targets and ordinal_scores:
+        ordinal_mae = float(
+            sum(abs(target - score) for target, score in zip(ordinal_targets, ordinal_scores))
+            / max(1, len(ordinal_targets))
+        )
+
+    return {
+        "non_benign_auc": non_benign_metrics["auc"],
+        "non_benign_ap": non_benign_metrics["ap"],
+        "malicious_given_non_benign_auc": malicious_context_metrics["auc"],
+        "malicious_given_non_benign_ap": malicious_context_metrics["ap"],
+        "ordinal_mae": ordinal_mae,
     }
 
 
@@ -291,7 +387,13 @@ def train(args: argparse.Namespace) -> None:
     else:
         print("[*] Balanced sampling disabled.", flush=True)
     criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=args.label_smoothing)
+    non_benign_criterion = nn.BCEWithLogitsLoss()
+    malicious_context_criterion = nn.BCEWithLogitsLoss()
+    ordinal_risk_criterion = nn.MSELoss()
     scaler = GradScaler(enabled=amp_enabled)
+
+    if args.stage_loss_weight > 0 or args.action_loss_weight > 0 or args.contrastive_loss_weight > 0:
+        raise ValueError("Stage/action/contrastive losses are disabled for Tier 1. Use decision-decomposition losses instead.")
 
     models_dir = BASE_DIR / "models"
     config_dir = BASE_DIR / "config"
@@ -314,10 +416,32 @@ def train(args: argparse.Namespace) -> None:
             ids = batch["ids"].to(device, non_blocking=True)
             mask = batch["mask"].to(device, non_blocking=True)
             labels = batch["lbl"].to(device, non_blocking=True)
+            non_benign_labels = batch["non_benign_lbl"].to(device, non_blocking=True)
+            malicious_context_labels = batch["malicious_given_non_benign_lbl"].to(device, non_blocking=True)
+            ordinal_risk_targets = batch["ordinal_risk_target"].to(device, non_blocking=True)
 
             with autocast(device_type="cuda", dtype=torch.float16, enabled=amp_enabled):
-                logits = model(ids, mask)
-                loss = criterion(logits, labels) / grad_acc_steps
+                outputs = model(ids, mask)
+                verdict_logits = outputs["verdict_logits"]
+                verdict_loss = criterion(verdict_logits, labels)
+                non_benign_loss = non_benign_criterion(outputs["non_benign_logit"], non_benign_labels)
+                non_benign_mask = non_benign_labels > 0.5
+                malicious_context_loss = verdict_logits.new_tensor(0.0)
+                if non_benign_mask.any():
+                    malicious_context_loss = malicious_context_criterion(
+                        outputs["malicious_given_non_benign_logit"][non_benign_mask],
+                        malicious_context_labels[non_benign_mask],
+                    )
+                ordinal_risk_loss = ordinal_risk_criterion(
+                    torch.sigmoid(outputs["ordinal_risk_logit"]),
+                    ordinal_risk_targets,
+                )
+                loss = (
+                    verdict_loss
+                    + args.non_benign_loss_weight * non_benign_loss
+                    + args.malicious_context_loss_weight * malicious_context_loss
+                    + args.ordinal_risk_loss_weight * ordinal_risk_loss
+                ) / grad_acc_steps
 
             scaler.scale(loss).backward()
 
@@ -326,7 +450,7 @@ def train(args: argparse.Namespace) -> None:
                 scaler.update()
                 optimizer.zero_grad(set_to_none=True)
 
-            preds = torch.argmax(logits, dim=1)
+            preds = torch.argmax(verdict_logits, dim=1)
             train_correct += (preds == labels).sum().item()
             train_total += labels.size(0)
             train_loss_sum += loss.item() * grad_acc_steps
@@ -342,9 +466,10 @@ def train(args: argparse.Namespace) -> None:
         train_acc = train_correct / max(1, train_total)
         train_loss = train_loss_sum / max(1, len(train_loader))
 
-        val_targets, val_probs, val_loss = collect_outputs(model, val_loader, device, amp_enabled)
+        val_targets, val_probs, val_loss, val_aux_outputs = collect_outputs(model, val_loader, device, amp_enabled)
         val_metrics = multiclass_metrics(val_targets, val_probs)
         val_metrics["loss"] = val_loss
+        val_metrics["auxiliary"] = auxiliary_head_metrics(val_aux_outputs)
 
         print(
             f"\n[Epoch {epoch + 1}] train_loss={train_loss:.4f} train_acc={train_acc * 100:.2f}% "
@@ -353,6 +478,15 @@ def train(args: argparse.Namespace) -> None:
         for cls_name in LABEL_NAMES:
             cm = val_metrics["per_class"][cls_name]
             print(f"  {cls_name:20s}  P={cm['precision']:.4f}  R={cm['recall']:.4f}  F1={cm['f1']:.4f}", flush=True)
+        aux = val_metrics["auxiliary"]
+        print(
+            "  Aux heads             "
+            f"NB-AUC={aux['non_benign_auc'] if aux['non_benign_auc'] is not None else 'n/a'}  "
+            f"NB-AP={aux['non_benign_ap'] if aux['non_benign_ap'] is not None else 'n/a'}  "
+            f"MC-AUC={aux['malicious_given_non_benign_auc'] if aux['malicious_given_non_benign_auc'] is not None else 'n/a'}  "
+            f"MC-AP={aux['malicious_given_non_benign_ap'] if aux['malicious_given_non_benign_ap'] is not None else 'n/a'}  "
+            f"Risk-MAE={aux['ordinal_mae'] if aux['ordinal_mae'] is not None else 'n/a'}"
+        , flush=True)
 
         ranking = (val_metrics["macro_f1"], val_metrics["accuracy"])
         if best_bundle is None or ranking > best_bundle["ranking"]:
@@ -372,9 +506,10 @@ def train(args: argparse.Namespace) -> None:
     raw_model.load_state_dict(torch.load(model_save_path, map_location=device))
     raw_model.to(device)
 
-    test_targets, test_probs, test_loss = collect_outputs(raw_model, test_loader, device, amp_enabled)
+    test_targets, test_probs, test_loss, test_aux_outputs = collect_outputs(raw_model, test_loader, device, amp_enabled)
     test_metrics = multiclass_metrics(test_targets, test_probs)
     test_metrics["loss"] = test_loss
+    test_metrics["auxiliary"] = auxiliary_head_metrics(test_aux_outputs)
 
     meta = {
         "seed": args.seed,
@@ -390,6 +525,24 @@ def train(args: argparse.Namespace) -> None:
         "class_weight_power": args.class_weight_power,
         "num_classes": NUM_CLASSES,
         "label_names": LABEL_NAMES,
+        "label_map": LABEL_TO_IDX,
+        "id_to_label": {str(i): label for i, label in enumerate(LABEL_NAMES)},
+        "model_architecture": "shared_codebert_with_decision_decomposition",
+        "decision_heads": [
+            "verdict_logits",
+            "non_benign_logit",
+            "malicious_given_non_benign_logit",
+            "ordinal_risk_logit",
+        ],
+        "non_benign_supervision_source": "verdict_label_projection",
+        "malicious_given_non_benign_supervision_source": "verdict_label_projection",
+        "ordinal_risk_supervision_source": "verdict_label_projection",
+        "non_benign_loss_weight": args.non_benign_loss_weight,
+        "malicious_context_loss_weight": args.malicious_context_loss_weight,
+        "ordinal_risk_loss_weight": args.ordinal_risk_loss_weight,
+        "stage_loss_weight": args.stage_loss_weight,
+        "action_loss_weight": args.action_loss_weight,
+        "contrastive_loss_weight": args.contrastive_loss_weight,
         "best_epoch": best_bundle["epoch"],
         "class_weights": best_bundle["class_weights"],
         "val_metrics": best_bundle["val_metrics"],
@@ -421,4 +574,10 @@ if __name__ == "__main__":
     parser.add_argument("--log-interval", type=int, default=int(os.getenv("GENOS_T1_LOG_INTERVAL", "100")))
     parser.add_argument("--use-compile", action="store_true", default=os.getenv("GENOS_T1_USE_COMPILE", "0") == "1")
     parser.add_argument("--deterministic", action="store_true", default=os.getenv("GENOS_T1_DETERMINISTIC", "0") == "1")
+    parser.add_argument("--non-benign-loss-weight", type=float, default=float(os.getenv("GENOS_T1_NON_BENIGN_LOSS_WEIGHT", "0.0")))
+    parser.add_argument("--malicious-context-loss-weight", type=float, default=float(os.getenv("GENOS_T1_MALICIOUS_CONTEXT_LOSS_WEIGHT", "0.0")))
+    parser.add_argument("--ordinal-risk-loss-weight", type=float, default=float(os.getenv("GENOS_T1_ORDINAL_RISK_LOSS_WEIGHT", "0.0")))
+    parser.add_argument("--stage-loss-weight", type=float, default=float(os.getenv("GENOS_T1_STAGE_LOSS_WEIGHT", "0.3")))
+    parser.add_argument("--action-loss-weight", type=float, default=float(os.getenv("GENOS_T1_ACTION_LOSS_WEIGHT", "0.0")))
+    parser.add_argument("--contrastive-loss-weight", type=float, default=float(os.getenv("GENOS_T1_CONTRASTIVE_LOSS_WEIGHT", "0.0")))
     train(parser.parse_args())

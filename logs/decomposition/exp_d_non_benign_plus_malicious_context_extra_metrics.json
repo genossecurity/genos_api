@@ -1,0 +1,136 @@
+{
+  "test": {
+    "auc_malicious_one_vs_rest": 0.9952457824117465,
+    "ap_malicious_one_vs_rest": 0.9918770243525459,
+    "auc_non_benign": 0.9893379197854998,
+    "ap_non_benign": 0.9828184285763834,
+    "balanced_accuracy": 0.9241724292031933,
+    "per_class": {
+      "Benign": {
+        "precision": 0.9705718010802756,
+        "recall": 0.9384116693679092,
+        "f1": 0.9542208386742355,
+        "support": 5553
+      },
+      "Malicious": {
+        "precision": 0.9222682382924499,
+        "recall": 0.9704994971505196,
+        "f1": 0.9457693564194708,
+        "support": 2983
+      },
+      "Context_Dependent": {
+        "precision": 0.8478118876551274,
+        "recall": 0.863606121091151,
+        "f1": 0.8556361239288068,
+        "support": 1503
+      }
+    }
+  },
+  "benign_fp_local": {
+    "n": 95,
+    "fp_count": 25,
+    "fp_rate": 0.2631578947368421,
+    "examples": [
+      {
+        "command": "pwd",
+        "label": "Malicious",
+        "confidence": 53.37
+      },
+      {
+        "command": "cat /etc/hostname",
+        "label": "Suspicious",
+        "confidence": 98.13
+      },
+      {
+        "command": "head -n 20 access.log",
+        "label": "Suspicious",
+        "confidence": 98.35
+      },
+      {
+        "command": "tail -f /var/log/syslog",
+        "label": "Suspicious",
+        "confidence": 88.88
+      },
+      {
+        "command": "top -bn1 | head -20",
+        "label": "Suspicious",
+        "confidence": 57.94
+      },
+      {
+        "command": "uptime",
+        "label": "Malicious",
+        "confidence": 52.2
+      },
+      {
+        "command": "hostname",
+        "label": "Suspicious",
+        "confidence": 47.56
+      },
+      {
+        "command": "ps aux | grep python",
+        "label": "Suspicious",
+        "confidence": 98.38
+      },
+      {
+        "command": "lsblk",
+        "label": "Suspicious",
+        "confidence": 97.15
+      },
+      {
+        "command": "ifconfig",
+        "label": "Suspicious",
+        "confidence": 92.39
+      },
+      {
+        "command": "ip addr show",
+        "label": "Suspicious",
+        "confidence": 97.9
+      },
+      {
+        "command": "netstat -tlnp",
+        "label": "Suspicious",
+        "confidence": 97.75
+      },
+      {
+        "command": "ss -tuln",
+        "label": "Suspicious",
+        "confidence": 96.69
+      },
+      {
+        "command": "dig example.com",
+        "label": "Suspicious",
+        "confidence": 95.7
+      },
+      {
+        "command": "nslookup google.com",
+        "label": "Suspicious",
+        "confidence": 97.8
+      },
+      {
+        "command": "traceroute 8.8.8.8",
+        "label": "Suspicious",
+        "confidence": 97.68
+      },
+      {
+        "command": "docker images",
+        "label": "Suspicious",
+        "confidence": 97.07
+      },
+      {
+        "command": "docker volume ls",
+        "label": "Suspicious",
+        "confidence": 95.87
+      },
+      {
+        "command": "docker network ls",
+        "label": "Suspicious",
+        "confidence": 98.33
+      },
+      {
+        "command": "python3 -c 'print(\"hello world\")'",
+        "label": "Suspicious",
+        "confidence": 83.14
+      }
+    ]
+  }
+}

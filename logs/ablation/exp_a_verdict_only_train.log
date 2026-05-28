@@ -1,0 +1,263 @@
+[*] Training on device: cuda
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[*] Loading and pre-tokenizing Gatekeeper 3-class dataset (Train)...
+[+] Train load complete: 29465 benign | 15805 malicious | 7920 context_dependent
+[*] Loading and pre-tokenizing Gatekeeper 3-class dataset (Validation)...
+[+] Validation load complete: 5228 benign | 2823 malicious | 1436 context_dependent
+[*] Loading and pre-tokenizing Gatekeeper 3-class dataset (Test)...
+[+] Test load complete: 5553 benign | 2983 malicious | 1503 context_dependent
+[*] Batch config: micro=32, grad_acc=8, effective=256
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 13714.31it/s]
+[*] torch.compile() disabled.
+[*] Dynamic class weights: Benign=0.7757, Malicious=1.0591, Context_Dependent=1.4962
+[*] Balanced sampling enabled: power=1.00 (replacement sampling across classes)
+[*] Epoch 1/5 step 100/1663 train_acc=33.75%
+[*] Epoch 1/5 step 200/1663 train_acc=40.02%
+[*] Epoch 1/5 step 300/1663 train_acc=44.86%
+[*] Epoch 1/5 step 400/1663 train_acc=48.70%
+[*] Epoch 1/5 step 500/1663 train_acc=53.86%
+[*] Epoch 1/5 step 600/1663 train_acc=58.05%
+[*] Epoch 1/5 step 700/1663 train_acc=61.45%
+[*] Epoch 1/5 step 800/1663 train_acc=64.13%
+[*] Epoch 1/5 step 900/1663 train_acc=66.31%
+[*] Epoch 1/5 step 1000/1663 train_acc=68.07%
+[*] Epoch 1/5 step 1100/1663 train_acc=69.67%
+[*] Epoch 1/5 step 1200/1663 train_acc=71.14%
+[*] Epoch 1/5 step 1300/1663 train_acc=72.39%
+[*] Epoch 1/5 step 1400/1663 train_acc=73.54%
+[*] Epoch 1/5 step 1500/1663 train_acc=74.60%
+[*] Epoch 1/5 step 1600/1663 train_acc=75.48%
+[*] Epoch 1/5 step 1663/1663 train_acc=75.97%
+
+[Epoch 1] train_loss=0.5535 train_acc=75.97% | val_acc=90.97% val_macro_f1=0.8945
+  Benign                P=0.9797  R=0.8770  F1=0.9255
+  Malicious             P=0.9099  R=0.9476  F1=0.9283
+  Context_Dependent     P=0.7338  R=0.9540  F1=0.8295
+[+] Gatekeeper improved. Saved weights to /home/sam/genos/genos_api/models/gatekeeper.pt
+------------------------------------------------------------------------
+[*] Epoch 2/5 step 100/1663 train_acc=89.38%
+[*] Epoch 2/5 step 200/1663 train_acc=90.50%
+[*] Epoch 2/5 step 300/1663 train_acc=90.79%
+[*] Epoch 2/5 step 400/1663 train_acc=90.94%
+[*] Epoch 2/5 step 500/1663 train_acc=91.03%
+[*] Epoch 2/5 step 600/1663 train_acc=91.02%
+[*] Epoch 2/5 step 700/1663 train_acc=91.21%
+[*] Epoch 2/5 step 800/1663 train_acc=91.37%
+[*] Epoch 2/5 step 900/1663 train_acc=91.50%
+[*] Epoch 2/5 step 1000/1663 train_acc=91.62%
+[*] Epoch 2/5 step 1100/1663 train_acc=91.72%
+[*] Epoch 2/5 step 1200/1663 train_acc=91.89%
+[*] Epoch 2/5 step 1300/1663 train_acc=91.99%
+[*] Epoch 2/5 step 1400/1663 train_acc=92.09%
+[*] Epoch 2/5 step 1500/1663 train_acc=92.17%
+[*] Epoch 2/5 step 1600/1663 train_acc=92.18%
+[*] Epoch 2/5 step 1663/1663 train_acc=92.22%
+
+[Epoch 2] train_loss=0.3289 train_acc=92.22% | val_acc=93.95% val_macro_f1=0.9266
+  Benign                P=0.9824  R=0.9279  F1=0.9544
+  Malicious             P=0.9501  R=0.9447  F1=0.9474
+  Context_Dependent     P=0.8008  R=0.9714  F1=0.8779
+[+] Gatekeeper improved. Saved weights to /home/sam/genos/genos_api/models/gatekeeper.pt
+------------------------------------------------------------------------
+[*] Epoch 3/5 step 100/1663 train_acc=93.66%
+[*] Epoch 3/5 step 200/1663 train_acc=94.09%
+[*] Epoch 3/5 step 300/1663 train_acc=93.65%
+[*] Epoch 3/5 step 400/1663 train_acc=93.77%
+[*] Epoch 3/5 step 500/1663 train_acc=93.84%
+[*] Epoch 3/5 step 600/1663 train_acc=93.88%
+[*] Epoch 3/5 step 700/1663 train_acc=93.95%
+[*] Epoch 3/5 step 800/1663 train_acc=93.94%
+[*] Epoch 3/5 step 900/1663 train_acc=94.00%
+[*] Epoch 3/5 step 1000/1663 train_acc=93.93%
+[*] Epoch 3/5 step 1100/1663 train_acc=93.97%
+[*] Epoch 3/5 step 1200/1663 train_acc=94.05%
+[*] Epoch 3/5 step 1300/1663 train_acc=94.09%
+[*] Epoch 3/5 step 1400/1663 train_acc=94.09%
+[*] Epoch 3/5 step 1500/1663 train_acc=94.11%
+[*] Epoch 3/5 step 1600/1663 train_acc=94.13%
+[*] Epoch 3/5 step 1663/1663 train_acc=94.17%
+
+[Epoch 3] train_loss=0.2878 train_acc=94.17% | val_acc=95.32% val_macro_f1=0.9438
+  Benign                P=0.9851  R=0.9461  F1=0.9652
+  Malicious             P=0.9459  R=0.9600  F1=0.9529
+  Context_Dependent     P=0.8663  R=0.9659  F1=0.9134
+[+] Gatekeeper improved. Saved weights to /home/sam/genos/genos_api/models/gatekeeper.pt
+------------------------------------------------------------------------
+[*] Epoch 4/5 step 100/1663 train_acc=94.31%
+[*] Epoch 4/5 step 200/1663 train_acc=94.42%
+[*] Epoch 4/5 step 300/1663 train_acc=94.67%
+[*] Epoch 4/5 step 400/1663 train_acc=94.82%
+[*] Epoch 4/5 step 500/1663 train_acc=94.73%
+[*] Epoch 4/5 step 600/1663 train_acc=94.77%
+[*] Epoch 4/5 step 700/1663 train_acc=94.79%
+[*] Epoch 4/5 step 800/1663 train_acc=94.86%
+[*] Epoch 4/5 step 900/1663 train_acc=94.92%
+[*] Epoch 4/5 step 1000/1663 train_acc=95.01%
+[*] Epoch 4/5 step 1100/1663 train_acc=95.07%
+[*] Epoch 4/5 step 1200/1663 train_acc=95.15%
+[*] Epoch 4/5 step 1300/1663 train_acc=95.20%
+[*] Epoch 4/5 step 1400/1663 train_acc=95.23%
+[*] Epoch 4/5 step 1500/1663 train_acc=95.24%
+[*] Epoch 4/5 step 1600/1663 train_acc=95.24%
+[*] Epoch 4/5 step 1663/1663 train_acc=95.25%
+
+[Epoch 4] train_loss=0.2682 train_acc=95.25% | val_acc=95.76% val_macro_f1=0.9485
+  Benign                P=0.9850  R=0.9533  F1=0.9689
+  Malicious             P=0.9598  R=0.9568  F1=0.9583
+  Context_Dependent     P=0.8679  R=0.9749  F1=0.9183
+[+] Gatekeeper improved. Saved weights to /home/sam/genos/genos_api/models/gatekeeper.pt
+------------------------------------------------------------------------
+[*] Epoch 5/5 step 100/1663 train_acc=96.03%
+[*] Epoch 5/5 step 200/1663 train_acc=96.30%
+[*] Epoch 5/5 step 300/1663 train_acc=95.92%
+[*] Epoch 5/5 step 400/1663 train_acc=95.99%
+[*] Epoch 5/5 step 500/1663 train_acc=95.93%
+[*] Epoch 5/5 step 600/1663 train_acc=95.84%
+[*] Epoch 5/5 step 700/1663 train_acc=95.80%
+[*] Epoch 5/5 step 800/1663 train_acc=95.85%
+[*] Epoch 5/5 step 900/1663 train_acc=95.89%
+[*] Epoch 5/5 step 1000/1663 train_acc=95.88%
+[*] Epoch 5/5 step 1100/1663 train_acc=95.89%
+[*] Epoch 5/5 step 1200/1663 train_acc=95.93%
+[*] Epoch 5/5 step 1300/1663 train_acc=95.96%
+[*] Epoch 5/5 step 1400/1663 train_acc=95.96%
+[*] Epoch 5/5 step 1500/1663 train_acc=95.96%
+[*] Epoch 5/5 step 1600/1663 train_acc=95.97%
+[*] Epoch 5/5 step 1663/1663 train_acc=95.97%
+
+[Epoch 5] train_loss=0.2529 train_acc=95.97% | val_acc=95.94% val_macro_f1=0.9511
+  Benign                P=0.9871  R=0.9547  F1=0.9706
+  Malicious             P=0.9520  R=0.9621  F1=0.9570
+  Context_Dependent     P=0.8840  R=0.9714  F1=0.9257
+[+] Gatekeeper improved. Saved weights to /home/sam/genos/genos_api/models/gatekeeper.pt
+------------------------------------------------------------------------
+/home/sam/genos/genos_api/scripts/training/trainer1.py:518: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  raw_model.load_state_dict(torch.load(model_save_path, map_location=device))
+
+[*] Final Gatekeeper results
+{
+  "seed": 42,
+  "epochs": 5,
+  "micro_batch_size": 32,
+  "effective_batch_size": 256,
+  "max_len": 256,
+  "learning_rate": 1e-05,
+  "weight_decay": 0.01,
+  "label_smoothing": 0.05,
+  "balanced_sampling": true,
+  "sampling_power": 1.0,
+  "class_weight_power": 0.5,
+  "num_classes": 3,
+  "label_names": [
+    "Benign",
+    "Malicious",
+    "Context_Dependent"
+  ],
+  "coarse_stage_names": [
+    "Benign Administration",
+    "Discovery",
+    "Execution",
+    "Remote Transfer",
+    "Persistence",
+    "Credential Access",
+    "Defense Evasion",
+    "Collection / Staging",
+    "C2 / Remote Access",
+    "Impact",
+    "Context Required"
+  ],
+  "action_tag_names": [
+    "has_identity_enumeration",
+    "has_network_enumeration",
+    "has_remote_resource",
+    "has_interpreter_execution",
+    "has_pipe_or_chain",
+    "has_sensitive_path",
+    "has_archive_operation",
+    "has_remote_target",
+    "has_persistence_mechanism",
+    "has_destructive_operation",
+    "has_obfuscation"
+  ],
+  "stage_supervision_source": "mitre_id_coarse_stage_mapping",
+  "action_supervision_source": "disabled",
+  "contrastive_supervision_source": "disabled",
+  "stage_loss_weight": 0.0,
+  "action_loss_weight": 0.0,
+  "contrastive_loss_weight": 0.0,
+  "contrastive_temperature": 0.1,
+  "best_epoch": 5,
+  "class_weights": [
+    0.7757131457328796,
+    1.059149146080017,
+    1.4962072372436523
+  ],
+  "val_metrics": {
+    "accuracy": 0.959418151154211,
+    "macro_f1": 0.951108711359748,
+    "macro_precision": 0.9410515923771513,
+    "macro_recall": 0.9627375681908642,
+    "per_class": {
+      "Benign": {
+        "precision": 0.9871439873417721,
+        "recall": 0.9546671767406274,
+        "f1": 0.9706339945546479,
+        "tp": 4991,
+        "fp": 65,
+        "fn": 237
+      },
+      "Malicious": {
+        "precision": 0.9519803715387312,
+        "recall": 0.9620970598653914,
+        "f1": 0.9570119802677942,
+        "tp": 2716,
+        "fp": 137,
+        "fn": 107
+      },
+      "Context_Dependent": {
+        "precision": 0.8840304182509505,
+        "recall": 0.9714484679665738,
+        "f1": 0.9256801592568015,
+        "tp": 1395,
+        "fp": 183,
+        "fn": 41
+      }
+    },
+    "loss": 0.14080635956219079
+  },
+  "test_metrics": {
+    "accuracy": 0.9451140551847793,
+    "macro_f1": 0.9288317639623148,
+    "macro_precision": 0.9272994092290182,
+    "macro_recall": 0.9305285597977835,
+    "per_class": {
+      "Benign": {
+        "precision": 0.9671112735245752,
+        "recall": 0.9531784620925626,
+        "f1": 0.9600943225104299,
+        "tp": 5293,
+        "fp": 180,
+        "fn": 260
+      },
+      "Malicious": {
+        "precision": 0.9403714565004888,
+        "recall": 0.9674824002681864,
+        "f1": 0.953734302709848,
+        "tp": 2886,
+        "fp": 183,
+        "fn": 97
+      },
+      "Context_Dependent": {
+        "precision": 0.8744154976619907,
+        "recall": 0.8709248170326015,
+        "f1": 0.8726666666666666,
+        "tp": 1309,
+        "fp": 188,
+        "fn": 194
+      }
+    },
+    "loss": 0.18228322232502225
+  },
+  "model_path": "/home/sam/genos/genos_api/models/gatekeeper.pt"
+}
+[+] Metadata saved to /home/sam/genos/genos_api/config/gatekeeper_meta.json

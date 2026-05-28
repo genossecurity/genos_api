@@ -189,7 +189,7 @@ def classify(engine: GenosEngine, command: str) -> Tuple[str, float, float]:
     t0 = time.perf_counter()
     result = engine.scan(command)
     latency = (time.perf_counter() - t0) * 1000.0
-    label = result.get("label", "Benign")
+    label = result.get("internal_label", result.get("label", "Benign"))
     conf = float(result.get("label_confidence", 0.0))
     return label, conf, latency
 
