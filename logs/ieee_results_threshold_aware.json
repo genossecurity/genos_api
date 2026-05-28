@@ -1,12 +1,12 @@
 {
   "baseline": {
-    "top1_acc": 0.4920828258221681,
-    "top3_acc": 0.6382460414129111,
-    "macro_f1": 0.3942470096349129,
-    "lat_ms": 28.15052765806123
+    "top1_acc": 0.5006090133982948,
+    "top3_acc": 0.6419001218026796,
+    "macro_f1": 0.4177052569481684,
+    "lat_ms": 12.417501951277
   },
   "tier1": {
-    "auc": 0.9488662017075922,
+    "auc": 0.9488662017075921,
     "ap": 0.8627431121487124,
     "precision": 0.7401015228426396,
     "recall": 0.8879415347137637,
@@ -18,64 +18,64 @@
     "tp": 729,
     "threshold_used": null,
     "decision_mode": "argmax",
-    "mean_preproc_ms": 0.035840793778438504,
+    "mean_preproc_ms": 0.031308125780165834,
     "obfuscation_flag_rate": 0.02949438202247191,
     "deobfuscation_change_rate": 0.0
   },
   "tier2_legacy_csv": {
-    "top1_acc": 0.3075980392156863,
-    "top3_acc": 0.45098039215686275,
-    "macro_f1": 0.13977177202260688,
-    "lat_ms": 6.7772707769501155,
-    "mean_preproc_ms": 0.03769707822642636,
+    "top1_acc": 0.5428921568627451,
+    "top3_acc": 0.6936274509803921,
+    "macro_f1": 0.49250067670489345,
+    "lat_ms": 35.213999954659634,
+    "mean_preproc_ms": 0.035976116420806205,
     "deobfuscation_change_rate": 0.0,
     "n_eval": 816,
     "n_skipped_missing_label": 5
   },
   "tier2_expanded": {
-    "top1_acc": 0.30639324487334135,
-    "top3_acc": 0.4487334137515078,
-    "macro_f1": 0.1460972374671914,
-    "lat_ms": 6.727040541415587,
-    "mean_preproc_ms": 0.03717480894667967,
+    "top1_acc": 0.5392038600723763,
+    "top3_acc": 0.6936067551266586,
+    "macro_f1": 0.46406329038917205,
+    "lat_ms": 35.03705270687578,
+    "mean_preproc_ms": 0.03577467551475238,
     "deobfuscation_change_rate": 0.0,
     "n_eval": 829,
     "n_skipped_missing_label": 0
   },
   "tier2_legacy_group": {
-    "top1_acc": 0.3075980392156863,
-    "top3_acc": 0.45098039215686275,
-    "macro_f1": 0.13977177202260688,
-    "lat_ms": 6.73513446350162,
-    "mean_preproc_ms": 0.03759901657901412,
+    "top1_acc": 0.5428921568627451,
+    "top3_acc": 0.6936274509803921,
+    "macro_f1": 0.49250067670489345,
+    "lat_ms": 35.145305212007074,
+    "mean_preproc_ms": 0.03667547794350412,
     "deobfuscation_change_rate": 0.0,
     "n_eval": 816,
     "n_skipped_missing_label": 0
   },
   "tier2_new_group": {
-    "top1_acc": 0.23076923076923078,
-    "top3_acc": 0.3076923076923077,
-    "macro_f1": 0.15,
-    "lat_ms": 6.757288633917387,
-    "mean_preproc_ms": 0.03849793798648394,
+    "top1_acc": 0.3076923076923077,
+    "top3_acc": 0.6923076923076923,
+    "macro_f1": 0.2,
+    "lat_ms": 34.47999830769697,
+    "mean_preproc_ms": 0.038816307699982226,
     "deobfuscation_change_rate": 0.0,
     "n_eval": 13,
     "n_skipped_missing_label": 0
   },
   "tfidf_tier2_legacy_csv": {
-    "top1_acc": 0.5416164053075995,
-    "top3_acc": 0.6863691194209891,
-    "macro_f1": 0.45695590881412024,
-    "lat_ms": 89.03951830409278,
+    "top1_acc": 0.5392038600723763,
+    "top3_acc": 0.6972255729794934,
+    "macro_f1": 0.46143564858844854,
+    "lat_ms": 34.56701310494558,
     "n_eval": 829,
     "n_skipped_missing_label": 0,
     "text_col_used": "input_text"
   },
   "tfidf_tier2_legacy_group": {
-    "top1_acc": 0.5453431372549019,
-    "top3_acc": 0.6862745098039216,
-    "macro_f1": 0.4788533603134904,
-    "lat_ms": 89.85762312601996,
+    "top1_acc": 0.5428921568627451,
+    "top3_acc": 0.6973039215686274,
+    "macro_f1": 0.489503264082332,
+    "lat_ms": 34.47524273529611,
     "n_eval": 816,
     "n_skipped_missing_label": 0,
     "text_col_used": "input_text"
@@ -83,16 +83,16 @@
   "tfidf_tier2_new_group": {
     "top1_acc": 0.3076923076923077,
     "top3_acc": 0.6923076923076923,
-    "macro_f1": 0.21052631578947367,
-    "lat_ms": 82.86002912343695,
+    "macro_f1": 0.2,
+    "lat_ms": 34.16434307690417,
     "n_eval": 13,
     "n_skipped_missing_label": 0,
     "text_col_used": "input_text"
   },
   "full_pipeline_codebert": {
     "0.5": {
-      "end_to_end_lat_ms": 9.641979372827336,
-      "mean_preproc_ms": 0.03661459251306951,
+      "end_to_end_lat_ms": 24.505156970698522,
+      "mean_preproc_ms": 0.03513839529978213,
       "tier2_trigger_rate": 0.467,
       "obfuscation_flag_rate": 0.1046,
       "deobfuscation_change_rate": 0.0,
@@ -101,8 +101,8 @@
       "n_stream": 10000
     },
     "0.9": {
-      "end_to_end_lat_ms": 7.387757722334936,
-      "mean_preproc_ms": 0.035079100355505946,
+      "end_to_end_lat_ms": 12.777794502499388,
+      "mean_preproc_ms": 0.03314227029884478,
       "tier2_trigger_rate": 0.1304,
       "obfuscation_flag_rate": 0.0241,
       "deobfuscation_change_rate": 0.0,
@@ -111,8 +111,8 @@
       "n_stream": 10000
     },
     "0.99": {
-      "end_to_end_lat_ms": 6.87142892787233,
-      "mean_preproc_ms": 0.03465235875919461,
+      "end_to_end_lat_ms": 10.14840572629987,
+      "mean_preproc_ms": 0.03210414349946404,
       "tier2_trigger_rate": 0.055,
       "obfuscation_flag_rate": 0.0063,
       "deobfuscation_change_rate": 0.0,
@@ -123,24 +123,24 @@
   },
   "full_pipeline_tfidf": {
     "0.5": {
-      "end_to_end_lat_ms": 48.15091757257469,
-      "mean_preproc_ms": 0.03916606097482145,
+      "end_to_end_lat_ms": 24.266588274298712,
+      "mean_preproc_ms": 0.035152044700907936,
       "tier2_trigger_rate": 0.467,
       "binary_acc": 0.923,
       "binary_bal_acc": 0.923,
       "n_stream": 10000
     },
     "0.9": {
-      "end_to_end_lat_ms": 18.253145755734295,
-      "mean_preproc_ms": 0.0359095573425293,
+      "end_to_end_lat_ms": 12.706975632501166,
+      "mean_preproc_ms": 0.03311675449951963,
       "tier2_trigger_rate": 0.1304,
       "binary_acc": 0.947,
       "binary_bal_acc": 0.9203333333333333,
       "n_stream": 10000
     },
     "0.99": {
-      "end_to_end_lat_ms": 11.57975086462684,
-      "mean_preproc_ms": 0.036132200015708806,
+      "end_to_end_lat_ms": 10.150368413401132,
+      "mean_preproc_ms": 0.032023218600033945,
       "tier2_trigger_rate": 0.055,
       "binary_acc": 0.9522,
       "binary_bal_acc": 0.9065656565656566,
@@ -152,7 +152,7 @@
     "fp_count": 8,
     "true_negative_count": 87,
     "fp_rate": 0.08421052631578947,
-    "mean_malicious_prob": 0.08525749242031261,
-    "csv_path": "/home/snake/genos_api/genos_api/logs/real_world_benign_results.csv"
+    "mean_malicious_prob": 0.08525752344805944,
+    "csv_path": "/home/sam/genos/genos_api/logs/real_world_benign_results.csv"
   }
 }
