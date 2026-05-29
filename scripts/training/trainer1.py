@@ -10,6 +10,7 @@ from typing import Dict, List, Tuple
 import pandas as pd
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.amp import GradScaler, autocast
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from tqdm import tqdm
@@ -54,6 +55,8 @@ def set_seed(seed: int) -> None:
 NUM_CLASSES = 3
 LABEL_NAMES = ["Benign", "Malicious", "Context_Dependent"]
 LABEL_TO_IDX = {name: i for i, name in enumerate(LABEL_NAMES)}
+EVIDENCE_LABEL_NAMES = ["Routine_Operational", "Direct_Abuse", "Needs_Context"]
+SOFT_TARGET_SCHEMA_KEYS = ["Routine_Operational", "Needs_Context", "Direct_Abuse"]
 NON_BENIGN_TARGET = {
     "Benign": 0.0,
     "Malicious": 1.0,
@@ -68,6 +71,103 @@ ORDINAL_RISK_TARGET = {
     "Context_Dependent": 0.5,
     "Malicious": 1.0,
 }
+
+
+def resolve_optional_data_path(path_value: str | None) -> str | None:
+    if not path_value:
+        return None
+    return resolve_data_path(path_value)
+
+
+def hard_label_to_soft_target(label: str) -> List[float]:
+    if label not in LABEL_TO_IDX:
+        raise ValueError(f"Unknown hard label: {label}")
+    soft_target = [0.0] * NUM_CLASSES
+    soft_target[LABEL_TO_IDX[label]] = 1.0
+    return soft_target
+
+
+def normalize_soft_target(raw_target: Dict[str, float], row_idx: int, source_path: str) -> List[float]:
+    missing = [key for key in SOFT_TARGET_SCHEMA_KEYS if key not in raw_target]
+    extra = [key for key in raw_target if key not in SOFT_TARGET_SCHEMA_KEYS]
+    if missing or extra:
+        raise ValueError(
+            f"Invalid soft_target keys in {source_path} row {row_idx}: missing={missing or 'none'} extra={extra or 'none'}"
+        )
+
+    routine = float(raw_target["Routine_Operational"])
+    needs_context = float(raw_target["Needs_Context"])
+    direct_abuse = float(raw_target["Direct_Abuse"])
+    values = [routine, direct_abuse, needs_context]
+    if any(value < 0.0 or value > 1.0 for value in values):
+        raise ValueError(f"Soft target values must be in [0, 1] in {source_path} row {row_idx}: {raw_target}")
+
+    total = sum(values)
+    if total <= 0.0:
+        raise ValueError(f"Soft target must sum to a positive value in {source_path} row {row_idx}: {raw_target}")
+    normalized = [value / total for value in values]
+    if abs(sum(normalized) - 1.0) > 1e-6:
+        raise ValueError(f"Normalized soft target does not sum to 1 in {source_path} row {row_idx}: {raw_target}")
+    return normalized
+
+
+def soft_target_to_auxiliary_targets(soft_target: List[float]) -> Tuple[float, float, float]:
+    routine_operational, direct_abuse, needs_context = soft_target
+    non_benign = direct_abuse + needs_context
+    malicious_given_non_benign = 0.0 if non_benign <= 0.0 else direct_abuse / non_benign
+    ordinal_risk = (0.5 * needs_context) + direct_abuse
+    return non_benign, malicious_given_non_benign, ordinal_risk
+
+
+def soft_cross_entropy_loss(
+    logits: torch.Tensor,
+    soft_targets: torch.Tensor,
+    class_weights: torch.Tensor | None = None,
+    reduction: str = "mean",
+) -> torch.Tensor:
+    log_probs = F.log_softmax(logits, dim=1)
+    losses = -(soft_targets * log_probs)
+    if class_weights is not None:
+        losses = losses * class_weights.unsqueeze(0)
+    losses = losses.sum(dim=1)
+    if reduction == "sum":
+        return losses.sum()
+    if reduction == "none":
+        return losses
+    return losses.mean()
+
+
+def soft_kl_divergence_loss(logits: torch.Tensor, soft_targets: torch.Tensor, reduction: str = "batchmean") -> torch.Tensor:
+    log_probs = F.log_softmax(logits, dim=1)
+    return F.kl_div(log_probs, soft_targets, reduction=reduction)
+
+
+def compute_verdict_loss(
+    logits: torch.Tensor,
+    labels: torch.Tensor,
+    soft_targets: torch.Tensor,
+    verdict_loss_name: str,
+    class_weights: torch.Tensor | None,
+    label_smoothing: float,
+    reduction: str = "mean",
+) -> torch.Tensor:
+    if verdict_loss_name == "hard_ce":
+        return F.cross_entropy(
+            logits,
+            labels,
+            weight=class_weights,
+            label_smoothing=label_smoothing,
+            reduction=reduction,
+        )
+    if verdict_loss_name == "soft_ce":
+        return soft_cross_entropy_loss(logits, soft_targets, class_weights=class_weights, reduction=reduction)
+    if verdict_loss_name == "soft_kl":
+        if reduction == "sum":
+            return soft_kl_divergence_loss(logits, soft_targets, reduction="sum")
+        if reduction == "none":
+            raise ValueError("soft_kl does not support reduction='none'")
+        return soft_kl_divergence_loss(logits, soft_targets, reduction="batchmean")
+    raise ValueError(f"Unsupported verdict loss: {verdict_loss_name}")
 
 
 class GatekeeperModel(nn.Module):
@@ -102,16 +202,107 @@ class GatekeeperModel(nn.Module):
 class ThreeClassDataset(Dataset):
     """Load a unified 3-class CSV (command, label, original_label, mitre_id)."""
 
-    def __init__(self, csv_path: str, tokenizer: RobertaTokenizer, max_len: int = 256, phase: str = "Train"):
+    def __init__(
+        self,
+        csv_path: str | None,
+        tokenizer: RobertaTokenizer,
+        max_len: int = 256,
+        phase: str = "Train",
+        hard_label_jsonl: str | None = None,
+        soft_label_jsonl: str | None = None,
+    ):
         print(f"[*] Loading and pre-tokenizing Gatekeeper 3-class dataset ({phase})...")
-        df = pd.read_csv(csv_path).dropna(subset=["command"])
+        rows: List[Dict[str, object]] = []
 
-        self.texts = [str(c).lower().strip() for c in df["command"].tolist()]
-        raw_labels = [str(label) for label in df["label"].tolist()]
-        self.labels = [LABEL_TO_IDX[lbl] for lbl in raw_labels]
-        self.non_benign_labels = [NON_BENIGN_TARGET[lbl] for lbl in raw_labels]
-        self.malicious_given_non_benign_labels = [MALICIOUS_GIVEN_NON_BENIGN_TARGET.get(lbl, 0.0) for lbl in raw_labels]
-        self.ordinal_risk_targets = [ORDINAL_RISK_TARGET[lbl] for lbl in raw_labels]
+        if csv_path:
+            df = pd.read_csv(csv_path).dropna(subset=["command"])
+            for record in df.to_dict("records"):
+                label = str(record["label"])
+                soft_target = hard_label_to_soft_target(label)
+                non_benign, malicious_given_non_benign, ordinal_risk = soft_target_to_auxiliary_targets(soft_target)
+                rows.append(
+                    {
+                        "command": str(record["command"]),
+                        "label_idx": LABEL_TO_IDX[label],
+                        "soft_target": soft_target,
+                        "non_benign": non_benign,
+                        "malicious_given_non_benign": malicious_given_non_benign,
+                        "ordinal_risk": ordinal_risk,
+                        "source_type": "hard_label_dataset",
+                        "label_basis": f"hard_label:{label}",
+                        "is_soft_label": False,
+                    }
+                )
+
+        if hard_label_jsonl:
+            with open(hard_label_jsonl, "r", encoding="utf-8") as handle:
+                for row_idx, line in enumerate(handle, start=1):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    payload = json.loads(line)
+                    command = str(payload.get("command", "")).strip()
+                    if not command:
+                        raise ValueError(f"Missing command in {hard_label_jsonl} row {row_idx}")
+                    label = str(payload.get("label", "")).strip()
+                    if label not in LABEL_TO_IDX:
+                        raise ValueError(f"Invalid label in {hard_label_jsonl} row {row_idx}: {label!r}")
+                    soft_target = hard_label_to_soft_target(label)
+                    non_benign, malicious_given_non_benign, ordinal_risk = soft_target_to_auxiliary_targets(soft_target)
+                    rows.append(
+                        {
+                            "command": command,
+                            "label_idx": LABEL_TO_IDX[label],
+                            "soft_target": soft_target,
+                            "non_benign": non_benign,
+                            "malicious_given_non_benign": malicious_given_non_benign,
+                            "ordinal_risk": ordinal_risk,
+                            "source_type": str(payload.get("source_type", "hard_label_jsonl")),
+                            "label_basis": str(payload.get("label_basis", f"hard_label_jsonl:{label}")),
+                            "is_soft_label": False,
+                        }
+                    )
+
+        if soft_label_jsonl:
+            with open(soft_label_jsonl, "r", encoding="utf-8") as handle:
+                for row_idx, line in enumerate(handle, start=1):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    payload = json.loads(line)
+                    command = str(payload.get("command", "")).strip()
+                    if not command:
+                        raise ValueError(f"Missing command in {soft_label_jsonl} row {row_idx}")
+                    if "soft_target" not in payload or not isinstance(payload["soft_target"], dict):
+                        raise ValueError(f"Missing soft_target object in {soft_label_jsonl} row {row_idx}")
+                    soft_target = normalize_soft_target(payload["soft_target"], row_idx, soft_label_jsonl)
+                    non_benign, malicious_given_non_benign, ordinal_risk = soft_target_to_auxiliary_targets(soft_target)
+                    rows.append(
+                        {
+                            "command": command,
+                            "label_idx": int(torch.tensor(soft_target).argmax().item()),
+                            "soft_target": soft_target,
+                            "non_benign": non_benign,
+                            "malicious_given_non_benign": malicious_given_non_benign,
+                            "ordinal_risk": ordinal_risk,
+                            "source_type": str(payload.get("source_type", "soft_label_dataset")),
+                            "label_basis": str(payload.get("label_basis", "unspecified")),
+                            "is_soft_label": True,
+                        }
+                    )
+
+        if not rows:
+            raise ValueError(f"No rows loaded for {phase}; provide a CSV split or soft-label JSONL.")
+
+        self.texts = [str(row["command"]).lower().strip() for row in rows]
+        self.labels = [int(row["label_idx"]) for row in rows]
+        self.soft_targets = [list(row["soft_target"]) for row in rows]
+        self.non_benign_labels = [float(row["non_benign"]) for row in rows]
+        self.malicious_given_non_benign_labels = [float(row["malicious_given_non_benign"]) for row in rows]
+        self.ordinal_risk_targets = [float(row["ordinal_risk"]) for row in rows]
+        self.soft_label_count = sum(1 for row in rows if bool(row["is_soft_label"]))
+        self.source_types = [str(row["source_type"]) for row in rows]
+        self.label_bases = [str(row["label_basis"]) for row in rows]
         self.encodings = tokenizer(
             self.texts,
             padding="max_length",
@@ -121,7 +312,8 @@ class ThreeClassDataset(Dataset):
         )
         counts = Counter(self.labels)
         parts = " | ".join(f"{counts.get(i, 0)} {LABEL_NAMES[i].lower()}" for i in range(NUM_CLASSES))
-        print(f"[+] {phase} load complete: {parts}")
+        soft_msg = f" | {self.soft_label_count} soft-labeled" if self.soft_label_count else ""
+        print(f"[+] {phase} load complete: {parts}{soft_msg}")
 
     def __len__(self) -> int:
         return len(self.labels)
@@ -131,6 +323,7 @@ class ThreeClassDataset(Dataset):
             "ids": self.encodings["input_ids"][idx],
             "mask": self.encodings["attention_mask"][idx],
             "lbl": torch.tensor(self.labels[idx], dtype=torch.long),
+            "soft_target": torch.tensor(self.soft_targets[idx], dtype=torch.float32),
             "non_benign_lbl": torch.tensor(self.non_benign_labels[idx], dtype=torch.float32),
             "malicious_given_non_benign_lbl": torch.tensor(self.malicious_given_non_benign_labels[idx], dtype=torch.float32),
             "ordinal_risk_target": torch.tensor(self.ordinal_risk_targets[idx], dtype=torch.float32),
@@ -143,6 +336,9 @@ def collect_outputs(
     loader: DataLoader,
     device: torch.device,
     amp_enabled: bool,
+    verdict_loss_name: str,
+    class_weights: torch.Tensor | None,
+    label_smoothing: float,
 ) -> Tuple[List[int], List[List[float]], float, Dict[str, List[float]]]:
     """Collect ground-truth labels, verdict probabilities, and auxiliary-head outputs."""
     model.eval()
@@ -150,7 +346,6 @@ def collect_outputs(
     all_probs: List[List[float]] = []
     total_loss = 0.0
     total_items = 0
-    criterion = nn.CrossEntropyLoss(reduction="sum")
     aux_outputs: Dict[str, List[float]] = {
         "non_benign_targets": [],
         "non_benign_scores": [],
@@ -164,6 +359,7 @@ def collect_outputs(
         ids = batch["ids"].to(device, non_blocking=True)
         mask = batch["mask"].to(device, non_blocking=True)
         labels = batch["lbl"].to(device, non_blocking=True)
+        soft_targets = batch["soft_target"].to(device, non_blocking=True)
         non_benign_labels = batch["non_benign_lbl"].to(device, non_blocking=True)
         malicious_context_labels = batch["malicious_given_non_benign_lbl"].to(device, non_blocking=True)
         ordinal_risk_targets = batch["ordinal_risk_target"].to(device, non_blocking=True)
@@ -171,7 +367,15 @@ def collect_outputs(
         with autocast(device_type="cuda", dtype=torch.float16, enabled=amp_enabled):
             outputs = model(ids, mask)
             logits = outputs["verdict_logits"]
-            loss = criterion(logits, labels)
+            loss = compute_verdict_loss(
+                logits,
+                labels,
+                soft_targets,
+                verdict_loss_name=verdict_loss_name,
+                class_weights=class_weights,
+                label_smoothing=label_smoothing,
+                reduction="sum",
+            )
 
         batch_probs = torch.softmax(logits, dim=1)
         non_benign_scores = torch.sigmoid(outputs["non_benign_logit"])
@@ -228,6 +432,10 @@ def multiclass_metrics(targets: List[int], all_probs: List[List[float]]) -> Dict
 
 def _safe_binary_auc_ap(targets: List[float], scores: List[float]) -> Dict[str, float | None]:
     if not targets or average_precision_score is None or roc_auc_score is None:
+        return {"auc": None, "ap": None}
+    # Soft-label runs produce continuous auxiliary targets; ROC-AUC/AP only apply
+    # when the reference targets are effectively binary.
+    if any(target not in (0.0, 1.0) for target in targets):
         return {"auc": None, "ap": None}
     unique_targets = {int(round(target)) for target in targets}
     if len(unique_targets) < 2:
@@ -312,18 +520,24 @@ def train(args: argparse.Namespace) -> None:
         tokenizer,
         max_len=args.max_len,
         phase="Train",
+        hard_label_jsonl=resolve_optional_data_path(args.train_patch_jsonl),
+        soft_label_jsonl=resolve_optional_data_path(args.soft_train_jsonl),
     )
     val_dataset = ThreeClassDataset(
         resolve_data_path("gatekeeper_3class_val.csv"),
         tokenizer,
         max_len=args.max_len,
         phase="Validation",
+        hard_label_jsonl=None,
+        soft_label_jsonl=resolve_optional_data_path(args.soft_val_jsonl),
     )
     test_dataset = ThreeClassDataset(
         resolve_data_path("gatekeeper_3class_test.csv"),
         tokenizer,
         max_len=args.max_len,
         phase="Test",
+        hard_label_jsonl=None,
+        soft_label_jsonl=resolve_optional_data_path(args.soft_test_jsonl),
     )
 
     pin_memory = device.type == "cuda"
@@ -386,7 +600,8 @@ def train(args: argparse.Namespace) -> None:
         print(f"[*] Balanced sampling enabled: power={args.sampling_power:.2f} (replacement sampling across classes)", flush=True)
     else:
         print("[*] Balanced sampling disabled.", flush=True)
-    criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=args.label_smoothing)
+    if args.verdict_loss != "hard_ce" and args.label_smoothing > 0:
+        print("[*] label_smoothing is ignored for soft verdict losses.", flush=True)
     non_benign_criterion = nn.BCEWithLogitsLoss()
     malicious_context_criterion = nn.BCEWithLogitsLoss()
     ordinal_risk_criterion = nn.MSELoss()
@@ -416,6 +631,7 @@ def train(args: argparse.Namespace) -> None:
             ids = batch["ids"].to(device, non_blocking=True)
             mask = batch["mask"].to(device, non_blocking=True)
             labels = batch["lbl"].to(device, non_blocking=True)
+            soft_targets = batch["soft_target"].to(device, non_blocking=True)
             non_benign_labels = batch["non_benign_lbl"].to(device, non_blocking=True)
             malicious_context_labels = batch["malicious_given_non_benign_lbl"].to(device, non_blocking=True)
             ordinal_risk_targets = batch["ordinal_risk_target"].to(device, non_blocking=True)
@@ -423,7 +639,14 @@ def train(args: argparse.Namespace) -> None:
             with autocast(device_type="cuda", dtype=torch.float16, enabled=amp_enabled):
                 outputs = model(ids, mask)
                 verdict_logits = outputs["verdict_logits"]
-                verdict_loss = criterion(verdict_logits, labels)
+                verdict_loss = compute_verdict_loss(
+                    verdict_logits,
+                    labels,
+                    soft_targets,
+                    verdict_loss_name=args.verdict_loss,
+                    class_weights=class_weights,
+                    label_smoothing=args.label_smoothing,
+                )
                 non_benign_loss = non_benign_criterion(outputs["non_benign_logit"], non_benign_labels)
                 non_benign_mask = non_benign_labels > 0.5
                 malicious_context_loss = verdict_logits.new_tensor(0.0)
@@ -466,7 +689,15 @@ def train(args: argparse.Namespace) -> None:
         train_acc = train_correct / max(1, train_total)
         train_loss = train_loss_sum / max(1, len(train_loader))
 
-        val_targets, val_probs, val_loss, val_aux_outputs = collect_outputs(model, val_loader, device, amp_enabled)
+        val_targets, val_probs, val_loss, val_aux_outputs = collect_outputs(
+            model,
+            val_loader,
+            device,
+            amp_enabled,
+            verdict_loss_name=args.verdict_loss,
+            class_weights=class_weights if args.verdict_loss != "soft_kl" else None,
+            label_smoothing=args.label_smoothing,
+        )
         val_metrics = multiclass_metrics(val_targets, val_probs)
         val_metrics["loss"] = val_loss
         val_metrics["auxiliary"] = auxiliary_head_metrics(val_aux_outputs)
@@ -506,7 +737,15 @@ def train(args: argparse.Namespace) -> None:
     raw_model.load_state_dict(torch.load(model_save_path, map_location=device))
     raw_model.to(device)
 
-    test_targets, test_probs, test_loss, test_aux_outputs = collect_outputs(raw_model, test_loader, device, amp_enabled)
+    test_targets, test_probs, test_loss, test_aux_outputs = collect_outputs(
+        raw_model,
+        test_loader,
+        device,
+        amp_enabled,
+        verdict_loss_name=args.verdict_loss,
+        class_weights=class_weights if args.verdict_loss != "soft_kl" else None,
+        label_smoothing=args.label_smoothing,
+    )
     test_metrics = multiclass_metrics(test_targets, test_probs)
     test_metrics["loss"] = test_loss
     test_metrics["auxiliary"] = auxiliary_head_metrics(test_aux_outputs)
@@ -520,11 +759,14 @@ def train(args: argparse.Namespace) -> None:
         "learning_rate": args.lr,
         "weight_decay": args.weight_decay,
         "label_smoothing": args.label_smoothing,
+        "verdict_loss": args.verdict_loss,
         "balanced_sampling": args.balanced_sampling,
         "sampling_power": args.sampling_power,
         "class_weight_power": args.class_weight_power,
         "num_classes": NUM_CLASSES,
         "label_names": LABEL_NAMES,
+        "evidence_label_names": EVIDENCE_LABEL_NAMES,
+        "soft_target_schema_keys": SOFT_TARGET_SCHEMA_KEYS,
         "label_map": LABEL_TO_IDX,
         "id_to_label": {str(i): label for i, label in enumerate(LABEL_NAMES)},
         "model_architecture": "shared_codebert_with_decision_decomposition",
@@ -537,6 +779,14 @@ def train(args: argparse.Namespace) -> None:
         "non_benign_supervision_source": "verdict_label_projection",
         "malicious_given_non_benign_supervision_source": "verdict_label_projection",
         "ordinal_risk_supervision_source": "verdict_label_projection",
+        "train_patch_jsonl": resolve_optional_data_path(args.train_patch_jsonl),
+        "soft_train_jsonl": resolve_optional_data_path(args.soft_train_jsonl),
+        "soft_val_jsonl": resolve_optional_data_path(args.soft_val_jsonl),
+        "soft_test_jsonl": resolve_optional_data_path(args.soft_test_jsonl),
+        "soft_train_count": train_dataset.soft_label_count,
+        "soft_val_count": val_dataset.soft_label_count,
+        "soft_test_count": test_dataset.soft_label_count,
+        "train_patch_count": len(train_dataset.labels) - len(pd.read_csv(resolve_data_path("gatekeeper_3class_train.csv")).dropna(subset=["command"])) - train_dataset.soft_label_count,
         "non_benign_loss_weight": args.non_benign_loss_weight,
         "malicious_context_loss_weight": args.malicious_context_loss_weight,
         "ordinal_risk_loss_weight": args.ordinal_risk_loss_weight,
@@ -568,12 +818,17 @@ if __name__ == "__main__":
     parser.add_argument("--num-workers", type=int, default=int(os.getenv("GENOS_T1_NUM_WORKERS", "0")))
     parser.add_argument("--seed", type=int, default=int(os.getenv("GENOS_T1_SEED", "42")))
     parser.add_argument("--label-smoothing", type=float, default=float(os.getenv("GENOS_T1_LABEL_SMOOTHING", "0.05")))
+    parser.add_argument("--verdict-loss", choices=["hard_ce", "soft_ce", "soft_kl"], default=os.getenv("GENOS_T1_VERDICT_LOSS", "hard_ce"))
     parser.add_argument("--balanced-sampling", action="store_true", default=os.getenv("GENOS_T1_BALANCED_SAMPLING", "1") == "1")
     parser.add_argument("--sampling-power", type=float, default=float(os.getenv("GENOS_T1_SAMPLING_POWER", "1.0")))
     parser.add_argument("--class-weight-power", type=float, default=float(os.getenv("GENOS_T1_CLASS_WEIGHT_POWER", "0.5")))
     parser.add_argument("--log-interval", type=int, default=int(os.getenv("GENOS_T1_LOG_INTERVAL", "100")))
     parser.add_argument("--use-compile", action="store_true", default=os.getenv("GENOS_T1_USE_COMPILE", "0") == "1")
     parser.add_argument("--deterministic", action="store_true", default=os.getenv("GENOS_T1_DETERMINISTIC", "0") == "1")
+    parser.add_argument("--train-patch-jsonl", type=str, default=os.getenv("GENOS_T1_TRAIN_PATCH_JSONL", ""))
+    parser.add_argument("--soft-train-jsonl", type=str, default=os.getenv("GENOS_T1_SOFT_TRAIN_JSONL", ""))
+    parser.add_argument("--soft-val-jsonl", type=str, default=os.getenv("GENOS_T1_SOFT_VAL_JSONL", ""))
+    parser.add_argument("--soft-test-jsonl", type=str, default=os.getenv("GENOS_T1_SOFT_TEST_JSONL", ""))
     parser.add_argument("--non-benign-loss-weight", type=float, default=float(os.getenv("GENOS_T1_NON_BENIGN_LOSS_WEIGHT", "0.0")))
     parser.add_argument("--malicious-context-loss-weight", type=float, default=float(os.getenv("GENOS_T1_MALICIOUS_CONTEXT_LOSS_WEIGHT", "0.0")))
     parser.add_argument("--ordinal-risk-loss-weight", type=float, default=float(os.getenv("GENOS_T1_ORDINAL_RISK_LOSS_WEIGHT", "0.0")))

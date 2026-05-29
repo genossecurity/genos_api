@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gatekeeper Soft Label Row",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "command",
+    "soft_target",
+    "label_basis",
+    "source_type"
+  ],
+  "properties": {
+    "command": {
+      "type": "string",
+      "minLength": 1
+    },
+    "soft_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Routine_Operational",
+        "Needs_Context",
+        "Direct_Abuse"
+      ],
+      "properties": {
+        "Routine_Operational": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "Needs_Context": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "Direct_Abuse": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "label_basis": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_type": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

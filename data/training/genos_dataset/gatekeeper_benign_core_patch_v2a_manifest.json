@@ -1,0 +1,38 @@
+{
+  "seed": 42,
+  "target_rows": 250,
+  "rows": 250,
+  "source_family_counts": {
+    "trivial_shell_basics": 40,
+    "routine_file_admin_inspection": 60,
+    "docker_routine_inspection": 40,
+    "kubernetes_routine_inspection": 40,
+    "network_system_inspection": 35,
+    "services_packages_and_workflows": 35
+  },
+  "provenance_source_counts": {
+    "tier1_sanity": 100,
+    "expanded_benign:docker": 40,
+    "expanded_benign:kubernetes": 40,
+    "expanded_benign:networking_benign": 29,
+    "curated_routine_operational": 6,
+    "expanded_benign:package_managers": 26,
+    "expanded_benign:developer_workflows": 9
+  },
+  "source_family_targets": {
+    "trivial_shell_basics": 40,
+    "routine_file_admin_inspection": 60,
+    "docker_routine_inspection": 40,
+    "kubernetes_routine_inspection": 40,
+    "network_system_inspection": 35,
+    "services_packages_and_workflows": 35
+  },
+  "source_family_actual": {
+    "trivial_shell_basics": 40,
+    "routine_file_admin_inspection": 60,
+    "docker_routine_inspection": 40,
+    "kubernetes_routine_inspection": 40,
+    "network_system_inspection": 35,
+    "services_packages_and_workflows": 35
+  }
+}

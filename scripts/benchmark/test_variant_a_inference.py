@@ -234,6 +234,86 @@ def test_no_hard_masking():
               min_val >= 0.0, f"min={min_val}")
 
 
+def test_soft_label_projection_order():
+    """Verify evidence-schema soft targets project into the model label order correctly."""
+    section("Soft-label projection order")
+
+    from scripts.training.trainer1 import (
+        EVIDENCE_LABEL_NAMES,
+        LABEL_NAMES,
+        hard_label_to_soft_target,
+        normalize_soft_target,
+        soft_target_to_auxiliary_targets,
+    )
+
+    check(
+        "model label order is Benign/Malicious/Context_Dependent",
+        LABEL_NAMES == ["Benign", "Malicious", "Context_Dependent"],
+        f"got: {LABEL_NAMES}",
+    )
+    check(
+        "evidence label order is Routine_Operational/Direct_Abuse/Needs_Context",
+        EVIDENCE_LABEL_NAMES == ["Routine_Operational", "Direct_Abuse", "Needs_Context"],
+        f"got: {EVIDENCE_LABEL_NAMES}",
+    )
+
+    routine_target = normalize_soft_target(
+        {
+            "Routine_Operational": 0.90,
+            "Needs_Context": 0.10,
+            "Direct_Abuse": 0.00,
+        },
+        row_idx=1,
+        source_path="projection_test",
+    )
+    context_target = normalize_soft_target(
+        {
+            "Routine_Operational": 0.15,
+            "Needs_Context": 0.80,
+            "Direct_Abuse": 0.05,
+        },
+        row_idx=2,
+        source_path="projection_test",
+    )
+    abuse_target = normalize_soft_target(
+        {
+            "Routine_Operational": 0.00,
+            "Needs_Context": 0.05,
+            "Direct_Abuse": 0.95,
+        },
+        row_idx=3,
+        source_path="projection_test",
+    )
+
+    check("Routine_Operational projects to Benign index",
+          routine_target == [0.9, 0.0, 0.1],
+          f"got: {routine_target}")
+    check("Needs_Context projects to Context_Dependent index",
+          context_target == [0.15, 0.05, 0.8],
+          f"got: {context_target}")
+    check("Direct_Abuse projects to Malicious index",
+          abuse_target == [0.0, 0.95, 0.05],
+          f"got: {abuse_target}")
+
+    non_benign, malicious_given_non_benign, ordinal_risk = soft_target_to_auxiliary_targets(context_target)
+    check("context-heavy target projects to non-benign auxiliary",
+          abs(non_benign - 0.85) < 1e-6,
+          f"got: {non_benign}")
+    check("context-heavy target projects to malicious-given-non-benign auxiliary",
+          abs(malicious_given_non_benign - (0.05 / 0.85)) < 1e-6,
+          f"got: {malicious_given_non_benign}")
+    check("context-heavy target projects to ordinal risk auxiliary",
+          abs(ordinal_risk - 0.45) < 1e-6,
+          f"got: {ordinal_risk}")
+
+    check("hard label Benign still maps to one-hot soft target",
+          hard_label_to_soft_target("Benign") == [1.0, 0.0, 0.0])
+    check("hard label Malicious still maps to one-hot soft target",
+          hard_label_to_soft_target("Malicious") == [0.0, 1.0, 0.0])
+    check("hard label Context_Dependent still maps to one-hot soft target",
+          hard_label_to_soft_target("Context_Dependent") == [0.0, 0.0, 1.0])
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # FULL TESTS — loads model from disk
 # ─────────────────────────────────────────────────────────────────────────────
@@ -430,6 +510,7 @@ def run_fast_tests():
     test_boot_logon_echo_exclusion()
     test_registry_priors()
     test_no_hard_masking()
+    test_soft_label_projection_order()
 
 
 def run_full_tests():
@@ -458,6 +539,7 @@ def test_runtime_gatekeeper_parity_pytest():
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--fast", action="store_true", help="Run fast tests only (no model load)")
+    ap.add_argument("--parity-only", action="store_true", help="Run only the Tier 1 runtime parity regression")
     args = ap.parse_args()
 
     W = 72
@@ -466,12 +548,20 @@ if __name__ == "__main__":
     print("=" * W)
 
     try:
-        run_fast_tests()
+        if not args.parity_only:
+            run_fast_tests()
     except Exception:
         _results.append(f"  ERROR in fast tests:\n{traceback.format_exc()}")
         _FAIL += 1
 
-    if not args.fast:
+    if args.parity_only:
+        print("\n[*] Loading engine for parity-only test (this may take a moment)...")
+        try:
+            test_runtime_gatekeeper_label_parity()
+        except Exception:
+            _results.append(f"  ERROR in parity test:\n{traceback.format_exc()}")
+            _FAIL += 1
+    elif not args.fast:
         print("\n[*] Loading engine for full tests (this may take a moment)...")
         try:
             run_full_tests()
