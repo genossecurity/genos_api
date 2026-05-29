@@ -4,5 +4,7 @@ my_flask_env/
 *.py[cod]
 *$py.class
 .env
+logs/
+models/
 models/**/*.pkl
 models/*.pkl

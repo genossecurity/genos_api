@@ -1,13 +1,0 @@
-[*] Training on device: cuda
-[*] Loading and pre-tokenizing Gatekeeper 3-class dataset (Train)...
-[+] Train load complete: 29465 benign | 15805 malicious | 7920 context_dependent
-[*] Loading and pre-tokenizing Gatekeeper 3-class dataset (Validation)...
-[+] Validation load complete: 5228 benign | 2823 malicious | 1436 context_dependent
-[*] Loading and pre-tokenizing Gatekeeper 3-class dataset (Test)...
-[+] Test load complete: 5553 benign | 2983 malicious | 1503 context_dependent
-[*] Batch config: micro=32, grad_acc=8, effective=256
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 18871.48it/s]
-[*] torch.compile() disabled.
-[*] Dynamic class weights: Benign=0.7757, Malicious=1.0591, Context_Dependent=1.4962
-[*] Balanced sampling enabled: power=1.00 (replacement sampling across classes)
