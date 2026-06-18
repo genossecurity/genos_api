@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Genos Engine Pipeline</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --bg: #0d1117; --panel: #161b22; --panel2: #1c2128; --ink: #e6edf3; --soft: #c9d1d9; --muted: #8b949e; --border: #30363d;
+      --input: #8b949e; --obfuscation: #d29922; --gatekeeper: #58a6ff; --decision: #f778ba; --behavior: #bc8cff; --evidence: #39d0d8; --response: #3fb950; --danger: #f85149;
+    }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; overflow-x: hidden; background: var(--bg); color: var(--ink); font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+    a { color: inherit; text-decoration: none; }
+    code, .field, .literal { font-family: "SFMono-Regular", Consolas, monospace; }
+    .shell { width: min(1280px, calc(100vw - 32px)); margin: 0 auto; padding-bottom: 56px; }
+    .topbar { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; background: rgba(13,17,23,.95); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 850; letter-spacing: -.02em; }
+    .brand-mark { width: 28px; height: 28px; display: grid; place-items: center; flex: 0 0 auto; border: 1px solid var(--border); border-radius: 7px; background: #101722; color: var(--gatekeeper); font-weight: 900; }
+    .toplinks { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+    .toplinks a, .tab-btn { border: 1px solid var(--border); background: var(--panel); color: var(--soft); border-radius: 7px; padding: 8px 11px; font: inherit; cursor: pointer; }
+    .toplinks a:hover, .tab-btn:hover { border-color: #6e7681; }
+    .tab-btn.active { border-color: var(--gatekeeper); color: var(--ink); background: #0d2340; }
+    .hero { padding: 26px 0 18px; }
+    h1 { margin: 0 0 8px; font-size: clamp(1.7rem,3vw,2.5rem); line-height: 1.08; letter-spacing: -.04em; }
+    .hero p { margin: 0; max-width: 780px; color: var(--muted); }
+    .legend { position: sticky; top: 58px; z-index: 20; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; margin-bottom: 18px; border: 1px solid var(--border); border-radius: 8px; background: rgba(22,27,34,.95); backdrop-filter: blur(12px); }
+    .key { display: inline-flex; align-items: center; gap: 7px; min-width: 0; padding: 3px 7px; border-radius: 999px; background: #10151d; color: var(--soft); font-size: .78rem; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .layout { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 18px; align-items: start; }
+    .tracker { position: sticky; top: 124px; border: 1px solid var(--border); background: var(--panel); border-radius: 8px; padding: 10px; }
+    .tracker a { display: flex; align-items: center; gap: 8px; padding: 8px 7px; border-radius: 6px; color: var(--muted); font-size: .78rem; }
+    .tracker a.active, .tracker a:hover { background: var(--panel2); color: var(--ink); }
+    .mini-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); flex: 0 0 auto; }
+    .tracker a.active .mini-dot { background: var(--decision); }
+
+    .flow-list { display: grid; gap: 0; border: 1px solid var(--border); border-radius: 8px; background: #0f141c; padding: 12px 14px; }
+    .flow-row { display: grid; grid-template-columns: 140px 120px minmax(0,1fr); gap: 18px; align-items: center; padding: 14px 0; min-width: 0; scroll-margin-top: 128px; }
+    .flow-row + .flow-row { border-top: 1px solid rgba(48,54,61,.5); }
+    .flow-row.branch-row { padding-top: 10px; padding-bottom: 10px; border-top: 0; }
+    .stage-title { display: flex; align-items: flex-start; gap: 8px; min-width: 0; color: var(--soft); font-weight: 850; line-height: 1.25; }
+    .stage-title .meta { min-width: 0; }
+    .stage-title small { display: block; margin-top: 2px; color: var(--muted); font-weight: 700; font-size: .72rem; word-break: break-word; }
+    .branch-row .stage-title { padding-left: 18px; font-size: .84rem; }
+    .branch-row .stage-title::before { content: "\21B3"; margin-right: -2px; color: var(--decision); }
+    .visual-cell { display: grid; grid-template-rows: 26px auto 26px; place-items: center; min-width: 0; align-self: stretch; }
+    .visual-cell.has-bypass { grid-template-columns: 1fr 24px; column-gap: 14px; }
+    .visual-cell.has-bypass .vline, .visual-cell.has-bypass .stage-icon { grid-column: 1; }
+    .bypass-line { grid-column: 2; grid-row: 1 / -1; width: 2px; height: 100%; min-height: 100%; background: var(--response); }
+    .vline { width: 2px; height: 100%; min-height: 22px; background: var(--border); }
+    .fork-row { align-items: stretch; }
+    .fork-row .stage-title { padding-left: 18px; }
+    .fork-row .stage-title::before { content: "\21B3"; margin-right: -2px; color: var(--decision); }
+    .fork-visual { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; align-items: center; }
+    .fork-copy { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; min-width: 0; }
+    .stage-icon { width: 78px; min-height: 58px; display: grid; place-items: center; text-align: center; border: 2px solid var(--stage-color); border-radius: 10px; background: var(--panel); color: var(--ink); padding: 8px; font-weight: 850; font-size: .76rem; overflow-wrap: anywhere; }
+    .stage-icon.diamond { width: 68px; height: 68px; min-height: 68px; transform: rotate(45deg); border-radius: 9px; }
+    .stage-icon.diamond span { transform: rotate(-45deg); display: block; line-height: 1.15; overflow-wrap: normal; }
+    .stage-icon.branch { min-height: 44px; border-style: dashed; font-size: .72rem; }
+    .stage-icon.branch.yes { --stage-color: var(--behavior); }
+    .stage-icon.branch.no { --stage-color: var(--response); }
+    .explain { min-width: 0; border: 1px solid var(--border); border-top: 3px solid var(--stage-color); border-radius: 8px; background: var(--panel); padding: 11px 12px; }
+    .explain h3 { margin: 0 0 4px; font-size: .96rem; letter-spacing: -.01em; }
+    .explain p { margin: 0; color: var(--muted); font-size: .82rem; }
+    .outputs { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; min-width: 0; }
+    .pill { max-width: 100%; border: 1px solid var(--border); border-radius: 999px; padding: 2px 7px; color: var(--soft); font-size: .69rem; background: #10151d; overflow-wrap: anywhere; }
+    .flow-note { margin-top: 14px; border: 1px dashed var(--border); border-radius: 8px; padding: 10px 12px; color: var(--muted); background: rgba(28,33,40,.5); }
+
+    .details-grid { margin-top: 18px; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+    details.stage { border: 1px solid var(--border); background: var(--panel); border-radius: 8px; overflow: hidden; }
+    details.stage summary { cursor: pointer; list-style: none; padding: 12px 14px; display: grid; grid-template-columns: 10px minmax(0,1fr) auto; gap: 10px; align-items: center; }
+    details.stage summary::-webkit-details-marker { display: none; }
+    .summary-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .summary-title { font-weight: 850; }
+    .summary-sub { color: var(--muted); font-size: .78rem; margin-top: 2px; }
+    .chev { color: var(--muted); }
+    details[open] .chev { transform: rotate(90deg); }
+    .detail-body { border-top: 1px solid var(--border); padding: 12px 14px 14px; color: var(--soft); }
+    .detail-body ul { margin: 0; padding-left: 18px; }
+    .detail-body li { margin: 6px 0; }
+    .field-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .field-list .pill { font-family: "SFMono-Regular", Consolas, monospace; }
+    .config-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+    .config-card { border: 1px solid var(--border); background: var(--panel); border-radius: 8px; padding: 14px; }
+    .config-card h3 { margin: 0 0 10px; font-size: .98rem; }
+    .config-row { display: grid; grid-template-columns: minmax(150px,1fr) 1.2fr; gap: 10px; padding: 8px 0; border-top: 1px solid #21262d; }
+    .config-row:first-of-type { border-top: 0; }
+    .config-row div:last-child { color: var(--muted); }
+    .bar { height: 7px; background: #21262d; border-radius: 999px; overflow: hidden; margin-top: 5px; }
+    .fill { height: 100%; border-radius: inherit; }
+    [data-stage="input"] { --stage-color: var(--input); } [data-stage="obfuscation"] { --stage-color: var(--obfuscation); } [data-stage="gatekeeper"] { --stage-color: var(--gatekeeper); } [data-stage="routing"] { --stage-color: var(--decision); } [data-stage="behavior"] { --stage-color: var(--behavior); } [data-stage="evidence"] { --stage-color: var(--evidence); } [data-stage="response"] { --stage-color: var(--response); }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .tracker { position: static; display: flex; flex-wrap: wrap; } .details-grid, .config-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 680px) { .shell { width: min(100vw - 20px, 1280px); } .topbar { align-items: flex-start; flex-direction: column; } .legend { top: 104px; } .flow-list { padding: 10px; } .flow-row { grid-template-columns: 1fr; gap: 8px; align-items: stretch; } .visual-cell, .visual-cell.has-bypass { display: flex; justify-content: flex-start; gap: 12px; } .visual-cell.has-bypass .vline, .visual-cell.has-bypass .stage-icon { grid-column: auto; } .bypass-line { width: 26px; height: 2px; min-height: 2px; align-self: center; } .vline { width: 26px; height: 2px; min-height: 2px; align-self: center; } .fork-visual, .fork-copy { grid-template-columns: 1fr; } .stage-icon { width: 72px; min-height: 44px; font-size: .68rem; } .stage-icon.diamond { width: 54px; height: 54px; min-height: 54px; margin: 8px; } .branch-row .stage-title, .fork-row .stage-title { padding-left: 0; } .config-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar"><a class="brand" href="/"><span class="brand-mark">G</span><span>Genos Engine</span></a><nav class="toplinks"><button class="tab-btn active" data-tab="pipeline">Pipeline</button><button class="tab-btn" data-tab="config">Configuration</button><a href="/demo">Demo</a></nav></header>
+    <section class="hero"><h1>Command analysis flowchart</h1><p>A vertical map of how Genos moves from raw command text to verdict, behavior stage, evidence, and API response.</p></section>
+    <div class="legend"><span class="key"><span class="dot" style="background:var(--input)"></span>Input</span><span class="key"><span class="dot" style="background:var(--obfuscation)"></span>Obfuscation</span><span class="key"><span class="dot" style="background:var(--gatekeeper)"></span>Gatekeeper</span><span class="key"><span class="dot" style="background:var(--decision)"></span>Routing</span><span class="key"><span class="dot" style="background:var(--behavior)"></span>Behavior</span><span class="key"><span class="dot" style="background:var(--evidence)"></span>Evidence</span><span class="key"><span class="dot" style="background:var(--response)"></span>Response</span></div>
+
+    <section class="tab-panel active" id="pipeline-panel"><div class="layout"><aside class="tracker"><a href="#input" class="active"><span class="mini-dot"></span>Input</a><a href="#obfuscation"><span class="mini-dot"></span>Obfuscation</a><a href="#gatekeeper"><span class="mini-dot"></span>Gatekeeper</a><a href="#routing"><span class="mini-dot"></span>Routing</a><a href="#behavior"><span class="mini-dot"></span>Behavior</a><a href="#evidence"><span class="mini-dot"></span>Evidence</a><a href="#response"><span class="mini-dot"></span>Response</a></aside><div>
+      <section class="flow-list" aria-label="Genos pipeline vertical flowchart">
+        <article class="flow-row" id="input" data-stage="input"><div class="stage-title"><span class="dot" style="background:var(--input)"></span><span class="meta">01 · Input<small>API entry</small></span></div><div class="visual-cell"><span class="vline"></span><div class="stage-icon">Input</div><span class="vline"></span></div><div class="explain"><h3>Input</h3><p>API receives the raw command string from <span class="field">/scan</span> or <span class="field">/scan/free</span>.</p><div class="outputs"><span class="pill literal">command</span></div></div></article>
+        <article class="flow-row" id="obfuscation" data-stage="obfuscation"><div class="stage-title"><span class="dot" style="background:var(--obfuscation)"></span><span class="meta">02 · Obfuscation<small>Decode pass</small></span></div><div class="visual-cell"><span class="vline"></span><div class="stage-icon">Decode</div><span class="vline"></span></div><div class="explain"><h3>Obfuscation</h3><p>Entropy and syntax checks detect evasive strings, then unwrap encoded payloads when possible.</p><div class="outputs"><span class="pill literal">current_cmd</span><span class="pill literal">was_obfuscated</span><span class="pill literal">deobfuscated_cmd</span></div></div></article>
+        <article class="flow-row" id="gatekeeper" data-stage="gatekeeper"><div class="stage-title"><span class="dot" style="background:var(--gatekeeper)"></span><span class="meta">03 · Gatekeeper<small>Tier 1 ML</small></span></div><div class="visual-cell"><span class="vline"></span><div class="stage-icon">ML</div><span class="vline"></span></div><div class="explain"><h3>Gatekeeper</h3><p>Fine-tuned CodeBERT predicts Benign, Suspicious, or Malicious and records the class margin.</p><div class="outputs"><span class="pill literal">label</span><span class="pill literal">class_probabilities</span><span class="pill literal">decision_margin</span></div></div></article>
+        <article class="flow-row" id="routing" data-stage="routing"><div class="stage-title"><span class="dot" style="background:var(--decision)"></span><span class="meta">04 · Routing<small>Decision</small></span></div><div class="visual-cell"><span class="vline"></span><div class="stage-icon diamond"><span>Run<br>Behavior?</span></div><span class="vline"></span></div><div class="explain"><h3>Routing</h3><p>Model label, decision margin, and feature flags decide whether Tier 2 behavior analysis should run.</p><div class="outputs"><span class="pill literal">routing_policy</span><span class="pill literal">triggered_features</span><span class="pill literal">should_run_specialist</span></div></div></article>
+        <article class="flow-row fork-row" data-stage="routing"><div class="stage-title"><span class="dot" style="background:var(--decision)"></span><span class="meta">Branch paths<small>Forks immediately from Routing</small></span></div><div class="fork-visual"><div class="stage-icon branch yes">YES</div><div class="stage-icon branch no">NO</div></div><div class="fork-copy"><div class="explain" data-stage="behavior"><h3>YES · Behavior</h3><p>Non-benign, low margin, or suspicious signal routes into Behavior and Evidence.</p><div class="outputs"><span class="pill literal">should_run_specialist=true</span></div></div><div class="explain" data-stage="response"><h3>NO · Response</h3><p>Confident benign skips Behavior and Evidence, then rejoins at Response.</p><div class="outputs"><span class="pill literal">should_run_specialist=false</span></div></div></div></article>
+        <article class="flow-row" id="behavior" data-stage="behavior"><div class="stage-title"><span class="dot" style="background:var(--behavior)"></span><span class="meta">05 · Behavior<small>Tier 2 ML</small></span></div><div class="visual-cell has-bypass"><span class="vline"></span><div class="stage-icon">Stage</div><span class="vline"></span><span class="bypass-line"></span></div><div class="explain"><h3>Behavior</h3><p>The behavior encoder consumes residual command text and predicts attack stage plus action tags.</p><div class="outputs"><span class="pill literal">behavior.stage</span><span class="pill literal">stage_confidence</span><span class="pill literal">action_tags</span><span class="pill literal">model_type</span></div></div></article>
+        <article class="flow-row" id="evidence" data-stage="evidence"><div class="stage-title"><span class="dot" style="background:var(--evidence)"></span><span class="meta">06 · Evidence<small>Parser + rules</small></span></div><div class="visual-cell has-bypass"><span class="vline"></span><div class="stage-icon">Proof</div><span class="vline"></span><span class="bypass-line"></span></div><div class="explain"><h3>Evidence</h3><p>On the behavior branch, parser, semantic features, and rules build analyst context and enrichment.</p><div class="outputs"><span class="pill literal">evidence</span><span class="pill literal">fired_rules</span><span class="pill literal">why_mapped</span><span class="pill literal">ioc_summary</span></div></div></article>
+        <article class="flow-row" id="response" data-stage="response"><div class="stage-title"><span class="dot" style="background:var(--response)"></span><span class="meta">07 · Response<small>API payload</small></span></div><div class="visual-cell has-bypass"><span class="vline"></span><div class="stage-icon">JSON</div><span class="vline"></span><span class="bypass-line"></span></div><div class="explain"><h3>Response</h3><p>Final JSON combines verdict, model internals, optional behavior/evidence, deobfuscation data, and timing.</p><div class="outputs"><span class="pill literal">label</span><span class="pill literal">label_confidence</span><span class="pill literal">gatekeeper</span><span class="pill literal">behavior</span><span class="pill literal">evidence</span><span class="pill literal">elapsed_ms</span></div></div></article>
+      </section>
+      <div class="flow-note">Configuration and calibration remain separated into the Configuration tab so the pipeline stays readable.</div>
+      <section class="details-grid" aria-label="Expandable stage details">
+        <details class="stage"><summary><span class="summary-dot" style="background:var(--input)"></span><span><span class="summary-title">Input</span><span class="summary-sub">Accepts raw command text through Flask endpoints.</span></span><span class="chev">&gt;</span></summary><div class="detail-body"><ul><li><span class="field">/scan/free</span> is the no-key local demo endpoint.</li><li><span class="field">/scan</span> validates API keys and logs usage.</li></ul></div></details>
+        <details class="stage"><summary><span class="summary-dot" style="background:var(--obfuscation)"></span><span><span class="summary-title">Obfuscation</span><span class="summary-sub">Flags evasive strings and decodes up to five layers.</span></span><span class="chev">&gt;</span></summary><div class="detail-body"><ul><li>Checks <span class="field">[char]</span>, <span class="field">base64</span>, <span class="field">FromBase64String</span>, hex escapes, concatenation, and entropy above <span class="field">5.2</span>.</li><li>Scores both raw and decoded views when deobfuscation succeeds.</li></ul></div></details>
+        <details class="stage"><summary><span class="summary-dot" style="background:var(--gatekeeper)"></span><span><span class="summary-title">Gatekeeper</span><span class="summary-sub">Fine-tuned CodeBERT returns verdict probabilities.</span></span><span class="chev">&gt;</span></summary><div class="detail-body"><ul><li>Labels are <span class="field">Benign</span>, <span class="field">Context_Dependent</span> exposed as Suspicious, and <span class="field">Malicious</span>.</li><li>Returns confidence, probabilities, margin, model view, and thresholds.</li></ul></div></details>
+        <details class="stage"><summary><span class="summary-dot" style="background:var(--decision)"></span><span><span class="summary-title">Routing</span><span class="summary-sub">Determines whether behavior analysis is needed.</span></span><span class="chev">&gt;</span></summary><div class="detail-body"><ul><li>Behavior runs for Suspicious/Malicious, low margin under <span class="field">0.12</span>, or suspicious signals.</li><li>If the route is false, behavior and full enrichment are skipped and the response contains minimal routing evidence.</li></ul><div class="field-list"><span class="pill">has_tunneling</span><span class="pill">has_base64_or_encoded_exec</span><span class="pill">has_exfil_data_movement</span><span class="pill">has_sensitive_file_read</span><span class="pill">has_reverse_shell_pattern</span></div></div></details>
+        <details class="stage"><summary><span class="summary-dot" style="background:var(--behavior)"></span><span><span class="summary-title">Behavior</span><span class="summary-sub">Predicts behavior stage and action tags.</span></span><span class="chev">&gt;</span></summary><div class="detail-body"><ul><li>Input format: <span class="field">RAW</span>, <span class="field">RESIDUAL</span>, and optional <span class="field">FEATURES</span>.</li><li>CodeBERT encoder with <span class="field">stage_head</span> and <span class="field">action_head</span>; fallback is <span class="field">heuristic_bootstrap</span>.</li></ul></div></details>
+        <details class="stage"><summary><span class="summary-dot" style="background:var(--evidence)"></span><span><span class="summary-title">Evidence</span><span class="summary-sub">Turns parser, semantic, and rule signals into analyst context.</span></span><span class="chev">&gt;</span></summary><div class="detail-body"><ul><li><span class="field">parser.py</span>, <span class="field">semantic_features.py</span>, and <span class="field">rule_engine.py</span> build fired rules, MITRE reasons, IOC summary, severity, and analyst hint.</li></ul></div></details>
+        <details class="stage"><summary><span class="summary-dot" style="background:var(--response)"></span><span><span class="summary-title">Response</span><span class="summary-sub">Final compact API object consumed by UI and callers.</span></span><span class="chev">&gt;</span></summary><div class="detail-body"><div class="field-list"><span class="pill">label</span><span class="pill">label_confidence</span><span class="pill">class_probabilities</span><span class="pill">behavior</span><span class="pill">evidence</span><span class="pill">MITRE_codes</span><span class="pill">attack_stage</span><span class="pill">severity</span><span class="pill">deobfuscated_cmd</span><span class="pill">elapsed_ms</span></div></div></details>
+      </section></div></div></section>
+    <section class="tab-panel" id="config-panel"><div class="config-grid"><article class="config-card"><h3>Confidence Thresholds</h3><div class="config-row"><div class="field">GENOS_BENIGN_CONF_THRESHOLD</div><div>52%<div class="bar"><div class="fill" style="width:52%;background:var(--response)"></div></div></div></div><div class="config-row"><div class="field">GENOS_SUSPICIOUS_CONF_THRESHOLD</div><div>55%<div class="bar"><div class="fill" style="width:55%;background:var(--obfuscation)"></div></div></div></div><div class="config-row"><div class="field">GENOS_MALICIOUS_CONF_THRESHOLD</div><div>78%<div class="bar"><div class="fill" style="width:78%;background:var(--danger)"></div></div></div></div><div class="config-row"><div class="field">GENOS_LOW_MARGIN_THRESHOLD</div><div>12% margin; below this, route to Behavior.</div></div></article><article class="config-card"><h3>Tactic Severity</h3><div class="config-row"><div>Critical</div><div>Impact</div></div><div class="config-row"><div>High</div><div>Credential Access, Lateral Movement, C2, Exfiltration, Privilege Escalation, Initial Access</div></div><div class="config-row"><div>Medium</div><div>Execution, Persistence, Defense Evasion, Collection</div></div><div class="config-row"><div>Low</div><div>Discovery, Reconnaissance</div></div></article><article class="config-card"><h3>Routing Policies</h3><div class="config-row"><div class="field">model_top_class</div><div>Default policy. Uses the highest-probability Gatekeeper class.</div></div><div class="config-row"><div class="field">high_risk_override_enabled</div><div>Environment-configurable override for strong risk indicators.</div></div><div class="config-row"><div class="field">suspicious_fallback_enabled</div><div>Environment-configurable safety fallback for suspicious signals.</div></div></article><article class="config-card"><h3>Model Files</h3><div class="config-row"><div class="field">models/gatekeeper.pt</div><div>Gatekeeper weights.</div></div><div class="config-row"><div class="field">models/behavior_encoder.pt</div><div>Behavior encoder weights.</div></div><div class="config-row"><div class="field">models/behavior_encoder.json</div><div>Stage map, action map, and test metrics.</div></div><div class="config-row"><div class="field">config/gatekeeper_meta.json</div><div>Labels, calibration, and threshold metadata.</div></div></article></div></section>
+  </main>
+  <script>
+    const buttons = document.querySelectorAll('.tab-btn');
+    const panels = { pipeline: document.getElementById('pipeline-panel'), config: document.getElementById('config-panel') };
+    buttons.forEach(button => button.addEventListener('click', () => { const tab = button.dataset.tab; buttons.forEach(other => other.classList.toggle('active', other === button)); Object.entries(panels).forEach(([name, panel]) => panel.classList.toggle('active', name === tab)); }));
+    const navLinks = [...document.querySelectorAll('.tracker a')];
+    const targets = navLinks.map(link => document.querySelector(link.getAttribute('href'))).filter(Boolean);
+    const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (!entry.isIntersecting) return; navLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id)); }), { rootMargin: '-35% 0px -55% 0px', threshold: 0 });
+    targets.forEach(target => observer.observe(target));
+  </script>
+</body>
+</html>

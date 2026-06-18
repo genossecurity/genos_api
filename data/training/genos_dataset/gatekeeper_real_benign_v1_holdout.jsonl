@@ -1,0 +1,1 @@
+{"command": "sudo passwd", "label": "Benign", "source_type": "local_shell_history", "label_basis": "routine_operational_provenance", "provenance_source": "personal_dev_box", "source_uri": "local://personal_dev_box/.bash_history", "holdout_group": "personal_dev_box", "source_name": "local_dev_shell_history"}

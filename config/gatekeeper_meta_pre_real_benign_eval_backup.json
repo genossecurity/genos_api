@@ -1,0 +1,151 @@
+{
+  "seed": 42,
+  "epochs": 5,
+  "micro_batch_size": 32,
+  "effective_batch_size": 256,
+  "max_len": 256,
+  "learning_rate": 1e-05,
+  "weight_decay": 0.01,
+  "label_smoothing": 0.05,
+  "verdict_loss": "hard_ce",
+  "balanced_sampling": true,
+  "sampling_power": 1.0,
+  "class_weight_power": 0.5,
+  "num_classes": 3,
+  "label_names": [
+    "Benign",
+    "Malicious",
+    "Context_Dependent"
+  ],
+  "evidence_label_names": [
+    "Routine_Operational",
+    "Direct_Abuse",
+    "Needs_Context"
+  ],
+  "soft_target_schema_keys": [
+    "Routine_Operational",
+    "Needs_Context",
+    "Direct_Abuse"
+  ],
+  "label_map": {
+    "Benign": 0,
+    "Malicious": 1,
+    "Context_Dependent": 2
+  },
+  "id_to_label": {
+    "0": "Benign",
+    "1": "Malicious",
+    "2": "Context_Dependent"
+  },
+  "model_architecture": "shared_codebert_with_decision_decomposition",
+  "decision_heads": [
+    "verdict_logits",
+    "non_benign_logit",
+    "malicious_given_non_benign_logit",
+    "ordinal_risk_logit"
+  ],
+  "non_benign_supervision_source": "verdict_label_projection",
+  "malicious_given_non_benign_supervision_source": "verdict_label_projection",
+  "ordinal_risk_supervision_source": "verdict_label_projection",
+  "train_patch_jsonl": "data/training/genos_dataset/gatekeeper_benign_core_patch_v2b.jsonl",
+  "soft_train_jsonl": null,
+  "soft_val_jsonl": null,
+  "soft_test_jsonl": null,
+  "soft_train_count": 0,
+  "soft_val_count": 0,
+  "soft_test_count": 0,
+  "train_patch_count": 500,
+  "non_benign_loss_weight": 0.3,
+  "malicious_context_loss_weight": 0.0,
+  "ordinal_risk_loss_weight": 0.0,
+  "stage_loss_weight": 0.0,
+  "action_loss_weight": 0.0,
+  "contrastive_loss_weight": 0.0,
+  "best_epoch": 5,
+  "class_weights": [
+    0.7728210687637329,
+    1.0641156435012817,
+    1.503223180770874
+  ],
+  "val_metrics": {
+    "accuracy": 0.95962896595341,
+    "macro_f1": 0.9523857417973037,
+    "macro_precision": 0.9422327594573363,
+    "macro_recall": 0.9640220091762514,
+    "per_class": {
+      "Benign": {
+        "precision": 0.9878944234967255,
+        "recall": 0.9521805661820965,
+        "f1": 0.969708775689101,
+        "tp": 4978,
+        "fp": 61,
+        "fn": 250
+      },
+      "Malicious": {
+        "precision": 0.9472222222222222,
+        "recall": 0.9663478568898335,
+        "f1": 0.9566894616868314,
+        "tp": 2728,
+        "fp": 152,
+        "fn": 95
+      },
+      "Context_Dependent": {
+        "precision": 0.8915816326530612,
+        "recall": 0.9735376044568245,
+        "f1": 0.9307589880159787,
+        "tp": 1398,
+        "fp": 170,
+        "fn": 38
+      }
+    },
+    "loss": 0.27348007707986866,
+    "auxiliary": {
+      "non_benign_auc": 0.9971097480595122,
+      "non_benign_ap": 0.9968314972387413,
+      "malicious_given_non_benign_auc": 0.018068477498305306,
+      "malicious_given_non_benign_ap": 0.4509861298510521,
+      "ordinal_mae": 0.491313359729103
+    }
+  },
+  "test_metrics": {
+    "accuracy": 0.9492977388186075,
+    "macro_f1": 0.9354955048762261,
+    "macro_precision": 0.9318507247238937,
+    "macro_recall": 0.9394350403857601,
+    "per_class": {
+      "Benign": {
+        "precision": 0.9736599742125621,
+        "recall": 0.9519178822258239,
+        "f1": 0.9626661810234929,
+        "tp": 5286,
+        "fp": 143,
+        "fn": 267
+      },
+      "Malicious": {
+        "precision": 0.9394233884029802,
+        "recall": 0.9721756620851492,
+        "f1": 0.9555189456342668,
+        "tp": 2900,
+        "fp": 187,
+        "fn": 83
+      },
+      "Context_Dependent": {
+        "precision": 0.8824688115561392,
+        "recall": 0.8942115768463074,
+        "f1": 0.8883013879709188,
+        "tp": 1344,
+        "fp": 179,
+        "fn": 159
+      }
+    },
+    "loss": 0.3123423190382399,
+    "auxiliary": {
+      "non_benign_auc": 0.9938290115459353,
+      "non_benign_ap": 0.9928070572206205,
+      "malicious_given_non_benign_auc": 0.01911987846856296,
+      "malicious_given_non_benign_ap": 0.4526674701824852,
+      "ordinal_mae": 0.4954189403513796
+    }
+  },
+  "model_path": "/home/sam/genos/genos_api/models/gatekeeper.pt"
+}

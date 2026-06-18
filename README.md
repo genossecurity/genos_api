@@ -182,6 +182,52 @@ Model weights and large artefacts are tracked with Git LFS (`.gitattributes`). T
 
 ---
 
+## Provenance-first benign collection
+
+Tier 1 repair work should prefer real benign operational provenance over synthetic patch rows.
+
+Use [scripts/data/build_real_benign_provenance_corpus.py](scripts/data/build_real_benign_provenance_corpus.py) with a manifest like [config/benign_provenance_sources.template.json](config/benign_provenance_sources.template.json) to:
+
+1. ingest real benign sources such as shell history, official docs examples, or runbook exports
+2. preserve `source_type`, `label_basis`, `provenance_source`, `source_uri`, and `holdout_group` per row
+3. deduplicate against the existing Tier 1 train/val/test CSVs and existing benign patch JSONLs
+4. split the accepted corpus into train and a never-train-on real-benign holdout benchmark
+
+Example:
+
+```bash
+cd /home/sam/genos/genos_api
+source venv/bin/activate
+
+python3 scripts/data/build_real_benign_provenance_corpus.py \
+  --manifest config/benign_provenance_sources.json \
+  --output-stem gatekeeper_real_benign_v1
+```
+
+This produces:
+
+- `data/training/genos_dataset/gatekeeper_real_benign_v1_train.jsonl`
+- `data/training/genos_dataset/gatekeeper_real_benign_v1_holdout.jsonl`
+- `data/training/genos_dataset/gatekeeper_real_benign_v1_manifest.json`
+
+To evaluate the current checkpoint on the never-train-on benign holdout before retraining:
+
+```bash
+python3 scripts/benchmark/real_benign_holdout_benchmark.py \
+  --holdout-jsonl data/training/genos_dataset/gatekeeper_real_benign_v1_holdout.jsonl \
+  --prefix gatekeeper_real_benign_v1
+```
+
+This writes summary artifacts under `logs/real_benign_holdout/`.
+
+The intent is scientific separation:
+
+- `Benign`: observed routine operational provenance
+- `Context_Dependent`: command text alone is ambiguous
+- `Malicious`: direct abuse evidence or attack provenance
+
+---
+
 ## API
 
 Served by Gunicorn on `127.0.0.1:6001` by default.

@@ -1,0 +1,30 @@
+{
+  "stage_counts": {
+    "Defense Evasion": 2289,
+    "Payload Retrieval": 337,
+    "Impact": 227,
+    "Execution": 902,
+    "Discovery / Recon": 1059,
+    "Context Required": 128,
+    "Collection / Staging": 527,
+    "C2 / Remote Access": 118,
+    "Credential Access": 519,
+    "Persistence": 1142,
+    "Privilege Escalation": 249,
+    "Exfiltration": 91,
+    "Lateral Movement": 89
+  },
+  "action_tag_counts": {
+    "execute_interpreter": 2147,
+    "use_signed_proxy_binary": 2446,
+    "use_encoded_payload": 686,
+    "use_obfuscation": 699,
+    "execute_inline_code": 407,
+    "remote_execution": 24,
+    "download_remote_resource": 79,
+    "archive_data": 18,
+    "extract_archive": 8
+  },
+  "n_stages": 13,
+  "n_action_tags": 9
+}

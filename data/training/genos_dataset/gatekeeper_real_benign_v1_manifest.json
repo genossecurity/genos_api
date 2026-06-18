@@ -1,0 +1,35 @@
+{
+  "seed": 42,
+  "source_manifest_path": "config/benign_provenance_sources.json",
+  "output_stem": "gatekeeper_real_benign_v1",
+  "holdout_ratio": 0.2,
+  "rows_total": 237,
+  "rows_train": 236,
+  "rows_holdout": 1,
+  "deduped_against_existing": 109,
+  "deduped_internal": 161,
+  "source_type_counts": {
+    "local_shell_history": 237
+  },
+  "label_basis_counts": {
+    "routine_operational_provenance": 237
+  },
+  "holdout_group_counts": {
+    "personal_dev_box": 1
+  },
+  "split_stats": {
+    "groups_total": 1,
+    "groups_in_holdout": 1
+  },
+  "source_stats": [
+    {
+      "source_name": "local_dev_shell_history",
+      "path": "data/provenance/raw/my_dev_shell_history.txt",
+      "format": "history",
+      "rows_loaded": 507,
+      "rows_accepted": 237,
+      "deduped_against_existing": 109,
+      "deduped_internal": 161
+    }
+  ]
+}

@@ -27,7 +27,7 @@ LOG_DIR = BASE_DIR / "logs" / "tier1_sanity"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 sys.path.insert(0, str(BASE_DIR))
 
-from scripts.benchmark.tier1_case_sets import build_tier1_sanity_buckets
+from scripts.benchmark.tier1_case_sets import build_catastrophic_benign_cases, build_tier1_sanity_buckets
 from scripts.benchmark.tier1_stress_test import compute_metrics, init_engine, runtime_predict
 
 
@@ -98,6 +98,31 @@ def focused_audit(engine) -> dict[str, dict[str, object]]:
     return results
 
 
+def catastrophic_benign_gate(engine) -> dict[str, object]:
+    failures: list[dict[str, object]] = []
+    cases = build_catastrophic_benign_cases()
+    for row in tqdm(cases, total=len(cases), desc="Catastrophic benign gate", unit="case", dynamic_ncols=True, mininterval=0.1, smoothing=0.0):
+        runtime = runtime_predict(engine, row["command"])
+        predicted = runtime["internal_label"]
+        if predicted == "Malicious":
+            failures.append(
+                {
+                    "command": row["command"],
+                    "predicted": predicted,
+                    "public_label": runtime["public_label"],
+                    "confidence": runtime["label_confidence"],
+                    "runtime_probs": runtime["label_probabilities"],
+                }
+            )
+    return {
+        "n": len(cases),
+        "target": 0,
+        "malicious_count": len(failures),
+        "passed": len(failures) == 0,
+        "failures": failures,
+    }
+
+
 def main() -> None:
     args = parse_args()
     print("[1/4] Loading engine and sanity buckets...", flush=True)
@@ -121,12 +146,14 @@ def main() -> None:
     trivial_rows = all_audit_rows["trivial_benign"]
     benign_to_malicious = sum(1 for row in trivial_rows if row["predicted"] == "Malicious")
     trivial_recall = summary["buckets"]["trivial_benign"]["metrics"]["per_class"]["Benign"]["recall"]
+    catastrophic_gate = catastrophic_benign_gate(engine)
     summary["acceptance_gate"] = {
+        "catastrophic_benign": catastrophic_gate,
         "trivial_benign_recall": trivial_recall,
         "trivial_benign_recall_target": 0.95,
         "trivial_benign_to_malicious": benign_to_malicious,
         "trivial_benign_to_malicious_target": 0,
-        "passed": trivial_recall > 0.95 and benign_to_malicious == 0,
+        "passed": catastrophic_gate["passed"] and trivial_recall > 0.95 and benign_to_malicious == 0,
     }
     summary["focused_audit"] = focused_audit(engine)
 

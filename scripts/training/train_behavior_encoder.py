@@ -83,6 +83,14 @@ def parse_args():
     parser.add_argument("--max-length", type=int, default=256)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--output", type=Path, default=MODELS_DIR / "behavior_encoder.pt")
+    parser.add_argument(
+        "--weighted-loss", action="store_true",
+        help="Weight stage CrossEntropyLoss by inverse class frequency to address imbalance",
+    )
+    parser.add_argument(
+        "--max-weight", type=float, default=8.0,
+        help="Cap on any single class weight (prevents extreme gradients for very rare classes)",
+    )
     return parser.parse_args()
 
 
@@ -172,7 +180,26 @@ def main():
     model = BehaviorEncoderModel(len(stage_map), len(action_map)).to(device)
     print(f"[+] Loaded model on device={device}", flush=True)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
-    stage_loss_fn = nn.CrossEntropyLoss()
+
+    if args.weighted_loss:
+        # Compute inverse-frequency weights from training set
+        from collections import Counter
+        stage_counts = Counter(r.stage_label for r in train_rows)
+        total = sum(stage_counts.values())
+        num_classes = len(stage_map)
+        weights = torch.ones(num_classes, dtype=torch.float32)
+        for stage_name, idx in stage_map.items():
+            count = stage_counts.get(stage_name, 1)
+            w = min(total / (num_classes * count), args.max_weight)
+            weights[idx] = w
+        weights = weights.to(device)
+        print("[+] Stage loss weights (class: weight):")
+        for stage_name, idx in sorted(stage_map.items(), key=lambda x: x[1]):
+            print(f"    {stage_name:<30} {weights[idx].item():.3f}")
+        stage_loss_fn = nn.CrossEntropyLoss(weight=weights)
+    else:
+        stage_loss_fn = nn.CrossEntropyLoss()
+
     action_loss_fn = nn.BCEWithLogitsLoss()
 
     best_val = -1.0

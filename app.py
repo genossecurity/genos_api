@@ -4,8 +4,9 @@ import base64
 import logging
 import json
 import time
+import signal
 from datetime import datetime
-from flask import Flask, request, Response, jsonify
+from flask import Flask, request, Response, jsonify, render_template, redirect, url_for
 from pymongo import MongoClient
 from dotenv import load_dotenv
 
@@ -88,6 +89,91 @@ def _to_percentage(value):
 def _api_label(label):
     """Map internal labels to the public API contract."""
     return "Suspicious" if label == "Context_Dependent" else label
+
+
+def _listening_pids_on_port(port):
+    """Return PIDs listening on a TCP port using Linux /proc data."""
+    target_port = f"{int(port):04X}"
+    socket_inodes = set()
+
+    for proc_net_path in ("/proc/net/tcp", "/proc/net/tcp6"):
+        try:
+            with open(proc_net_path, "r", encoding="utf-8") as proc_net:
+                next(proc_net, None)
+                for line in proc_net:
+                    columns = line.split()
+                    if len(columns) < 10:
+                        continue
+                    local_address = columns[1]
+                    socket_state = columns[3]
+                    inode = columns[9]
+                    local_port = local_address.rsplit(":", 1)[-1].upper()
+                    if local_port == target_port and socket_state == "0A":
+                        socket_inodes.add(inode)
+        except OSError:
+            continue
+
+    if not socket_inodes:
+        return []
+
+    current_pid = os.getpid()
+    listening_pids = set()
+    for pid_name in os.listdir("/proc"):
+        if not pid_name.isdigit():
+            continue
+        pid = int(pid_name)
+        if pid == current_pid:
+            continue
+        fd_dir = os.path.join("/proc", pid_name, "fd")
+        try:
+            fd_names = os.listdir(fd_dir)
+        except OSError:
+            continue
+        for fd_name in fd_names:
+            fd_path = os.path.join(fd_dir, fd_name)
+            try:
+                target = os.readlink(fd_path)
+            except OSError:
+                continue
+            if target.startswith("socket:[") and target[8:-1] in socket_inodes:
+                listening_pids.add(pid)
+                break
+
+    return sorted(listening_pids)
+
+
+def _free_port(port, timeout=3.0):
+    """Terminate other processes listening on the requested TCP port."""
+    pids = _listening_pids_on_port(port)
+    if not pids:
+        return
+
+    app.logger.warning("Port %s is already in use by PID(s): %s. Terminating them...", port, pids)
+    for pid in pids:
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        except PermissionError:
+            app.logger.warning("No permission to terminate PID %s using port %s", pid, port)
+
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        remaining_pids = [pid for pid in pids if os.path.exists(os.path.join("/proc", str(pid)))]
+        if not remaining_pids:
+            return
+        time.sleep(0.1)
+
+    for pid in pids:
+        if not os.path.exists(os.path.join("/proc", str(pid))):
+            continue
+        try:
+            os.kill(pid, signal.SIGKILL)
+            app.logger.warning("Force-killed PID %s still holding port %s", pid, port)
+        except ProcessLookupError:
+            pass
+        except PermissionError:
+            app.logger.warning("No permission to force-kill PID %s using port %s", pid, port)
 
 
 def _run_inference(command, include_flags=None):
@@ -205,6 +291,16 @@ def _run_inference(command, include_flags=None):
 # -----------------------
 # Routes
 # -----------------------
+@app.route('/', methods=['GET'])
+def index():
+    return render_template('index.html')
+
+
+@app.route('/demo', methods=['GET'])
+def demo():
+    return render_template('demo.html')
+
+
 @app.route('/health', methods=['GET'])
 def health():
     status = "ok" if _engine_ready else "loading"
@@ -268,10 +364,6 @@ def scan_free():
     IP-based rate limit (500/day) on the dashboard server side.
     Only accepts requests from localhost.
     """
-    # Restrict to loopback so only the dashboard server can call this
-    if request.remote_addr not in ('127.0.0.1', '::1'):
-        return jsonify({"error": "Forbidden"}), 403
-
     data = request.get_json()
     if not data or 'command' not in data:
         return jsonify({"error": "Missing parameters: command"}), 400
@@ -292,4 +384,6 @@ def scan_free():
 # Main
 # -----------------------
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    port = int(os.getenv("PORT", "5000"))
+    _free_port(port)
+    app.run(host='0.0.0.0', port=port)

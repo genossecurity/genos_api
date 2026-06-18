@@ -8,3 +8,5 @@ logs/
 models/
 models/**/*.pkl
 models/*.pkl
+data/provenance/raw/**
+!data/provenance/raw/.gitignore

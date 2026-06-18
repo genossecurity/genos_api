@@ -11,6 +11,32 @@ from __future__ import annotations
 from itertools import product
 
 
+def build_catastrophic_benign_cases() -> list[dict[str, str]]:
+    commands = [
+        "pwd",
+        "date",
+        "uptime",
+        "cal",
+        "hostname",
+        "whoami",
+        "id",
+        "groups",
+        "uname",
+        "echo hello",
+        "printf test",
+        "true",
+        "false",
+        "ls",
+        "ls -la",
+        "cat /etc/hostname",
+        "cat /etc/os-release",
+    ]
+    return [
+        {"bucket": "catastrophic_benign", "label": "Benign", "command": command}
+        for command in commands
+    ]
+
+
 def _unique(items: list[dict[str, str]]) -> list[dict[str, str]]:
     seen: set[tuple[str, str]] = set()
     result: list[dict[str, str]] = []

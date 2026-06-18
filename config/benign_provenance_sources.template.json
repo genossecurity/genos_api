@@ -1,0 +1,31 @@
+{
+  "notes": [
+    "Fill this with real benign operational sources only.",
+    "Supported formats: jsonl, history, text.",
+    "history expects shell-history style plain text; jsonl may override per-row metadata."
+  ],
+  "sources": [
+    {
+      "path": "data/provenance/raw/admin_history_example.txt",
+      "format": "history",
+      "source_name": "admin_history_example",
+      "source_type": "local_shell_history",
+      "label_basis": "routine_operational_provenance",
+      "provenance_source": "personal_admin_box",
+      "source_uri": "local://personal_admin_box/.bash_history",
+      "holdout_group": "personal_admin_box",
+      "default_label": "Benign"
+    },
+    {
+      "path": "data/provenance/raw/official_kubernetes_docs_examples.jsonl",
+      "format": "jsonl",
+      "source_name": "official_kubernetes_docs_examples",
+      "source_type": "official_kubernetes_docs",
+      "label_basis": "routine_operational_provenance",
+      "provenance_source": "kubernetes_docs",
+      "source_uri": "https://kubernetes.io/docs/",
+      "holdout_group": "official_kubernetes_docs",
+      "default_label": "Benign"
+    }
+  ]
+}

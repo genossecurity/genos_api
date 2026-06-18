@@ -1,0 +1,23 @@
+{
+  "base_rows": 250,
+  "repair_rows_added": 101,
+  "contrast_rows_added": 24,
+  "rows": 375,
+  "label_counts": {
+    "Benign": 351,
+    "Malicious": 12,
+    "Context_Dependent": 12
+  },
+  "source_family_counts": {
+    "trivial_shell_basics": 40,
+    "routine_file_admin_inspection": 60,
+    "docker_routine_inspection": 40,
+    "kubernetes_routine_inspection": 40,
+    "network_system_inspection": 35,
+    "services_packages_and_workflows": 35,
+    "obvious_shell_basics_repair": 101,
+    "wrapper_boundary_contrast": 24
+  },
+  "catastrophic_benign_seed_count": 17,
+  "strategy": "v2a_plus_targeted_obvious_benign_repairs_plus_wrapper_boundary_contrasts"
+}
