@@ -727,6 +727,11 @@
       category: 'malicious',
       cmd: 'schtasks /create /tn "SystemUpdate" /tr "C:\\Temp\\malware.exe" /sc onlogon /ru SYSTEM /f'
     },
+    {
+      label: 'Obfuscated',
+      category: 'suspicious',
+      cmd: 'd2hvYW1pIC9hbGwgJiYgbmV0IGxvY2FsZ3JvdXAgYWRtaW5pc3RyYXRvcnM='
+    },
   ];
 
   // Render example cards
@@ -734,7 +739,8 @@
   EXAMPLES.forEach(ex => {
     const card = document.createElement('div');
     card.className = 'example-card';
-    card.innerHTML = `<div class="ex-label label-${ex.category}">${ex.label}</div><div class="ex-cmd">${escHtml(ex.cmd)}</div>`;
+    const exLabelClass = ex.label === 'Obfuscated' ? 'label-suspicious' : `label-${ex.category}`;
+    card.innerHTML = `<div class="ex-label ${exLabelClass}">${ex.label}</div><div class="ex-cmd">${escHtml(ex.cmd)}</div>`;
     card.onclick = () => {
       document.getElementById('cmdInput').value = ex.cmd;
       document.getElementById('cmdInput').focus();
@@ -773,7 +779,7 @@
         throw new Error(data.error || `HTTP ${resp.status}`);
       }
 
-      renderResults(data);
+      renderResults(data, cmd);
       results.style.display = 'block';
       results.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (err) {
@@ -818,7 +824,7 @@
     return `<span class="kv-key">${escHtml(key)}${tooltip}</span><span class="kv-val${isCode ? ' code' : ''}">${escHtml(display)}</span>`;
   }
 
-  function renderResults(d) {
+  function renderResults(d, originalInput) {
     const label = d.label || 'Unknown';
 
     // ── Tier 1: Verdict hero ──
@@ -908,9 +914,13 @@
       if (markers.length) {
         bhtml += `<div class="ob-markers">${markers.map(m => `<span class="ob-marker">${escHtml(String(m))}</span>`).join('')}</div>`;
       }
+      if (originalInput) {
+        bhtml += `<div class="ob-label" style="margin-top:.55rem">Original input (obfuscated)</div>`;
+        bhtml += `<div class="ob-deobf" style="opacity:.7;margin-bottom:.7rem">${escHtml(originalInput)}</div>`;
+      }
       if (deobf) {
-        bhtml += `<div class="ob-label">Deobfuscated command analysed</div>`;
-        bhtml += `<div class="ob-deobf">${escHtml(deobf)}</div>`;
+        bhtml += `<div class="ob-label">Deobfuscated command</div>`;
+        bhtml += `<div class="ob-deobf" style="border-color:rgba(210,153,34,.45);background:rgba(210,153,34,.06)">${escHtml(deobf)}</div>`;
       }
       bhtml += `</div></div>`;
       banner.innerHTML = bhtml;

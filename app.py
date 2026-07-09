@@ -184,6 +184,8 @@ def _run_inference(command, include_flags=None):
     All sections are included by default when include_flags is None.
     """
     # --- Try auto-decode Base64 commands ---
+    original_command = command
+    app_decoded = False
     try:
         decoded_bytes = base64.b64decode(command, validate=True)
         # Try UTF-16LE first (PowerShell -EncodedCommand format)
@@ -192,11 +194,13 @@ def _run_inference(command, include_flags=None):
             ascii_printable = sum(1 for c in utf16 if '\x20' <= c <= '\x7e' or c in '\r\n\t')
             if ascii_printable > len(utf16) * 0.6 and len(utf16) > 3:
                 command = utf16
+                app_decoded = True
             else:
                 raise ValueError("not utf-16le")
         except (UnicodeDecodeError, ValueError):
             # Fallback to UTF-8
             command = decoded_bytes.decode('utf-8')
+            app_decoded = True
     except Exception:
         pass  # Assume plain text if decode fails
 
@@ -263,6 +267,14 @@ def _run_inference(command, include_flags=None):
     # --- Evidence ---
     if flags["evidence"] and "evidence" in raw_result:
         result["evidence"] = raw_result["evidence"]
+        # If the app layer pre-decoded Base64, make sure the evidence block
+        # reflects that so the UI obfuscation banner fires.
+        if app_decoded:
+            ev = result["evidence"]
+            if not ev.get("uses_obfuscation"):
+                ev["uses_obfuscation"] = True
+            if not ev.get("obfuscation_markers"):
+                ev["obfuscation_markers"] = ["base64"]
 
     # --- Analysis ---
     if flags["analysis"]:
@@ -273,6 +285,10 @@ def _run_inference(command, include_flags=None):
         for key in ("decoded_payload", "payload_mitre_codes", "deobfuscated_cmd"):
             if key in raw_result and raw_result[key] is not None:
                 result[key] = raw_result[key]
+        # If the app layer pre-decoded Base64 before the engine saw it, surface the
+        # decoded command so the UI can show the obfuscated → plain comparison.
+        if app_decoded and "deobfuscated_cmd" not in result:
+            result["deobfuscated_cmd"] = command
 
     # --- IOC summary ---
     if flags["ioc"] and "ioc_summary" in raw_result:
