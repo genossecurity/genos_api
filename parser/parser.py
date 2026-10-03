@@ -75,7 +75,7 @@ WINDOWS_EXECUTABLES = {
 }
 
 LINUX_EXECUTABLES = {
-    "ls", "whoami", "pwd", "cat", "curl", "wget", "tar", "unzip", "ssh", "scp",
+    "ls", "pwd", "cat", "curl", "wget", "tar", "unzip", "ssh", "scp",
     "rsync", "docker", "systemctl", "find", "grep", "awk", "sed", "bash", "sh",
     "python3", "python", "zip", "gunicorn", "flask", "node", "id", "uname",
     "ifconfig", "ip", "netstat", "ss", "dig", "nslookup", "traceroute", "ping",
@@ -305,7 +305,7 @@ def _detect_platform(executable: str, flags: List[str], registry_paths: List[str
     exe = executable.lower()
     if registry_paths:
         return "windows"
-    if exe in WINDOWS_EXECUTABLES:
+    if exe in WINDOWS_EXECUTABLES or exe.endswith(".exe"):
         return "windows"
     if exe in LINUX_EXECUTABLES:
         return "linux"

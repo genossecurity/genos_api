@@ -1,0 +1,1621 @@
+{
+  "pairs": [
+    {
+      "selector": "#inputHeading",
+      "text": "COMMAND INPUT",
+      "ratio": 9.39,
+      "target": 7
+    },
+    {
+      "selector": "label.",
+      "text": "Command to investigate",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "label.sample-control",
+      "text": "Load demo sample\n              \n                Choose sampl",
+      "ratio": 9.39,
+      "target": 7
+    },
+    {
+      "selector": "#demoSample",
+      "text": "Choose sample\u2026\n                Encoded download + execute\n  ",
+      "ratio": 16.86,
+      "target": 7
+    },
+    {
+      "selector": "#scanBtn",
+      "text": "ANALYZE\u2197",
+      "ratio": 7.36,
+      "target": 7
+    },
+    {
+      "selector": "#buttonLabel",
+      "text": "ANALYZE",
+      "ratio": 7.36,
+      "target": 7
+    },
+    {
+      "selector": "span.button-icon",
+      "text": "\u2197",
+      "ratio": 7.36,
+      "target": 7
+    },
+    {
+      "selector": "#scanStatus",
+      "text": "Done in 50.6 ms",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "#inputHelp",
+      "text": "Enter: analyze \u00b7 Shift+Enter: new line",
+      "ratio": 9.39,
+      "target": 7
+    },
+    {
+      "selector": "p.eyebrow",
+      "text": "INVESTIGATION RESULTS",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "#gpuHeading",
+      "text": "VRAM / command",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "#gpuCommandValue",
+      "text": "376.3 MiB",
+      "ratio": 12.28,
+      "target": 7
+    },
+    {
+      "selector": "#gpuDevice",
+      "text": "NVIDIA GeForce RTX 4060",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "#verdictHeading",
+      "text": "ASSESSMENT",
+      "ratio": 9.46,
+      "target": 7
+    },
+    {
+      "selector": "#verdictLabel",
+      "text": "MALICIOUS",
+      "ratio": 7.93,
+      "target": 7
+    },
+    {
+      "selector": "#confidenceValue",
+      "text": "79.2%",
+      "ratio": 7.93,
+      "target": 7
+    },
+    {
+      "selector": "#confidenceCaption",
+      "text": "confidence",
+      "ratio": 9.46,
+      "target": 7
+    },
+    {
+      "selector": "#analysisTime",
+      "text": "50.6 ms",
+      "ratio": 15.54,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "Benign",
+      "ratio": 15.54,
+      "target": 7
+    },
+    {
+      "selector": "span.prob-value",
+      "text": "3.7%",
+      "ratio": 10.34,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "Suspicious",
+      "ratio": 15.54,
+      "target": 7
+    },
+    {
+      "selector": "span.prob-value",
+      "text": "17.1%",
+      "ratio": 9.27,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "Malicious",
+      "ratio": 15.54,
+      "target": 7
+    },
+    {
+      "selector": "span.prob-value",
+      "text": "79.2%",
+      "ratio": 7.93,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "COMMAND BREAKDOWN",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "span.warning-icon",
+      "text": "\u26a0",
+      "ratio": 8.49,
+      "target": 7
+    },
+    {
+      "selector": "#obfuscationHeading",
+      "text": "OBFUSCATION DETECTED",
+      "ratio": 8.49,
+      "target": 7
+    },
+    {
+      "selector": "span.encoding-badge",
+      "text": "BASE64",
+      "ratio": 7.11,
+      "target": 7
+    },
+    {
+      "selector": "span.code-label",
+      "text": "ORIGINAL COMMAND",
+      "ratio": 8.66,
+      "target": 7
+    },
+    {
+      "selector": "code.",
+      "text": "d2hvYW1pIC9hbGwgJiYgbmV0IGxvY2FsZ3JvdXAgYWRtaW5pc3RyYXRvcnM=",
+      "ratio": 18.36,
+      "target": 7
+    },
+    {
+      "selector": "span.code-label",
+      "text": "\u21b3 DEOBFUSCATED COMMAND",
+      "ratio": 10.14,
+      "target": 7
+    },
+    {
+      "selector": "span.decode-arrow",
+      "text": "\u21b3",
+      "ratio": 10.14,
+      "target": 7
+    },
+    {
+      "selector": "span.command-span.executable",
+      "text": "whoami",
+      "ratio": 13.09,
+      "target": 7
+    },
+    {
+      "selector": "span.command-span.flag",
+      "text": "/all",
+      "ratio": 12.09,
+      "target": 7
+    },
+    {
+      "selector": "span.command-span.operator",
+      "text": "&&",
+      "ratio": 10.96,
+      "target": 7
+    },
+    {
+      "selector": "span.command-span.executable",
+      "text": "net",
+      "ratio": 13.09,
+      "target": 7
+    },
+    {
+      "selector": "span.command-span.argument",
+      "text": "localgroup",
+      "ratio": 17.1,
+      "target": 7
+    },
+    {
+      "selector": "span.command-span.argument",
+      "text": "administrators",
+      "ratio": 17.1,
+      "target": 7
+    },
+    {
+      "selector": "#breakdownCaption",
+      "text": "Decoded command structure",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "Executables",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "span.token.executable",
+      "text": "whoami",
+      "ratio": 7.94,
+      "target": 7
+    },
+    {
+      "selector": "span.token.executable",
+      "text": "net",
+      "ratio": 7.94,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "Flags",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "span.token.flag",
+      "text": "/all",
+      "ratio": 8.33,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "Arguments",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "span.token.argument",
+      "text": "localgroup",
+      "ratio": 9.59,
+      "target": 7
+    },
+    {
+      "selector": "span.token.argument",
+      "text": "administrators",
+      "ratio": 9.59,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "Operators",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "span.token.operator",
+      "text": "&&",
+      "ratio": 7.11,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "Platform",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "span.token.feature",
+      "text": "windows",
+      "ratio": 11.58,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "Obfuscation",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "span.token.warning",
+      "text": "base64",
+      "ratio": 7.11,
+      "target": 7
+    },
+    {
+      "selector": "span.executable",
+      "text": "Executable",
+      "ratio": 12.02,
+      "target": 7
+    },
+    {
+      "selector": "span.flag",
+      "text": "Flag",
+      "ratio": 11.11,
+      "target": 7
+    },
+    {
+      "selector": "span.argument",
+      "text": "Argument",
+      "ratio": 15.71,
+      "target": 7
+    },
+    {
+      "selector": "span.operator",
+      "text": "Operator",
+      "ratio": 10.06,
+      "target": 7
+    },
+    {
+      "selector": "span.url",
+      "text": "URL",
+      "ratio": 9.73,
+      "target": 7
+    },
+    {
+      "selector": "span.ip",
+      "text": "IP",
+      "ratio": 10.45,
+      "target": 7
+    },
+    {
+      "selector": "span.file",
+      "text": "File",
+      "ratio": 10.35,
+      "target": 7
+    },
+    {
+      "selector": "span.registry",
+      "text": "Registry",
+      "ratio": 13.8,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "BEHAVIOR",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "#behaviorCategory",
+      "text": "DISCOVERY / RECON",
+      "ratio": 16.86,
+      "target": 7
+    },
+    {
+      "selector": "li.",
+      "text": "Enumerates current user identity and account information.",
+      "ratio": 16.86,
+      "target": 7
+    },
+    {
+      "selector": "li.",
+      "text": "Lists members of the local Administrators group.",
+      "ratio": 16.86,
+      "target": 7
+    },
+    {
+      "selector": "span.token.semantic",
+      "text": "enumerates_identity",
+      "ratio": 7.83,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "THREAT MAPPING",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "small.",
+      "text": "MITRE ATT&CK / TOP 5",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "code.",
+      "text": "T1069",
+      "ratio": 11,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-name",
+      "text": "Permission Groups Discovery",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-score",
+      "text": "59.3%",
+      "ratio": 11,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "\u2197",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "code.",
+      "text": "T1078",
+      "ratio": 11,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-name",
+      "text": "Valid Accounts",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-score",
+      "text": "10.8%",
+      "ratio": 10.04,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "\u2197",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "code.",
+      "text": "T1087",
+      "ratio": 11,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-name",
+      "text": "Account Discovery",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-score",
+      "text": "4.3%",
+      "ratio": 10.04,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "\u2197",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "code.",
+      "text": "T1562",
+      "ratio": 11,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-name",
+      "text": "Impair Defenses",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-score",
+      "text": "3.3%",
+      "ratio": 10.04,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "\u2197",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "code.",
+      "text": "T1136",
+      "ratio": 11,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-name",
+      "text": "Create Account",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-score",
+      "text": "2.5%",
+      "ratio": 10.04,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "\u2197",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "INDICATORS",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "h3.",
+      "text": "IOCs",
+      "ratio": 16.86,
+      "target": 7
+    },
+    {
+      "selector": "p.",
+      "text": "None detected",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "h3.",
+      "text": "LOLBins",
+      "ratio": 16.86,
+      "target": 7
+    },
+    {
+      "selector": "p.",
+      "text": "None detected",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "h3.",
+      "text": "Network",
+      "ratio": 16.86,
+      "target": 7
+    },
+    {
+      "selector": "p.",
+      "text": "None detected",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "summary.",
+      "text": "Advanced / Model Details",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "model_type",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "behavior_encoder",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "behavior_encoder",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "behavior_encoder",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "routing_policy",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "model_top_class",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "decision_margin",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "62.12",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "model_view",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "deobfuscated",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "thresholds",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "{\"benign_conf_threshold\":0.52,\"suspicious_conf_threshold\":0.",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "high-risk override",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "true",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "suspicious fallback",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "true",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "runner-up confidence",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "17.09%",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "fired-rule strength",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "weak",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": ".token.executable",
+      "ratio": 7.94,
+      "target": 7
+    },
+    {
+      "selector": ".token.flag",
+      "ratio": 8.33,
+      "target": 7
+    },
+    {
+      "selector": ".token.argument",
+      "ratio": 9.59,
+      "target": 7
+    },
+    {
+      "selector": ".token.operator",
+      "ratio": 7.11,
+      "target": 7
+    },
+    {
+      "selector": ".token.url",
+      "ratio": 7.67,
+      "target": 7
+    },
+    {
+      "selector": ".token.ip",
+      "ratio": 8.07,
+      "target": 7
+    },
+    {
+      "selector": ".token.file",
+      "ratio": 7.83,
+      "target": 7
+    },
+    {
+      "selector": ".token.registry",
+      "ratio": 8.85,
+      "target": 7
+    },
+    {
+      "selector": ".token.feature",
+      "ratio": 11.58,
+      "target": 7
+    },
+    {
+      "selector": ".token.warning",
+      "ratio": 7.11,
+      "target": 7
+    },
+    {
+      "selector": ".token.semantic",
+      "ratio": 7.83,
+      "target": 7
+    },
+    {
+      "selector": "#inputHeading",
+      "text": "COMMAND INPUT",
+      "ratio": 9.39,
+      "target": 7
+    },
+    {
+      "selector": "label.",
+      "text": "Command to investigate",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "label.sample-control",
+      "text": "Load demo sample\n              \n                Choose sampl",
+      "ratio": 9.39,
+      "target": 7
+    },
+    {
+      "selector": "#demoSample",
+      "text": "Choose sample\u2026\n                Encoded download + execute\n  ",
+      "ratio": 16.86,
+      "target": 7
+    },
+    {
+      "selector": "#scanBtn",
+      "text": "ANALYZE\u2197",
+      "ratio": 7.36,
+      "target": 7
+    },
+    {
+      "selector": "#buttonLabel",
+      "text": "ANALYZE",
+      "ratio": 7.36,
+      "target": 7
+    },
+    {
+      "selector": "span.button-icon",
+      "text": "\u2197",
+      "ratio": 7.36,
+      "target": 7
+    },
+    {
+      "selector": "#scanStatus",
+      "text": "Done in 66.9 ms",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "#inputHelp",
+      "text": "Enter: analyze \u00b7 Shift+Enter: new line",
+      "ratio": 9.39,
+      "target": 7
+    },
+    {
+      "selector": "p.eyebrow",
+      "text": "INVESTIGATION RESULTS",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "#gpuHeading",
+      "text": "VRAM / command",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "#gpuCommandValue",
+      "text": "376.3 MiB",
+      "ratio": 12.28,
+      "target": 7
+    },
+    {
+      "selector": "#gpuDevice",
+      "text": "NVIDIA GeForce RTX 4060",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "#verdictHeading",
+      "text": "ASSESSMENT",
+      "ratio": 9.46,
+      "target": 7
+    },
+    {
+      "selector": "#verdictLabel",
+      "text": "MALICIOUS",
+      "ratio": 7.93,
+      "target": 7
+    },
+    {
+      "selector": "#confidenceValue",
+      "text": "93.5%",
+      "ratio": 7.93,
+      "target": 7
+    },
+    {
+      "selector": "#confidenceCaption",
+      "text": "confidence",
+      "ratio": 9.46,
+      "target": 7
+    },
+    {
+      "selector": "#analysisTime",
+      "text": "66.9 ms",
+      "ratio": 15.54,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "Benign",
+      "ratio": 15.54,
+      "target": 7
+    },
+    {
+      "selector": "span.prob-value",
+      "text": "4.4%",
+      "ratio": 10.34,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "Suspicious",
+      "ratio": 15.54,
+      "target": 7
+    },
+    {
+      "selector": "span.prob-value",
+      "text": "2.1%",
+      "ratio": 9.27,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "Malicious",
+      "ratio": 15.54,
+      "target": 7
+    },
+    {
+      "selector": "span.prob-value",
+      "text": "93.5%",
+      "ratio": 7.93,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "COMMAND BREAKDOWN",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "span.warning-icon",
+      "text": "\u26a0",
+      "ratio": 8.49,
+      "target": 7
+    },
+    {
+      "selector": "#obfuscationHeading",
+      "text": "OBFUSCATION DETECTED",
+      "ratio": 8.49,
+      "target": 7
+    },
+    {
+      "selector": "span.encoding-badge",
+      "text": "BASE64",
+      "ratio": 7.11,
+      "target": 7
+    },
+    {
+      "selector": "span.code-label",
+      "text": "ORIGINAL COMMAND",
+      "ratio": 8.66,
+      "target": 7
+    },
+    {
+      "selector": "code.",
+      "text": "Y3VybCAtZnNTTCBodHRwczovL2RlbW8uZXhhbXBsZS5vcmcvYWdlbnQuc2gg",
+      "ratio": 18.36,
+      "target": 7
+    },
+    {
+      "selector": "span.code-label",
+      "text": "\u21b3 DEOBFUSCATED COMMAND",
+      "ratio": 10.14,
+      "target": 7
+    },
+    {
+      "selector": "span.decode-arrow",
+      "text": "\u21b3",
+      "ratio": 10.14,
+      "target": 7
+    },
+    {
+      "selector": "span.command-span.executable",
+      "text": "curl",
+      "ratio": 13.09,
+      "target": 7
+    },
+    {
+      "selector": "span.command-span.flag",
+      "text": "-fsSL",
+      "ratio": 12.09,
+      "target": 7
+    },
+    {
+      "selector": "span.command-span.url",
+      "text": "https://demo.example.org/agent.sh",
+      "ratio": 10.6,
+      "target": 7
+    },
+    {
+      "selector": "span.command-span.flag",
+      "text": "-o",
+      "ratio": 12.09,
+      "target": 7
+    },
+    {
+      "selector": "span.command-span.file",
+      "text": "/tmp/agent.sh",
+      "ratio": 11.27,
+      "target": 7
+    },
+    {
+      "selector": "span.command-span.operator",
+      "text": "&&",
+      "ratio": 10.96,
+      "target": 7
+    },
+    {
+      "selector": "span.command-span.executable",
+      "text": "bash",
+      "ratio": 13.09,
+      "target": 7
+    },
+    {
+      "selector": "span.command-span.file",
+      "text": "/tmp/agent.sh",
+      "ratio": 11.27,
+      "target": 7
+    },
+    {
+      "selector": "#breakdownCaption",
+      "text": "Decoded command structure",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "Executables",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "span.token.executable",
+      "text": "curl",
+      "ratio": 7.94,
+      "target": 7
+    },
+    {
+      "selector": "span.token.executable",
+      "text": "bash",
+      "ratio": 7.94,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "Flags",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "span.token.flag",
+      "text": "-fsSL",
+      "ratio": 8.33,
+      "target": 7
+    },
+    {
+      "selector": "span.token.flag",
+      "text": "-o",
+      "ratio": 8.33,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "Arguments",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "span.token.argument",
+      "text": "https://demo.example.org/agent.sh",
+      "ratio": 9.59,
+      "target": 7
+    },
+    {
+      "selector": "span.token.argument",
+      "text": "/tmp/agent.sh",
+      "ratio": 9.59,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "Operators",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "span.token.operator",
+      "text": "&&",
+      "ratio": 7.11,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "Platform",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "span.token.feature",
+      "text": "linux",
+      "ratio": 11.58,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "Obfuscation",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "span.token.warning",
+      "text": "base64",
+      "ratio": 7.11,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "URLs",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "span.token.url",
+      "text": "https://demo.example.org/agent.sh",
+      "ratio": 7.67,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "Files",
+      "ratio": 10.27,
+      "target": 7
+    },
+    {
+      "selector": "span.token.file",
+      "text": "/tmp/agent.sh",
+      "ratio": 7.83,
+      "target": 7
+    },
+    {
+      "selector": "span.executable",
+      "text": "Executable",
+      "ratio": 12.02,
+      "target": 7
+    },
+    {
+      "selector": "span.flag",
+      "text": "Flag",
+      "ratio": 11.11,
+      "target": 7
+    },
+    {
+      "selector": "span.argument",
+      "text": "Argument",
+      "ratio": 15.71,
+      "target": 7
+    },
+    {
+      "selector": "span.operator",
+      "text": "Operator",
+      "ratio": 10.06,
+      "target": 7
+    },
+    {
+      "selector": "span.url",
+      "text": "URL",
+      "ratio": 9.73,
+      "target": 7
+    },
+    {
+      "selector": "span.ip",
+      "text": "IP",
+      "ratio": 10.45,
+      "target": 7
+    },
+    {
+      "selector": "span.file",
+      "text": "File",
+      "ratio": 10.35,
+      "target": 7
+    },
+    {
+      "selector": "span.registry",
+      "text": "Registry",
+      "ratio": 13.8,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "BEHAVIOR",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "#behaviorCategory",
+      "text": "PAYLOAD RETRIEVAL",
+      "ratio": 16.86,
+      "target": 7
+    },
+    {
+      "selector": "li.",
+      "text": "Uses a signed utility that can proxy execution.",
+      "ratio": 16.86,
+      "target": 7
+    },
+    {
+      "selector": "li.",
+      "text": "Runs commands through an interpreter.",
+      "ratio": 16.86,
+      "target": 7
+    },
+    {
+      "selector": "li.",
+      "text": "Downloads a resource from a remote URL.",
+      "ratio": 16.86,
+      "target": 7
+    },
+    {
+      "selector": "li.",
+      "text": "Writes the downloaded resource to the specified file destina",
+      "ratio": 16.86,
+      "target": 7
+    },
+    {
+      "selector": "li.",
+      "text": "Runs the script file through a shell interpreter.",
+      "ratio": 16.86,
+      "target": 7
+    },
+    {
+      "selector": "span.token.semantic",
+      "text": "uses_signed_proxy_binary",
+      "ratio": 7.83,
+      "target": 7
+    },
+    {
+      "selector": "span.token.semantic",
+      "text": "writes_executable_like_file",
+      "ratio": 7.83,
+      "target": 7
+    },
+    {
+      "selector": "span.token.semantic",
+      "text": "runs_interpreter",
+      "ratio": 7.83,
+      "target": 7
+    },
+    {
+      "selector": "span.token.semantic",
+      "text": "downloads_remote_resource",
+      "ratio": 7.83,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "THREAT MAPPING",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "small.",
+      "text": "MITRE ATT&CK / TOP 5",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "code.",
+      "text": "T1105",
+      "ratio": 11,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-name",
+      "text": "Ingress Tool Transfer",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-score",
+      "text": "14.8%",
+      "ratio": 11,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "\u2197",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "code.",
+      "text": "T1102",
+      "ratio": 11,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-name",
+      "text": "Web Service",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-score",
+      "text": "10.8%",
+      "ratio": 10.3,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "\u2197",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "code.",
+      "text": "T1213",
+      "ratio": 11,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-name",
+      "text": "Data from Information Repositories",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-score",
+      "text": "10.8%",
+      "ratio": 10.3,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "\u2197",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "code.",
+      "text": "T1048",
+      "ratio": 11,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-name",
+      "text": "Exfiltration Over Alternative Protocol",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-score",
+      "text": "9.3%",
+      "ratio": 10.03,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "\u2197",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "code.",
+      "text": "T1059",
+      "ratio": 11,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-name",
+      "text": "Command and Scripting Interpreter",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "span.technique-score",
+      "text": "5.8%",
+      "ratio": 10.04,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "\u2197",
+      "ratio": 15.43,
+      "target": 7
+    },
+    {
+      "selector": "span.",
+      "text": "INDICATORS",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "h3.",
+      "text": "IOCs3",
+      "ratio": 16.86,
+      "target": 7
+    },
+    {
+      "selector": "span.count-badge",
+      "text": "3",
+      "ratio": 7.2,
+      "target": 7
+    },
+    {
+      "selector": "span.token.artifact",
+      "text": "https://demo.example.org/agent.sh",
+      "ratio": 7.2,
+      "target": 7
+    },
+    {
+      "selector": "span.token.artifact",
+      "text": "demo.example.org",
+      "ratio": 7.2,
+      "target": 7
+    },
+    {
+      "selector": "span.token.artifact",
+      "text": "/tmp/agent.sh",
+      "ratio": 7.2,
+      "target": 7
+    },
+    {
+      "selector": "h3.",
+      "text": "LOLBins1",
+      "ratio": 16.86,
+      "target": 7
+    },
+    {
+      "selector": "span.count-badge",
+      "text": "1",
+      "ratio": 7.11,
+      "target": 7
+    },
+    {
+      "selector": "span.token.artifact",
+      "text": "curl",
+      "ratio": 7.11,
+      "target": 7
+    },
+    {
+      "selector": "h3.",
+      "text": "Network2",
+      "ratio": 16.86,
+      "target": 7
+    },
+    {
+      "selector": "span.count-badge",
+      "text": "2",
+      "ratio": 7.67,
+      "target": 7
+    },
+    {
+      "selector": "span.token.artifact",
+      "text": "https://demo.example.org/agent.sh",
+      "ratio": 7.67,
+      "target": 7
+    },
+    {
+      "selector": "span.token.artifact",
+      "text": "demo.example.org",
+      "ratio": 7.67,
+      "target": 7
+    },
+    {
+      "selector": "summary.",
+      "text": "Advanced / Model Details",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "model_type",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "behavior_encoder",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "behavior_encoder",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "behavior_encoder",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "routing_policy",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "model_top_class",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "decision_margin",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "89.04",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "model_view",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "deobfuscated",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "thresholds",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "{\"benign_conf_threshold\":0.52,\"suspicious_conf_threshold\":0.",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "high-risk override",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "true",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "suspicious fallback",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "true",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "runner-up confidence",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "4.43%",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": "dt.",
+      "text": "fired-rule strength",
+      "ratio": 10.48,
+      "target": 7
+    },
+    {
+      "selector": "dd.",
+      "text": "strong",
+      "ratio": 17.22,
+      "target": 7
+    },
+    {
+      "selector": ".token.executable",
+      "ratio": 7.94,
+      "target": 7
+    },
+    {
+      "selector": ".token.flag",
+      "ratio": 8.33,
+      "target": 7
+    },
+    {
+      "selector": ".token.argument",
+      "ratio": 9.59,
+      "target": 7
+    },
+    {
+      "selector": ".token.operator",
+      "ratio": 7.11,
+      "target": 7
+    },
+    {
+      "selector": ".token.url",
+      "ratio": 7.67,
+      "target": 7
+    },
+    {
+      "selector": ".token.ip",
+      "ratio": 8.07,
+      "target": 7
+    },
+    {
+      "selector": ".token.file",
+      "ratio": 7.83,
+      "target": 7
+    },
+    {
+      "selector": ".token.registry",
+      "ratio": 8.85,
+      "target": 7
+    },
+    {
+      "selector": ".token.feature",
+      "ratio": 11.58,
+      "target": 7
+    },
+    {
+      "selector": ".token.warning",
+      "ratio": 7.11,
+      "target": 7
+    },
+    {
+      "selector": ".token.semantic",
+      "ratio": 7.83,
+      "target": 7
+    }
+  ],
+  "failures": []
+}

@@ -68,7 +68,7 @@ function parseStructure(command, ev) {
     else args.push(value);
   }
   // /all is a Windows switch even if the specialist omitted platform evidence.
-  const windows = ev.platform === 'windows' || executables.some(x => /^(whoami|net|reg|cmd(?:\.exe)?|powershell(?:\.exe)?|Get-\w+|schtasks|vssadmin)$/i.test(x)) || /[A-Za-z]:\\/.test(command);
+  const windows = ev.platform === 'windows' || executables.some(x => /^(net|reg|cmd(?:\.exe)?|powershell(?:\.exe)?|Get-\w+|schtasks|vssadmin)$/i.test(x)) || /[A-Za-z]:\\/.test(command);
   if (windows) for (let i = args.length - 1; i >= 0; i--) if (/^\/[A-Za-z][\w-]*(?::.*)?$/.test(args[i])) flags.unshift(...args.splice(i,1));
   const urls = unique([...list(ev.urls), ...(command.match(/https?:\/\/[^\s"'<>|;&]+/gi) || [])]);
   const ips = unique([...list(ev.ips), ...(command.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g) || []).filter(x => x.split('.').every(n => +n <= 255))]);
@@ -84,7 +84,7 @@ function parseStructure(command, ev) {
   };
 }
 function renderBreakdown(rows, loading = false) {
-  const type = name => ({Executables:'executable',Flags:'flag',Arguments:'argument',Operators:'operator',Platform:'feature',Obfuscation:'feature',URLs:'url',IPs:'ip',Files:'file','Registry keys':'registry'}[name] || 'artifact');
+  const type = name => ({Executables:'executable',Flags:'flag',Arguments:'argument',Operators:'operator',Platform:'feature',Obfuscation:'warning',URLs:'url',IPs:'ip',Files:'file','Registry keys':'registry'}[name] || 'artifact');
   $('breakdown').innerHTML = Object.entries(rows).filter(([name,values]) => loading || CORE_ROWS.includes(name) || values.length).map(([name,values],i) => `<div class="breakdown-row" style="--row:${i}"><dt>${esc(name)}</dt><dd><div class="tokens">${loading ? ghostBars(2) : values.length ? chips(values,type(name),true) : '<span class="empty-value">None detected</span>'}</div></dd></div>`).join('');
 }
 function ghostBars(count = 3) {
@@ -173,7 +173,7 @@ function renderBehavior(d, rows, command) {
   if (!bullets.length) bullets.push(d.analyst_hint || ev.evidence_summary || 'No distinctive behavior reported. Review the command structure for context.');
   $('behaviorCategory').textContent = String(beh.stage || d.attack_stage || 'Behavior context not returned').toUpperCase();
   $('behaviorBullets').innerHTML = unique(bullets).map(x=>`<li>${esc(x)}</li>`).join('');
-  $('semanticTags').innerHTML = chips(list(ev.semantic_features),'feature');
+  $('semanticTags').innerHTML = chips(list(ev.semantic_features),'semantic');
 }
 function renderMitre(d) {
   const techniques = [...list(d.MITRE_codes)].sort((a,b)=>(Number(b?.confidence) || 0)-(Number(a?.confidence) || 0)).slice(0,5);
@@ -182,7 +182,7 @@ function renderMitre(d) {
     const name = t.name || t.technique_name || techniqueNames[id];
     const valid = /^T\d{4}(?:\.\d{3})?$/.test(id);
     const confidence = percent(t.confidence);
-    const content = `<code>${esc(id || 'No ID')}</code><span class="technique-name">${esc(name || 'ATT&CK technique (name unavailable)')}</span>${confidence != null ? `<span class="technique-score" aria-label="${confidence.toFixed(1)} percent confidence">${confidence.toFixed(1)}%</span>` : ''}`;
+    const content = `<code>${esc(id || 'No ID')}</code><span class="technique-name">${esc(name || 'ATT&CK technique (name unavailable)')}</span>${confidence != null ? `<span class="technique-score" style="--score-strength:${techniques[0]?.confidence > 0 ? Math.max(.62, Number(t.confidence) / Number(techniques[0].confidence)) : 1}" aria-label="${confidence.toFixed(1)} percent confidence">${confidence.toFixed(1)}%</span>` : ''}`;
     return valid ? `<a class="technique" href="https://attack.mitre.org/techniques/${id.replace('.','/')}/" target="_blank" rel="noopener noreferrer">${content}<span aria-label="opens in new tab">↗</span></a>` : `<span class="technique">${content}</span>`;
   }).join('') : '<p class="muted">None mapped</p>';
 }
@@ -193,7 +193,7 @@ function renderIndicators(d = {}, rows = {}) {
     LOLBins:unique(list(ev.lolbin_matches)),
     Network:unique([...list(rows.URLs),...list(rows.IPs),...list(ev.domains),...list(ev.ports).map(x=>'Port '+x),...list(ev.remote_targets)])
   };
-  $('indicators').innerHTML = Object.entries(groups).map(([name,values]) => `<article class="indicator-card${values.length ? ' active' : ''}"><h3>${name}${values.length ? `<span class="count-badge" aria-label="${values.length} detected">${values.length}</span>` : ''}</h3>${values.length ? '<div class="tokens">'+chips(values,'artifact')+'</div>' : '<p>None detected</p>'}</article>`).join('');
+  $('indicators').innerHTML = Object.entries(groups).map(([name,values]) => `<article class="indicator-card indicator-${name.toLowerCase()}${values.length ? ' active' : ''}"><h3>${name}${values.length ? `<span class="count-badge" aria-label="${values.length} detected">${values.length}</span>` : ''}</h3>${values.length ? '<div class="tokens">'+chips(values,'artifact')+'</div>' : '<p>None detected</p>'}</article>`).join('');
 }
 function renderAdvanced(d = {}) {
   const beh = d.behavior || {}, gk = d.gatekeeper || {}, thresholds = gk.thresholds || {};
@@ -224,17 +224,23 @@ function renderGpuMemory(d = {}) {
 function setStatus(text, error = false) {
   $('scanStatus').textContent = text;
   $('scanStatus').classList.toggle('error',error);
+  $('scanStatus').classList.toggle('done',!error && text.startsWith('Done in '));
   $('scanStatus').setAttribute('role',error ? 'alert' : 'status');
 }
 function markCommand(code, rows) {
   if (!code) return;
   const text = code.textContent;
-  const values = unique(Object.entries(rows).filter(([name])=>!['Platform','Obfuscation'].includes(name)).flatMap(([,v])=>v)).filter(v=>v !== 'newline').sort((a,b)=>b.length-a.length);
+  const types = new Map();
+  // More specific artifact types override the general argument classification.
+  for (const [name,type] of [['Arguments','argument'],['Executables','executable'],['Flags','flag'],['Operators','operator'],['Files','file'],['Registry keys','registry'],['IPs','ip'],['URLs','url']]) {
+    for (const value of list(rows[name])) if (value !== 'newline') types.set(String(value),type);
+  }
+  const values = [...types.keys()].sort((a,b)=>b.length-a.length);
   if (!values.length) return;
   const pattern = new RegExp(values.map(v=>v.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|'),'g');
   let html = '', offset = 0;
   for (const match of text.matchAll(pattern)) {
-    html += esc(text.slice(offset,match.index))+`<span class="command-span" data-token="${esc(match[0])}" tabindex="0">${esc(match[0])}</span>`;
+    html += esc(text.slice(offset,match.index))+`<span class="command-span ${types.get(match[0])}" data-token="${esc(match[0])}" tabindex="0">${esc(match[0])}</span>`;
     offset = match.index+match[0].length;
   }
   code.innerHTML = html+esc(text.slice(offset));
