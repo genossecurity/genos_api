@@ -1,0 +1,104 @@
+{
+  "label": "Suspicious",
+  "canonical_label": "Suspicious",
+  "label_confidence": 92.92,
+  "class_probabilities": {
+    "Benign": 1.89,
+    "Suspicious": 92.92,
+    "Malicious": 5.19
+  },
+  "decision_margin": 87.73,
+  "reason": "Using raw model top class Suspicious.",
+  "triggered_features": [],
+  "routing_policy": "model_top_class",
+  "should_run_specialist": true,
+  "gatekeeper": {
+    "decision_mode": "model_top_class",
+    "label_names": [
+      "Benign",
+      "Malicious",
+      "Context_Dependent"
+    ],
+    "model_top_internal_label": "Context_Dependent",
+    "model_top_label": "Suspicious",
+    "model_top_public_label": "Suspicious",
+    "model_top_confidence": 92.92,
+    "model_second_internal_label": "Malicious",
+    "model_second_label": "Malicious",
+    "model_second_public_label": "Malicious",
+    "model_second_confidence": 5.19,
+    "model_view": "deobfuscated",
+    "metadata_path": "/home/sam/genos/genos_api/config/gatekeeper_meta.json",
+    "thresholds": {
+      "benign_conf_threshold": 0.52,
+      "suspicious_conf_threshold": 0.55,
+      "malicious_conf_threshold": 0.78,
+      "low_margin_threshold": 0.12,
+      "high_risk_override_enabled": true,
+      "suspicious_fallback_enabled": true
+    },
+    "threshold_source": null
+  },
+  "behavior": {
+    "stage": "Collection / Staging",
+    "stage_confidence": 67.53,
+    "action_tags": [],
+    "model_type": "behavior_encoder",
+    "input_text": "RAW: Get-ChildItem -Path C:\\Users -Recurse -Filter *.txt\nRESIDUAL: FILE_ENUM | Get-ChildItem -Path <PATH> -Recurse -Filter *.txt\nFEATURES: RULE:query_registry RULE:file_and_directory_discovery"
+  },
+  "action": "requires_context",
+  "label_probabilities": {
+    "benign": 1.89,
+    "malicious": 5.19,
+    "suspicious": 92.92
+  },
+  "MITRE_codes": [],
+  "evidence": {
+    "platform": "unknown",
+    "executable": "get-childitem",
+    "subcommand": null,
+    "interpreter": null,
+    "high_signal_flags": [],
+    "file_paths": [
+      "C:\\Users",
+      "*.txt"
+    ],
+    "registry_paths": [],
+    "local_targets": [
+      "C:\\Users",
+      "*.txt"
+    ],
+    "remote_targets": [],
+    "urls": [],
+    "domains": [],
+    "ips": [],
+    "ports": [],
+    "has_pipe": false,
+    "has_redirect": false,
+    "has_chain": false,
+    "inline_code": false,
+    "uses_encoded_payload": false,
+    "uses_obfuscation": false,
+    "obfuscation_markers": [],
+    "deobfuscated_command": null,
+    "lolbin_matches": [],
+    "uses_signed_proxy_binary": false,
+    "semantic_features": [],
+    "rule_strength": "weak",
+    "fired_rules": [
+      "registry broad",
+      "file dir discovery",
+      "powershell cmdlets"
+    ],
+    "evidence_summary": "Get-childitem execution.",
+    "primary_artifact_type": "file",
+    "execution_style": null,
+    "triggered_features": [],
+    "routing_reason": "Using raw model top class Suspicious.",
+    "routing_policy": "model_top_class"
+  },
+  "confidence_driver": "model_aligned",
+  "analyst_hint": "Get-childitem execution.",
+  "attack_stage": "Collection / Staging",
+  "elapsed_ms": 20.5
+}

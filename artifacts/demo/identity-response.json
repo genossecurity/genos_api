@@ -1,0 +1,104 @@
+{
+  "label": "Malicious",
+  "canonical_label": "Malicious",
+  "label_confidence": 79.21,
+  "class_probabilities": {
+    "Benign": 3.69,
+    "Suspicious": 17.09,
+    "Malicious": 79.21
+  },
+  "decision_margin": 62.12,
+  "reason": "Using raw model top class Malicious.",
+  "triggered_features": [
+    "has_simple_benign_check"
+  ],
+  "routing_policy": "model_top_class",
+  "should_run_specialist": true,
+  "gatekeeper": {
+    "decision_mode": "model_top_class",
+    "label_names": [
+      "Benign",
+      "Malicious",
+      "Context_Dependent"
+    ],
+    "model_top_internal_label": "Malicious",
+    "model_top_label": "Malicious",
+    "model_top_public_label": "Malicious",
+    "model_top_confidence": 79.21,
+    "model_second_internal_label": "Context_Dependent",
+    "model_second_label": "Suspicious",
+    "model_second_public_label": "Suspicious",
+    "model_second_confidence": 17.09,
+    "model_view": "deobfuscated",
+    "metadata_path": "/home/sam/genos/genos_api/config/gatekeeper_meta.json",
+    "thresholds": {
+      "benign_conf_threshold": 0.52,
+      "suspicious_conf_threshold": 0.55,
+      "malicious_conf_threshold": 0.78,
+      "low_margin_threshold": 0.12,
+      "high_risk_override_enabled": true,
+      "suspicious_fallback_enabled": true
+    },
+    "threshold_source": null
+  },
+  "behavior": {
+    "stage": "Discovery / Recon",
+    "stage_confidence": 97.25,
+    "action_tags": [],
+    "model_type": "behavior_encoder",
+    "input_text": "RAW: whoami /all && net localgroup administrators\nRESIDUAL: IDENTITY_QUERY CHAINED | whoami /all && net localgroup administrators\nFEATURES: ENUM_IDENTITY RULE:account_discovery"
+  },
+  "label_probabilities": {
+    "benign": 3.69,
+    "malicious": 79.21,
+    "suspicious": 17.09
+  },
+  "MITRE_codes": [],
+  "evidence": {
+    "platform": "linux",
+    "executable": "whoami",
+    "subcommand": null,
+    "interpreter": null,
+    "high_signal_flags": [],
+    "file_paths": [],
+    "registry_paths": [],
+    "local_targets": [],
+    "remote_targets": [],
+    "urls": [],
+    "domains": [],
+    "ips": [],
+    "ports": [],
+    "has_pipe": false,
+    "has_redirect": false,
+    "has_chain": true,
+    "inline_code": false,
+    "uses_encoded_payload": false,
+    "uses_obfuscation": true,
+    "obfuscation_markers": [
+      "base64"
+    ],
+    "deobfuscated_command": null,
+    "lolbin_matches": [],
+    "uses_signed_proxy_binary": false,
+    "semantic_features": [
+      "enumerates_identity"
+    ],
+    "rule_strength": "weak",
+    "fired_rules": [
+      "discovery"
+    ],
+    "evidence_summary": "Whoami account enumeration.",
+    "primary_artifact_type": null,
+    "execution_style": null,
+    "triggered_features": [
+      "has_simple_benign_check"
+    ],
+    "routing_reason": "Using raw model top class Malicious.",
+    "routing_policy": "model_top_class"
+  },
+  "confidence_driver": "model_aligned",
+  "analyst_hint": "Whoami account enumeration.",
+  "deobfuscated_cmd": "whoami /all && net localgroup administrators",
+  "attack_stage": "Discovery / Recon",
+  "elapsed_ms": 14.0
+}

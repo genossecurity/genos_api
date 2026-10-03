@@ -5,6 +5,7 @@ import math
 import os
 import re
 
+import joblib
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -25,7 +26,6 @@ benign_conf_threshold = float(os.getenv("GENOS_BENIGN_CONF_THRESHOLD", "0.52"))
 suspicious_conf_threshold = float(os.getenv("GENOS_SUSPICIOUS_CONF_THRESHOLD", "0.55"))
 malicious_conf_threshold = float(os.getenv("GENOS_MALICIOUS_CONF_THRESHOLD", "0.78"))
 low_margin_threshold = float(os.getenv("GENOS_LOW_MARGIN_THRESHOLD", "0.12"))
-specialist_suspicious_conf_threshold = float(os.getenv("GENOS_SPECIALIST_SUSPICIOUS_CONF_THRESHOLD", "0.63"))
 high_risk_override_enabled = _env_flag("GENOS_HIGH_RISK_OVERRIDE_ENABLED", True)
 suspicious_fallback_enabled = _env_flag("GENOS_SUSPICIOUS_FALLBACK_ENABLED", True)
 
@@ -41,7 +41,6 @@ try:
     from parser import parse_command as _parse_command
     from semantic_features import build_semantic_features as _build_semantic_features
     from rule_engine import build_rule_result as _build_rule_result
-    from candidate_mask import build_prior_vector as _build_prior_vector
     from build_residual_dataset import build_residual as _build_residual, build_feature_tags as _build_feature_tags
     _RESIDUAL_PIPELINE_AVAILABLE = True
 except ImportError:
@@ -160,37 +159,6 @@ class BehaviorEncoderModel(nn.Module):
 
 
 class GenosEngine:
-    _TECHNIQUE_REASON_HINTS = {
-        "T1490": [
-            "Deletes shadow copies or backup artifacts",
-            "Targets recovery paths or system restore mechanisms",
-        ],
-        "T1486": [
-            "Shows impact-oriented destructive or recovery-inhibiting behavior",
-        ],
-        "T1140": [
-            "Decodes or unwraps embedded payload content",
-        ],
-        "T1027": [
-            "Uses encoded or obfuscated command content",
-        ],
-        "T1053": [
-            "Creates or updates scheduled task execution",
-        ],
-        "T1547": [
-            "Modifies autorun locations for persistence",
-        ],
-        "T1083": [
-            "Enumerates files or directories on the local system",
-        ],
-        "T1018": [
-            "Performs local network discovery activity",
-        ],
-        "T1087": [
-            "Enumerates local or domain account information",
-        ],
-    }
-
     _PUBLIC_LABEL_MAP = {
         "Benign": "Benign",
         "Malicious": "Malicious",
@@ -443,63 +411,6 @@ class GenosEngine:
         r"(?:/etc/shadow\b|mimikatz|sekurlsa|hashdump|lsass|sam hive|unshadow\b|john\b.*rockyou|secretsdump)",
         re.I,
     )
-    # Commands that are risky/bad-practice but NOT definitively malicious.
-    # If the model says Malicious, cap them at Suspicious instead.
-    _MALICIOUS_CAP_TO_SUSPICIOUS_RE = re.compile(
-        r"(?:"
-        # chmod with broad perms (777, 666, etc.) but NOT SUID/SGID (4xxx, 2xxx, u+s, g+s)
-        r"^\s*chmod\s+(?!(?:u\+s|g\+s|[42][0-7]{3})\b)[0-7]{3,4}\s+"
-        r"|"
-        # crontab -l (listing, not modifying)
-        r"^\s*crontab\s+-l\b"
-        r"|"
-        # ls / cat on cron directories (inspection, not persistence)
-        r"^\s*(?:ls|cat|find|stat|file|head|tail|less|more)\b.*\b/etc/cron"
-        r"|"
-        # Data movement without definitive attack context — scp/rsync of non-shadow files
-        r"^\s*(?:scp|rsync)\b.*(?:/etc/passwd|/var/log/).*@"
-        r"|"
-        # curl POST with file data (exfil-like but context-dependent)
-        r"^\s*curl\b.*(?:-X\s+POST|--request\s+POST)\b.*-d\s+@"
-        r"|"
-        # tar/archive of user SSH dirs (suspicious but not definitively malicious)
-        r"^\s*tar\b.*(?:/home/[^\s]+/\.ssh|\.ssh/)"
-        r"|"
-        # Download from internal IPs (tool transfer, context-dependent)
-        r"^\s*(?:curl|wget)\b.*https?://(?:10\.|172\.(?:1[6-9]|2\d|3[01])\.|192\.168\.)\S+.*(?:-o|-O)\s"
-        r"|"
-        # getfacl on sensitive files (enumeration, not exploitation)
-        r"^\s*getfacl\b"
-        r"|"
-        # tcpdump writing to file — monitoring, not definitively malicious without exfil
-        r"^\s*tcpdump\b.*\s-w\s"
-        r"|"
-        # Tunneling standalone — suspicious dual-use, not definitively malicious
-        r"^\s*chisel\s+client\b"
-        r"|"
-        r"\bssh\b.*\s-[DLR]\s.*-[fNq]"
-        r"|"
-        r"\bssh\b.*-[fNq].*\s-[DLR]\s"
-        r"|"
-        # SUID hunting / sensitive file enumeration — recon, not exploitation
-        r"^\s*find\s+/\s+.*-perm\s+[-+]4000"
-        r"|"
-        r"^\s*find\b.*-name\s+[\"']?(?:id_rsa|id_ed25519|authorized_keys|id_dsa)[\"']?"
-        r"|"
-        # Reading sudoers config (enumeration, not modification)
-        r"^\s*cat\s+/etc/sudoers\b"
-        r"|"
-        # Local staging of sensitive directories (no pipe to exfil)
-        r"^\s*tar\b.*(?:czf|cz)\b.*(?:/etc/kubernetes|/etc/pam\.d|/opt/secrets|/var/lib/kubelet|/var/lib/postgresql)"
-        r"|"
-        # rsync/scp of sensitive dirs to remote (context-dependent staging)
-        r"^\s*(?:scp|rsync)\b.*(?:/etc/kubernetes|/etc/pam\.d|/opt/secrets|/var/lib/kubelet|/var/lib/postgresql|/etc/ssh).*@"
-        r"|"
-        # Container archive of config dirs (context-dependent)
-        r"^\s*(?:docker|kubectl)\s+exec\b.*\btar\b"
-        r")",
-        re.I,
-    )
     _SIMPLE_OPERATIONAL_BENIGN_PATTERNS = (
         re.compile(r"^\s*(?:pwd|date|uptime|whoami|id(?:\s|$)|hostname(?:\s|$)|uname(?:\s|$)|echo\b|printf\b|true\b|false\b|alias\b)", re.I),
         re.compile(r"^\s*(?:df|free|lsblk|blkid|findmnt)\b", re.I),
@@ -573,7 +484,7 @@ class GenosEngine:
         for candidate in meta_candidates:
             resolved = _resolve_asset_path(candidate, ["config/gatekeeper_meta.json"])
             if os.path.exists(resolved):
-                self.gatekeeper_meta = self._load_gatekeeper_meta(resolved)
+                self.gatekeeper_meta = self._load_optional_json_dict(resolved)
                 self.gatekeeper_meta_path = resolved
                 gate_labels = self._load_gatekeeper_labels(self.gatekeeper_meta)
                 if gate_labels:
@@ -592,10 +503,7 @@ class GenosEngine:
         # separately; runtime loads it when present and otherwise falls back
         # to deterministic behavior staging.
         self.behavior_model_path = _resolve_behavior_model_path(t2_path)
-        self.behavior_meta_path = None
         self.behavior_model = None
-        self.behavior_stage_map = {}
-        self.behavior_action_map = {}
         self.behavior_stage_labels = {}
         self.behavior_action_labels = {}
         self.behavior_action_threshold = float(os.getenv("GENOS_BEHAVIOR_ACTION_THRESHOLD", "0.5"))
@@ -606,6 +514,16 @@ class GenosEngine:
         self.prior_alphas = prior_alphas or {"strong": 2.0, "weak": 1.5, "none": 0.0}
         # Forward map {mitre_id: int_index} used by build_prior_vector
         self._specialist_map_fwd = {mitre: idx for idx, mitre in self.s_map.items()}
+        # Behavior staging and MITRE ranking are separate models. The saved
+        # TF-IDF classifier ranks techniques for every command, including benign.
+        mitre_model_path = _resolve_asset_path(os.getenv(
+            "GENOS_MITRE_MODEL_PATH", "models/specialist_tfidf_char_rf.pkl"
+        ))
+        self.t2 = joblib.load(mitre_model_path)
+        self._tfidf_idx_to_label = dict(self.s_map)
+        unknown_classes = {int(index) for index in self.t2.classes_} - self.s_map.keys()
+        if unknown_classes:
+            raise ValueError(f"MITRE classifier has unmapped class indices: {sorted(unknown_classes)}")
 
     def _load_optional_json_dict(self, json_path: str) -> dict:
         try:
@@ -616,9 +534,6 @@ class GenosEngine:
         except Exception:
             pass
         return {}
-
-    def _load_gatekeeper_meta(self, json_path: str) -> dict:
-        return self._load_optional_json_dict(json_path)
 
     def _load_gatekeeper_labels(self, meta: dict) -> list[str] | None:
         label_names = meta.get("label_names")
@@ -686,9 +601,6 @@ class GenosEngine:
             return
 
         self.behavior_model = model
-        self.behavior_meta_path = meta_candidate if os.path.exists(meta_candidate) else None
-        self.behavior_stage_map = stage_map
-        self.behavior_action_map = action_map
         self.behavior_stage_labels = {index: label for label, index in stage_map.items()}
         self.behavior_action_labels = {index: label for label, index in action_map.items()}
 
@@ -834,7 +746,7 @@ class GenosEngine:
 
         # ── Evidence summary sentence ─────────────────────────────────
         evidence_summary = self._generate_evidence_summary(
-            exe, platform, sem, rule_strength, fired_rules
+            exe, sem, fired_rules
         )
 
         # ── Derived: primary_artifact_type ────────────────────────────
@@ -911,9 +823,7 @@ class GenosEngine:
             "execution_style":       execution_style,
         }
 
-    def _generate_evidence_summary(self, exe: str, platform: str,
-                                   sem: dict, rule_strength: str,
-                                   fired_rules: list) -> str:
+    def _generate_evidence_summary(self, exe: str, sem: dict, fired_rules: list) -> str:
         """Generate a compact analyst-facing evidence sentence."""
         parts = []
         if exe:
@@ -946,211 +856,6 @@ class GenosEngine:
         summary = (exe.capitalize() + " " if exe else "") + ", ".join(parts[1:] or ["execution"]) + "."
         return summary.strip()
 
-    def _build_mapping_reasons(self, top_code: str | None, evidence: dict) -> list[str]:
-        reasons = []
-        exe = evidence.get("executable")
-        semantic = set(evidence.get("semantic_features") or [])
-        fired_rules = list(evidence.get("fired_rules") or [])
-
-        if top_code:
-            reasons.extend(self._TECHNIQUE_REASON_HINTS.get(top_code, []))
-
-        if exe and evidence.get("uses_signed_proxy_binary"):
-            reasons.append(f"Uses {exe} as a signed proxy binary")
-        if "deletes_shadow_copies" in semantic:
-            reasons.append("Deletes shadow copies or backup restore points")
-        if "modifies_registry_autorun" in semantic:
-            reasons.append("Modifies registry autorun paths for persistence")
-        if "creates_scheduled_task" in semantic:
-            reasons.append("Creates scheduled execution for follow-on activity")
-        if "downloads_remote_resource" in semantic:
-            reasons.append("Retrieves content from a remote location")
-        if "remote_execution_or_session" in semantic:
-            reasons.append("Establishes or uses remote execution paths")
-        if evidence.get("uses_encoded_payload"):
-            reasons.append("Carries encoded command content")
-        if evidence.get("uses_obfuscation"):
-            reasons.append("Includes obfuscation markers consistent with evasion")
-        if evidence.get("high_signal_flags"):
-            flag_sample = ", ".join(evidence["high_signal_flags"][:2])
-            reasons.append(f"Invokes high-signal flags such as {flag_sample}")
-        if fired_rules:
-            reasons.append(f"Triggers rule logic for {fired_rules[0]}")
-
-        deduped = []
-        seen = set()
-        for reason in reasons:
-            if reason not in seen:
-                deduped.append(reason)
-                seen.add(reason)
-            if len(deduped) == 3:
-                break
-        return deduped
-
-    def _build_why_mapped(self, top_code: str | None, mapping_reasons: list[str]) -> str | None:
-        if not mapping_reasons:
-            return None
-        prefix = f"Mapped to {top_code} because " if top_code else "Mapped based on "
-        if len(mapping_reasons) == 1:
-            return prefix + mapping_reasons[0].lower() + "."
-        return prefix + mapping_reasons[0].lower() + " and " + mapping_reasons[1].lower() + "."
-
-    def _build_ioc_summary(self, evidence: dict) -> dict:
-        file_paths = list(evidence.get("file_paths") or [])
-        notable_files = [
-            path for path in file_paths
-            if re.search(r"\.(?:exe|dll|ps1|bat|cmd|sh|so|bin|zip|7z|tar|gz|jar)$", path, re.I)
-        ]
-        if not notable_files:
-            notable_files = file_paths[:3]
-
-        return {
-            "domains": list(evidence.get("domains") or [])[:5],
-            "ips": list(evidence.get("ips") or [])[:5],
-            "urls": list(evidence.get("urls") or [])[:5],
-            "notable_files": notable_files[:5],
-            "registry_paths": list(evidence.get("registry_paths") or [])[:5],
-        }
-
-    def _derive_confidence_driver(self, rule_result: dict | None) -> str:
-        if not rule_result:
-            return "Model-led"
-        strength = rule_result.get("rule_strength", "none")
-        if strength == "strong":
-            return "Rule-reinforced"
-        if strength == "weak":
-            return "Rule-supported"
-        return "Model-led"
-
-    def _build_analyst_hint(self, top_code: str | None, evidence: dict) -> str | None:
-        semantic = set(evidence.get("semantic_features") or [])
-        if "deletes_shadow_copies" in semantic or top_code in {"T1490", "T1486"}:
-            return "This behavior is commonly associated with recovery inhibition and destructive impact activity."
-        if "reads_credential_store" in semantic:
-            return "This pattern is often seen in credential access workflows."
-        if "modifies_registry_autorun" in semantic or "creates_scheduled_task" in semantic:
-            return "This pattern is often seen in persistence setup."
-        if "enumerates_identity" in semantic or top_code == "T1087":
-            return "This command appears consistent with account discovery activity."
-        if "enumerates_network_config" in semantic or top_code == "T1018":
-            return "This command appears consistent with host or network discovery activity."
-        if "downloads_remote_resource" in semantic and "executes_inline_code" in semantic:
-            return "This pattern is commonly used to fetch and immediately execute a payload."
-        if "remote_execution_or_session" in semantic:
-            return "This pattern is often seen in remote execution or lateral movement chains."
-        if evidence.get("uses_encoded_payload") or evidence.get("uses_obfuscation"):
-            return "This command uses concealment patterns that are commonly associated with evasive execution."
-        return None
-
-    # ── MITRE technique → ATT&CK tactic (attack stage) ──────────────────
-    _TECHNIQUE_TO_TACTIC = {
-        "T1001": "Command and Control", "T1003": "Credential Access",
-        "T1005": "Collection", "T1006": "Defense Evasion",
-        "T1007": "Discovery", "T1010": "Discovery",
-        "T1012": "Discovery", "T1014": "Defense Evasion",
-        "T1016": "Discovery", "T1018": "Discovery",
-        "T1020": "Exfiltration", "T1021": "Lateral Movement",
-        "T1025": "Collection", "T1027": "Defense Evasion",
-        "T1030": "Exfiltration", "T1033": "Discovery",
-        "T1036": "Defense Evasion", "T1037": "Persistence",
-        "T1039": "Collection", "T1040": "Credential Access",
-        "T1041": "Exfiltration", "T1046": "Discovery",
-        "T1047": "Execution", "T1048": "Exfiltration",
-        "T1049": "Discovery", "T1053": "Execution",
-        "T1055": "Defense Evasion", "T1056": "Collection",
-        "T1057": "Discovery", "T1059": "Execution",
-        "T1069": "Discovery", "T1070": "Defense Evasion",
-        "T1071": "Command and Control", "T1072": "Lateral Movement",
-        "T1074": "Collection", "T1078": "Persistence",
-        "T1082": "Discovery", "T1083": "Discovery",
-        "T1087": "Discovery", "T1090": "Command and Control",
-        "T1091": "Lateral Movement", "T1095": "Command and Control",
-        "T1098": "Persistence", "T1105": "Command and Control",
-        "T1106": "Execution", "T1110": "Credential Access",
-        "T1112": "Defense Evasion", "T1113": "Collection",
-        "T1114": "Collection", "T1115": "Collection",
-        "T1119": "Collection", "T1120": "Discovery",
-        "T1123": "Collection", "T1124": "Discovery",
-        "T1125": "Collection", "T1127": "Defense Evasion",
-        "T1129": "Execution", "T1132": "Command and Control",
-        "T1133": "Persistence", "T1134": "Defense Evasion",
-        "T1135": "Discovery", "T1136": "Persistence",
-        "T1137": "Persistence", "T1140": "Defense Evasion",
-        "T1176": "Persistence", "T1187": "Credential Access",
-        "T1195": "Initial Access", "T1197": "Defense Evasion",
-        "T1201": "Discovery", "T1202": "Defense Evasion",
-        "T1204": "Execution", "T1207": "Defense Evasion",
-        "T1216": "Defense Evasion", "T1217": "Discovery",
-        "T1218": "Defense Evasion", "T1219": "Command and Control",
-        "T1220": "Defense Evasion", "T1221": "Execution",
-        "T1222": "Defense Evasion", "T1482": "Discovery",
-        "T1484": "Defense Evasion", "T1485": "Impact",
-        "T1486": "Impact", "T1489": "Impact",
-        "T1490": "Impact", "T1491": "Impact",
-        "T1496": "Impact", "T1497": "Defense Evasion",
-        "T1505": "Persistence", "T1518": "Discovery",
-        "T1526": "Discovery", "T1528": "Credential Access",
-        "T1529": "Impact", "T1530": "Collection",
-        "T1531": "Impact", "T1539": "Credential Access",
-        "T1542": "Persistence", "T1543": "Persistence",
-        "T1546": "Persistence", "T1547": "Persistence",
-        "T1548": "Privilege Escalation", "T1550": "Lateral Movement",
-        "T1552": "Credential Access", "T1553": "Defense Evasion",
-        "T1555": "Credential Access", "T1556": "Persistence",
-        "T1557": "Credential Access", "T1558": "Credential Access",
-        "T1559": "Execution", "T1560": "Collection",
-        "T1562": "Defense Evasion", "T1563": "Lateral Movement",
-        "T1564": "Defense Evasion", "T1566": "Initial Access",
-        "T1567": "Exfiltration", "T1569": "Execution",
-        "T1570": "Lateral Movement", "T1571": "Command and Control",
-        "T1572": "Command and Control", "T1573": "Command and Control",
-        "T1574": "Persistence", "T1578": "Defense Evasion",
-        "T1580": "Discovery", "T1592": "Reconnaissance",
-        "T1595": "Reconnaissance", "T1606": "Credential Access",
-        "T1609": "Execution", "T1610": "Execution",
-        "T1611": "Privilege Escalation", "T1612": "Defense Evasion",
-        "T1613": "Discovery", "T1614": "Discovery",
-        "T1615": "Discovery", "T1619": "Discovery",
-        "T1620": "Defense Evasion", "T1622": "Defense Evasion",
-        "T1648": "Execution", "T1649": "Credential Access",
-        "T1651": "Execution", "T1652": "Discovery",
-        "T1654": "Discovery",
-    }
-
-    # Tactic severity ranking
-    _TACTIC_SEVERITY = {
-        "Reconnaissance": "Low",
-        "Initial Access": "High",
-        "Execution": "Medium",
-        "Persistence": "Medium",
-        "Privilege Escalation": "High",
-        "Defense Evasion": "Medium",
-        "Credential Access": "High",
-        "Discovery": "Low",
-        "Lateral Movement": "High",
-        "Collection": "Medium",
-        "Command and Control": "High",
-        "Exfiltration": "High",
-        "Impact": "Critical",
-    }
-
-    _SEVERITY_RANK = {"Low": 0, "Medium": 1, "High": 2, "Critical": 3}
-
-    _TACTIC_TO_BEHAVIOR_STAGE = {
-        "Reconnaissance": "Discovery / Recon",
-        "Discovery": "Discovery / Recon",
-        "Execution": "Execution",
-        "Persistence": "Persistence",
-        "Privilege Escalation": "Privilege Escalation",
-        "Defense Evasion": "Defense Evasion",
-        "Credential Access": "Credential Access",
-        "Collection": "Collection / Staging",
-        "Command and Control": "C2 / Remote Access",
-        "Lateral Movement": "Lateral Movement",
-        "Exfiltration": "Exfiltration",
-        "Impact": "Impact",
-        "Initial Access": "Context Required",
-    }
 
     _SEMANTIC_TO_ACTION_TAG = {
         "downloads_remote_resource": "download_remote_resource",
@@ -1181,42 +886,6 @@ class GenosEngine:
         "obfuscated_files_or_information": "use_obfuscation",
     }
 
-    def _derive_attack_stage(self, top_code: str | None) -> str | None:
-        if not top_code:
-            return None
-        return self._TECHNIQUE_TO_TACTIC.get(top_code)
-
-    def _derive_severity(self, top_code: str | None, label_conf: float,
-                         evidence: dict | None) -> str:
-        tactic = self._TECHNIQUE_TO_TACTIC.get(top_code or "")
-        base_severity = self._TACTIC_SEVERITY.get(tactic, "Medium")
-        rank = self._SEVERITY_RANK[base_severity]
-
-        # Promote severity if confidence is very high and evidence is strong
-        if label_conf >= 95.0 and evidence:
-            strength = evidence.get("rule_strength", "none")
-            if strength == "strong" and rank < 3:
-                rank = min(rank + 1, 3)
-
-        # Promote if obfuscation detected
-        if evidence and (evidence.get("uses_obfuscation") or evidence.get("uses_encoded_payload")):
-            if rank < 2:
-                rank = min(rank + 1, 3)
-
-        return {0: "Low", 1: "Medium", 2: "High", 3: "Critical"}[rank]
-
-    def _build_response_enrichment(self, top_code: str | None, evidence: dict, rule_result: dict | None,
-                                   label_conf: float = 0.0) -> dict:
-        mapping_reasons = self._build_mapping_reasons(top_code, evidence)
-        return {
-            "mapping_reasons": mapping_reasons,
-            "why_mapped": self._build_why_mapped(top_code, mapping_reasons),
-            "ioc_summary": self._build_ioc_summary(evidence),
-            "confidence_driver": self._derive_confidence_driver(rule_result),
-            "analyst_hint": self._build_analyst_hint(top_code, evidence),
-            "attack_stage": self._derive_attack_stage(top_code),
-            "severity": self._derive_severity(top_code, label_conf, evidence),
-        }
 
     def _build_behavior_input(self, cmd: str):
         """Build the canonical behavior-model input text and return (text, rule_result)."""
@@ -1233,6 +902,35 @@ class GenosEngine:
     def _build_variant_a_text(self, cmd: str):
         """Backward-compatible alias for the previous specialist input builder."""
         return self._build_behavior_input(cmd)
+
+    def _collect_indicator_evidence(self, raw_cmd: str, decoded_cmd: str, was_obfuscated: bool) -> dict:
+        """Extract observable artifacts independently of model routing."""
+        parsed = _parse_command(raw_cmd)
+        sem = _build_semantic_features(parsed)
+        if decoded_cmd != raw_cmd:
+            decoded = _parse_command(decoded_cmd)
+            decoded_sem = _build_semantic_features(decoded)
+            for key, value in decoded_sem.items():
+                if value and not sem.get(key):
+                    sem[key] = value
+            for key in ("file_paths", "registry_paths", "urls", "domains", "ips", "ports",
+                        "lolbin_matches", "local_targets", "remote_targets"):
+                parsed[key] = list(dict.fromkeys([*(parsed.get(key) or []), *(decoded.get(key) or [])]))
+        rules = _build_rule_result(parsed, sem)
+        return self._build_evidence(parsed, sem, rules, was_obfuscated=was_obfuscated,
+                                    deobfuscated_cmd=decoded_cmd if was_obfuscated else None)
+
+    def _predict_mitre_codes(self, raw_cmd: str, decoded_cmd: str | None = None) -> list[dict]:
+        """Rank the top five model predictions across raw and decoded views."""
+        commands = list(dict.fromkeys(cmd for cmd in (raw_cmd, decoded_cmd) if cmd is not None))
+        texts = [self._build_variant_a_text(cmd)[0] if self.use_residual_format else cmd for cmd in commands]
+        probabilities = self.t2.predict_proba(texts)
+        ranked = [
+            (self._tfidf_idx_to_label[int(index)], max(float(row[column]) for row in probabilities))
+            for column, index in enumerate(self.t2.classes_)
+        ]
+        ranked.sort(key=lambda item: (-item[1], item[0]))
+        return [{"code": code, "confidence": round(probability * 100, 2)} for code, probability in ranked[:5]]
 
     def _extract_behavior_action_tags(self, sem: dict, rules: dict, features: dict) -> list[str]:
         tags = {
@@ -1734,19 +1432,9 @@ class GenosEngine:
         }
         return features
 
-    def _label_threshold(self, public_label: str) -> float:
-        if public_label == "Benign":
-            return benign_conf_threshold
-        if public_label == "Malicious":
-            return malicious_conf_threshold
-        return suspicious_conf_threshold
 
     def _triggered_features(self, features: dict) -> list[str]:
         return sorted(name for name, value in features.items() if value)
-
-    _CONFIDENCE_DRIVER_MAP = {
-        "model_top_class": "model_aligned",
-    }
 
     def _build_route_result(
         self,
@@ -1759,12 +1447,11 @@ class GenosEngine:
         class_probs: dict | None = None,
     ) -> dict:
         model_confidence = class_probs[label] if class_probs is not None else label_confidence
-        confidence_driver = self._CONFIDENCE_DRIVER_MAP.get(policy, "model_aligned")
         return {
             "label": self._INTERNAL_LABEL_MAP[label],
             "label_confidence": label_confidence,
             "model_confidence": model_confidence,
-            "confidence_driver": confidence_driver,
+            "confidence_driver": "model_aligned",
             "reason": reason,
             "routing_policy": policy,
             "triggered_features": self._triggered_features(features),
@@ -1795,32 +1482,24 @@ class GenosEngine:
         self,
         final_label: str,
         class_probs: dict,
-        high_risk: bool,
-        features: dict,
         suspicious_signals: list[str],
     ) -> bool:
         # True cascade: always run for non-benign verdicts.
         if final_label in ("Malicious", "Suspicious"):
             return True
-        # High-risk feature forced routing — always run.
-        if high_risk:
-            return True
-        # Low confidence margin — candidate MITRE mapping useful even for benign.
+        # Low confidence margin — behavior analysis useful even for benign.
         sorted_probs = sorted(class_probs.values(), reverse=True)
         margin = sorted_probs[0] - sorted_probs[1] if len(sorted_probs) >= 2 else 1.0
         if margin < low_margin_threshold:
             return True
-        # Suspicious signals despite benign verdict — surface candidate mapping.
+        # Suspicious signals despite benign verdict — surface behavior context.
         if suspicious_signals:
             return True
         return False
 
-    def _route_gatekeeper(self, gate: dict, features: dict, raw_cmd: str, deobfuscated_cmd: str | None = None) -> dict:
+    def _route_gatekeeper(self, gate: dict, features: dict) -> dict:
         class_probs = gate["class_probabilities"]
         top_label = gate["public_label"]
-        top_conf = gate["label_conf"]
-        margin = gate["decision_margin"]
-        weak_prediction = top_conf < self._label_threshold(top_label) or margin < low_margin_threshold
         suspicious_signals = self._suspicious_signals(features)
         final_label = top_label
         reason = f"Using raw model top class {top_label}."
@@ -1829,8 +1508,6 @@ class GenosEngine:
         specialist = self._should_run_specialist(
             final_label=final_label,
             class_probs=class_probs,
-            high_risk=False,
-            features=features,
             suspicious_signals=suspicious_signals,
         )
 
@@ -1907,12 +1584,7 @@ class GenosEngine:
                     raw_cmd.strip(),
                     current_cmd if was_obfuscated else None,
                 )
-                routed = self._route_gatekeeper(
-                    gate,
-                    routing_features,
-                    raw_cmd.strip(),
-                    current_cmd if was_obfuscated else None,
-                )
+                routed = self._route_gatekeeper(gate, routing_features)
 
                 raw_probabilities = {
                     "Benign": round(gate["class_probabilities"]["Benign"] * 100, 2),
@@ -1974,59 +1646,38 @@ class GenosEngine:
                 if public_label == "Suspicious":
                     response["action"] = "requires_context"
 
-                rule_result = None
+                response["MITRE_codes"] = self._predict_mitre_codes(
+                    raw_cmd.strip(), current_cmd if was_obfuscated and current_cmd != raw_cmd.strip() else None,
+                )
                 if routed["should_run_specialist"]:
                     specialist_cmd = current_cmd if was_obfuscated and current_cmd != raw_cmd.strip() else raw_cmd.strip()
-                    behavior, rule_result = self._predict_behavior(
+                    behavior, _ = self._predict_behavior(
                         specialist_cmd,
                         routed["label"],
                         routing_features,
                     )
                     response["behavior"] = behavior
                     response["attack_stage"] = behavior["stage"]
-                    response["MITRE_codes"] = []
 
                     if was_obfuscated and specialist_cmd != raw_cmd.strip():
                         response["decoded_payload"] = specialist_cmd
 
-                    if self.use_residual_format and rule_result is not None:
-                        try:
-                            _parsed_ev = _parse_command(raw_cmd.strip())
-                            _sem_ev    = _build_semantic_features(_parsed_ev)
-                            if was_obfuscated and current_cmd != raw_cmd.strip():
-                                try:
-                                    _parsed_deob = _parse_command(current_cmd)
-                                    _sem_deob    = _build_semantic_features(_parsed_deob)
-                                    for k, v in _sem_deob.items():
-                                        if v and not _sem_ev.get(k):
-                                            _sem_ev[k] = v
-                                    for list_key in ("file_paths", "registry_paths", "urls", "domains", "ips", "ports"):
-                                        raw_list = _parsed_ev.get(list_key) or []
-                                        deob_list = _parsed_deob.get(list_key) or []
-                                        if deob_list:
-                                            seen = set(str(x) for x in raw_list)
-                                            for item in deob_list:
-                                                if str(item) not in seen:
-                                                    raw_list.append(item)
-                                                    seen.add(str(item))
-                                            _parsed_ev[list_key] = raw_list
-                                except Exception:
-                                    pass
-                            response["evidence"] = self._build_evidence(
-                                _parsed_ev, _sem_ev, rule_result,
-                                was_obfuscated=was_obfuscated,
-                                deobfuscated_cmd=current_cmd if was_obfuscated else None,
-                            )
-                            response["evidence"].update({
-                                "triggered_features": routed["triggered_features"],
-                                "routing_reason": routed["reason"],
-                                "routing_policy": routed["routing_policy"],
-                            })
-                            response["analyst_hint"] = response["evidence"].get("evidence_summary")
-                        except Exception:
-                            pass
-                else:
-                    response["MITRE_codes"] = []
+                if _RESIDUAL_PIPELINE_AVAILABLE:
+                    evidence = self._collect_indicator_evidence(raw_cmd.strip(), current_cmd, was_obfuscated)
+                    evidence.update({
+                        "triggered_features": routed["triggered_features"],
+                        "routing_reason": routed["reason"],
+                        "routing_policy": routed["routing_policy"],
+                    })
+                    response["evidence"] = evidence
+                    response["analyst_hint"] = evidence.get("evidence_summary")
+                    response["ioc_summary"] = {
+                        "urls": evidence["urls"],
+                        "domains": evidence["domains"],
+                        "ips": evidence["ips"],
+                        "notable_files": evidence["file_paths"],
+                        "registry_paths": evidence["registry_paths"],
+                    }
 
         return response
 

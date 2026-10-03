@@ -6,6 +6,9 @@ import json
 import time
 import signal
 from datetime import datetime
+from threading import Lock
+
+import torch
 from flask import Flask, request, Response, jsonify, render_template, redirect, url_for
 from pymongo import MongoClient
 from dotenv import load_dotenv
@@ -53,6 +56,7 @@ engine.scan("warmup")
 app.logger.info("Genos engine ready.")
 
 _engine_ready = True
+_inference_lock = Lock()
 
 # -----------------------
 # Helper Functions
@@ -176,6 +180,53 @@ def _free_port(port, timeout=3.0):
             app.logger.warning("No permission to force-kill PID %s using port %s", pid, port)
 
 
+def _scan_with_gpu_memory(command):
+    """Measure this scan's PyTorch allocations, excluding the resident baseline.
+
+    CUDA peak counters belong to the process/device, so scans must not overlap
+    while resetting or reading them. Allocator-reserved memory includes cache;
+    it is reported separately from live tensor allocations.
+    """
+    with _inference_lock:
+        device = engine.device
+        memory = {
+            "status": "cpu" if device.type != "cuda" else "unavailable",
+            "device_name": None,
+            "baseline_allocated_bytes": None,
+            "peak_allocated_bytes": None,
+            "command_peak_bytes": None,
+            "peak_reserved_bytes": None,
+        }
+        baseline = None
+        if device.type == "cuda":
+            try:
+                torch.cuda.synchronize(device)
+                baseline = torch.cuda.memory_allocated(device)
+                torch.cuda.reset_peak_memory_stats(device)
+            except (RuntimeError, AssertionError):
+                baseline = None
+
+        result = engine.scan(command)
+
+        if baseline is not None:
+            try:
+                torch.cuda.synchronize(device)
+                peak = torch.cuda.max_memory_allocated(device)
+                reserved = torch.cuda.max_memory_reserved(device)
+                name = torch.cuda.get_device_name(device)
+                memory.update({
+                    "status": "measured",
+                    "device_name": name,
+                    "baseline_allocated_bytes": baseline,
+                    "peak_allocated_bytes": peak,
+                    "command_peak_bytes": max(0, peak - baseline),
+                    "peak_reserved_bytes": reserved,
+                })
+            except (RuntimeError, AssertionError):
+                pass
+        return result, memory
+
+
 def _run_inference(command, include_flags=None):
     """Run engine, normalize response, and apply include flags.
 
@@ -206,7 +257,7 @@ def _run_inference(command, include_flags=None):
 
     # --- Run Genos engine ---
     t_start = time.perf_counter()
-    raw_result = engine.scan(command)
+    raw_result, gpu_memory = _scan_with_gpu_memory(command)
     elapsed_ms = round((time.perf_counter() - t_start) * 1000, 1)
 
     # Support both legacy and updated engine payload keys.
@@ -301,6 +352,7 @@ def _run_inference(command, include_flags=None):
         if "severity" in raw_result:
             result["severity"] = raw_result["severity"]
         result["elapsed_ms"] = elapsed_ms
+        result["gpu_memory"] = gpu_memory
 
     return result
 
