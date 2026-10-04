@@ -98,9 +98,9 @@ const percent = value => {
 function renderProbabilities(d = {}) {
   const source = d.label_probabilities || d.class_probabilities || {};
   const normalized = Object.fromEntries(Object.entries(source).map(([k,v]) => [k.toLowerCase(),v]));
-  $('probabilities').innerHTML = ['Benign','Suspicious','Malicious'].map(label => {
-    const p = percent(normalized[label.toLowerCase()] ?? (label === 'Suspicious' ? normalized.context_dependent : null));
-    return `<div class="prob-row ${label.toLowerCase()}"><span>${label}</span><div class="meter" aria-hidden="true"><span data-probability="${p ?? 0}" style="width:${p ?? 0}%"></span></div><span class="prob-value">${p == null ? '—' : p.toFixed(1)+'%'}</span></div>`;
+  $('probabilities').innerHTML = ['Benign','Context_Dependent','Malicious'].map(label => {
+    const p = percent(normalized[label.toLowerCase()] ?? (label === 'Context_Dependent' ? normalized.suspicious : null));
+    return `<div class="prob-row ${label === 'Context_Dependent' ? 'suspicious' : label.toLowerCase()}"><span>${label.replace('_',' ')}</span><div class="meter" aria-hidden="true"><span data-probability="${p ?? 0}" style="width:${p ?? 0}%"></span></div><span class="prob-value">${p == null ? '—' : p.toFixed(1)+'%'}</span></div>`;
   }).join('');
 }
 function decodeBase64(value) {
@@ -182,7 +182,7 @@ function renderMitre(d) {
     const name = t.name || t.technique_name || techniqueNames[id];
     const valid = /^T\d{4}(?:\.\d{3})?$/.test(id);
     const confidence = percent(t.confidence);
-    const content = `<code>${esc(id || 'No ID')}</code><span class="technique-name">${esc(name || 'ATT&CK technique (name unavailable)')}</span>${confidence != null ? `<span class="technique-score" style="--score-strength:${techniques[0]?.confidence > 0 ? Math.max(.62, Number(t.confidence) / Number(techniques[0].confidence)) : 1}" aria-label="${confidence.toFixed(1)} percent confidence">${confidence.toFixed(1)}%</span>` : ''}`;
+    const content = `<code>${esc(id || 'No ID')}</code><span class="technique-name">${esc(name || 'ATT&CK technique (name unavailable)')}</span>${confidence != null ? `<span class="technique-score" style="--score-strength:${techniques[0]?.confidence > 0 ? Math.max(.62, Number(t.confidence) / Number(techniques[0].confidence)) : 1}" aria-label="${confidence.toFixed(1)} percent model score">${confidence.toFixed(1)}%</span>` : ''}`;
     return valid ? `<a class="technique" href="https://attack.mitre.org/techniques/${id.replace('.','/')}/" target="_blank" rel="noopener noreferrer">${content}<span aria-label="opens in new tab">↗</span></a>` : `<span class="technique">${content}</span>`;
   }).join('') : '<p class="muted">None mapped</p>';
 }
@@ -196,15 +196,15 @@ function renderIndicators(d = {}, rows = {}) {
   $('indicators').innerHTML = Object.entries(groups).map(([name,values]) => `<article class="indicator-card indicator-${name.toLowerCase()}${values.length ? ' active' : ''}"><h3>${name}${values.length ? `<span class="count-badge" aria-label="${values.length} detected">${values.length}</span>` : ''}</h3>${values.length ? '<div class="tokens">'+chips(values,'artifact')+'</div>' : '<p>None detected</p>'}</article>`).join('');
 }
 function renderAdvanced(d = {}) {
-  const beh = d.behavior || {}, gk = d.gatekeeper || {}, thresholds = gk.thresholds || {};
+  const beh = d.behavior || {}, gk = d.gatekeeper || {};
   const fields = {
     model_type:beh.model_type ?? d.model_type,
     behavior_encoder:d.behavior_encoder ?? (beh.model_type === 'behavior_encoder' ? beh.model_type : null),
     routing_policy:d.routing_policy, decision_margin:d.decision_margin,
-    model_view:gk.model_view, thresholds,
-    'high-risk override':thresholds.high_risk_override_enabled,
-    'suspicious fallback':thresholds.suspicious_fallback_enabled,
-    'runner-up confidence':gk.model_second_confidence != null ? gk.model_second_confidence+'%' : null,
+    model_view:gk.model_view, view_policy:gk.view_policy,
+    score_type:d.score_type, calibration:d.calibration,
+    'behavior fallback reason':d.provenance?.behavior_fallback_reason,
+    'runner-up score':gk.model_second_confidence != null ? gk.model_second_confidence+'%' : null,
     'fired-rule strength':d.evidence?.rule_strength
   };
   $('modelDetails').innerHTML = Object.entries(fields).map(([key,value]) => `<div class="model-row"><dt>${esc(key)}</dt><dd>${esc(value == null || typeof value === 'object' && !Object.keys(value).length ? 'Not returned' : typeof value === 'object' ? JSON.stringify(value) : String(value))}</dd></div>`).join('');
@@ -256,11 +256,11 @@ function renderResults(d, original) {
   $('plainCommand').hidden = !!$('decodedCommand');
   $('commandText').textContent = command;
   markCommand($('decodedCommand') || $('commandText'),rows);
-  $('verdictSection').className = 'verdict-section '+String(d.label).toLowerCase();
-  $('verdictLabel').textContent = String(d.label).toUpperCase();
+  $('verdictSection').className = 'verdict-section '+(d.label === 'Context_Dependent' ? 'suspicious' : String(d.label).toLowerCase());
+  $('verdictLabel').textContent = String(d.label).replace('_',' ').toUpperCase();
   const conf = percent(d.label_confidence);
   $('confidenceValue').textContent = conf == null ? '—' : conf.toFixed(1)+'%';
-  $('confidenceCaption').textContent = 'confidence';
+  $('confidenceCaption').textContent = d.score_type === 'validation_temperature_scaled' ? 'calibrated score' : 'uncalibrated score';
   $('analysisTime').textContent = timingText(d) || 'Timing unavailable';
   renderProbabilities(d);
   $('breakdownCaption').textContent = command !== original ? 'Decoded command structure' : 'Command structure';
@@ -448,7 +448,7 @@ async function runScan() {
     let data;
     try { data = await response.json(); } catch { throw new Error('Unreadable response. Try again.'); }
     if (!response.ok) throw new Error(data?.error || 'Service unavailable (HTTP '+response.status+').');
-    if (!data || !['benign','suspicious','malicious'].includes(String(data.label).toLowerCase())) throw new Error('Incomplete analysis. Try again.');
+    if (!data || !['benign','context_dependent','suspicious','malicious'].includes(String(data.label).toLowerCase())) throw new Error('Incomplete analysis. Try again.');
     clearTimeout(timeout);
     renderResults(data,original); lastResult = data;
     $('results').scrollTop = 0;

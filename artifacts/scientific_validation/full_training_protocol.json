@@ -1,0 +1,44 @@
+{
+  "purpose": "Fresh supervised experiments on the frozen grouped weak-label dataset; not independent operational validation",
+  "gatekeeper": {
+    "epochs": 5,
+    "seed": 42,
+    "micro_batch_size": 16,
+    "effective_batch_size": 256,
+    "learning_rate": 1e-05,
+    "non_benign_loss_weight": 0.3,
+    "selection": "maximum validation macro-F1, then accuracy",
+    "output": "models/experiments/scientific_v2/gatekeeper_42"
+  },
+  "behavior": {
+    "epochs": 4,
+    "seeds": [
+      42
+    ],
+    "representations": [
+      "raw",
+      "structured"
+    ],
+    "batch_size": 8,
+    "learning_rate": 2e-05,
+    "selection": "maximum validation stage macro-F1 plus action micro-F1",
+    "outputs": "models/experiments/scientific_v2/behavior_full_{representation}_42",
+    "amp": true,
+    "precision_note": "Both full-trial representations use the same CUDA AMP setting; the earlier feasibility pilots used float32."
+  },
+  "dataset_manifests": {
+    "gatekeeper": "b34110205c57ecca9af12542b04d3e8f1c035504792dfb54fba9656ac806d337",
+    "behavior": "457aac9c77d928d62f838dc4d6783027b99ff54d82d27d3f8641855857ba604c"
+  },
+  "training_code": {
+    "scripts/training/trainer1.py": "9268bb6a258bf29003cd9687282e0447d479a6608c447e0dc1b0ce74038bc6b1",
+    "scripts/training/train_behavior_encoder.py": "af9367a20ac7741b085930b2db329082fd341bc165e45f19ad1362a111ce00f9"
+  },
+  "pretrained_backbone": {
+    "config_sha256": "742474d6148a061fa975dadc09ce93725fa9673c55421ed316ef75532cc6b7aa",
+    "weights_sha256": "ec0b6c596d73fb5778a36d505663dca22f6bedf44c9292addf07e12f73d9517f"
+  },
+  "promotion_policy": "No automatic replacement of active checkpoints; report failures and weak-label scope",
+  "independent_review": "User confirmed prepared queues should be used; reviews are pending",
+  "test_policy": "Evaluate once after validation checkpoint selection. These inspected results become development evidence if used for subsequent model choices."
+}

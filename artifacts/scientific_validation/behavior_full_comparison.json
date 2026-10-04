@@ -1,0 +1,205 @@
+{
+  "runs": [
+    {
+      "training_arguments": {
+        "data_dir": "/home/sam/genos/genos_api/data/derived/scientific_v2/behavior",
+        "amp": true,
+        "input_format": "raw",
+        "epochs": 4,
+        "batch_size": 8,
+        "log_every": 100,
+        "lr": 2e-05,
+        "max_length": 256,
+        "seed": 42,
+        "output": "models/experiments/scientific_v2/behavior_full_raw_42/behavior_encoder.pt",
+        "weighted_loss": false,
+        "max_weight": 8.0
+      },
+      "training_code_sha256": "af9367a20ac7741b085930b2db329082fd341bc165e45f19ad1362a111ce00f9",
+      "seed": 42,
+      "epochs": 4,
+      "input_format": "raw",
+      "dataset_manifest": {
+        "train": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/behavior/behavior_train.jsonl",
+          "sha256": "510b3cf9837a7f0a5c97f79efb04e9c2dd4df2d76af31307ed6e3737a61fb28d"
+        },
+        "val": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/behavior/behavior_val.jsonl",
+          "sha256": "2fff189539ed4d2de1225438c599109e90345a4517d17af1936c101614930be8"
+        },
+        "test": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/behavior/behavior_test.jsonl",
+          "sha256": "0cbea4ad2fe3788f288810ec2538c1320e88befc41118b095add481deb56cc9d"
+        }
+      },
+      "independence_audit": {
+        "normalization": "lowercase_strip",
+        "counts": {
+          "train": 6037,
+          "val": 755,
+          "test": 755
+        },
+        "within_split_label_conflicts": {
+          "train": 0,
+          "val": 0,
+          "test": 0
+        },
+        "overlap": {
+          "train:val": {
+            "commands": 0,
+            "conflicting_commands": 0,
+            "provenance_groups": 0
+          },
+          "train:test": {
+            "commands": 0,
+            "conflicting_commands": 0,
+            "provenance_groups": 0
+          },
+          "val:test": {
+            "commands": 0,
+            "conflicting_commands": 0,
+            "provenance_groups": 0
+          }
+        },
+        "passed": true
+      },
+      "checkpoint_sha256": "48bb414235bf83da0c9bf4167ae8d1cc6ec75950444292a203f7e83f54abbb67",
+      "evaluation_scope": "rule_derived_behavior_labels",
+      "backbone": "/home/sam/genos/genos_api/data/derived/scientific_v1/codebert-base",
+      "stage_map": {
+        "C2 / Remote Access": 0,
+        "Collection / Staging": 1,
+        "Context Required": 2,
+        "Credential Access": 3,
+        "Defense Evasion": 4,
+        "Discovery / Recon": 5,
+        "Execution": 6,
+        "Exfiltration": 7,
+        "Impact": 8,
+        "Lateral Movement": 9,
+        "Payload Retrieval": 10,
+        "Persistence": 11,
+        "Privilege Escalation": 12
+      },
+      "action_map": {
+        "archive_data": 0,
+        "download_remote_resource": 1,
+        "execute_inline_code": 2,
+        "execute_interpreter": 3,
+        "extract_archive": 4,
+        "remote_execution": 5,
+        "use_encoded_payload": 6,
+        "use_obfuscation": 7,
+        "use_signed_proxy_binary": 8
+      },
+      "test_metrics": {
+        "stage_acc": 0.5019867549668874,
+        "stage_macro_f1": 0.3595764572488894,
+        "action_micro_f1": 0.5541838134430727
+      },
+      "max_length": 256
+    },
+    {
+      "training_arguments": {
+        "data_dir": "/home/sam/genos/genos_api/data/derived/scientific_v2/behavior",
+        "amp": true,
+        "input_format": "structured",
+        "epochs": 4,
+        "batch_size": 8,
+        "log_every": 100,
+        "lr": 2e-05,
+        "max_length": 256,
+        "seed": 42,
+        "output": "models/experiments/scientific_v2/behavior_full_structured_42/behavior_encoder.pt",
+        "weighted_loss": false,
+        "max_weight": 8.0
+      },
+      "training_code_sha256": "af9367a20ac7741b085930b2db329082fd341bc165e45f19ad1362a111ce00f9",
+      "seed": 42,
+      "epochs": 4,
+      "input_format": "structured",
+      "dataset_manifest": {
+        "train": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/behavior/behavior_train.jsonl",
+          "sha256": "510b3cf9837a7f0a5c97f79efb04e9c2dd4df2d76af31307ed6e3737a61fb28d"
+        },
+        "val": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/behavior/behavior_val.jsonl",
+          "sha256": "2fff189539ed4d2de1225438c599109e90345a4517d17af1936c101614930be8"
+        },
+        "test": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/behavior/behavior_test.jsonl",
+          "sha256": "0cbea4ad2fe3788f288810ec2538c1320e88befc41118b095add481deb56cc9d"
+        }
+      },
+      "independence_audit": {
+        "normalization": "lowercase_strip",
+        "counts": {
+          "train": 6037,
+          "val": 755,
+          "test": 755
+        },
+        "within_split_label_conflicts": {
+          "train": 0,
+          "val": 0,
+          "test": 0
+        },
+        "overlap": {
+          "train:val": {
+            "commands": 0,
+            "conflicting_commands": 0,
+            "provenance_groups": 0
+          },
+          "train:test": {
+            "commands": 0,
+            "conflicting_commands": 0,
+            "provenance_groups": 0
+          },
+          "val:test": {
+            "commands": 0,
+            "conflicting_commands": 0,
+            "provenance_groups": 0
+          }
+        },
+        "passed": true
+      },
+      "checkpoint_sha256": "da2c2a58ed93b7da5624aebc6d9959e327bcf57db8f71252610032c07aea473d",
+      "evaluation_scope": "rule_derived_behavior_labels",
+      "backbone": "/home/sam/genos/genos_api/data/derived/scientific_v1/codebert-base",
+      "stage_map": {
+        "C2 / Remote Access": 0,
+        "Collection / Staging": 1,
+        "Context Required": 2,
+        "Credential Access": 3,
+        "Defense Evasion": 4,
+        "Discovery / Recon": 5,
+        "Execution": 6,
+        "Exfiltration": 7,
+        "Impact": 8,
+        "Lateral Movement": 9,
+        "Payload Retrieval": 10,
+        "Persistence": 11,
+        "Privilege Escalation": 12
+      },
+      "action_map": {
+        "archive_data": 0,
+        "download_remote_resource": 1,
+        "execute_inline_code": 2,
+        "execute_interpreter": 3,
+        "extract_archive": 4,
+        "remote_execution": 5,
+        "use_encoded_payload": 6,
+        "use_obfuscation": 7,
+        "use_signed_proxy_binary": 8
+      },
+      "test_metrics": {
+        "stage_acc": 0.4900662251655629,
+        "stage_macro_f1": 0.3234317314650755,
+        "action_micro_f1": 0.9835294117647059
+      },
+      "max_length": 256
+    }
+  ],
+  "scope": "Fixed four-epoch budget, single seed, validation-selected checkpoints, weak rule-derived labels; convergence and independent operational validity not established"
+}

@@ -1,0 +1,159 @@
+{
+  "benchmark_exclusions": {
+    "benchmarks": {
+      "path": "data/derived/scientific_v1/development_benchmarks.jsonl",
+      "sha256": "f9cd28def0a167b55d42856724b1329f9e0a13597cd9e2ee4405496a1bb8d04c"
+    }
+  },
+  "kind": "behavior",
+  "seed": 42,
+  "inputs": {
+    "train": {
+      "path": "/home/sam/genos/genos_api/data/training/genos_behavior/behavior_train.jsonl",
+      "sha256": "28d9e417bd5747853b4399ecf0dc459c6fef77892f22d7fadaca1c5a61ca2a7b"
+    },
+    "val": {
+      "path": "/home/sam/genos/genos_api/data/training/genos_behavior/behavior_val.jsonl",
+      "sha256": "0436104f325596fd49abcd8e4bf21e986c8712e2af64acf5071d5fbada13bea3"
+    },
+    "test": {
+      "path": "/home/sam/genos/genos_api/data/training/genos_behavior/behavior_test.jsonl",
+      "sha256": "bc11e1ade6e1017df9bdab656c7412d713f50c6fe406458fbd20b3c6583f41a6"
+    }
+  },
+  "before": {
+    "normalization": "lowercase_strip",
+    "counts": {
+      "train": 6017,
+      "val": 713,
+      "test": 829
+    },
+    "within_split_label_conflicts": {
+      "train": 0,
+      "val": 0,
+      "test": 0
+    },
+    "overlap": {
+      "train:val": {
+        "commands": 0,
+        "conflicting_commands": 0,
+        "provenance_groups": 0
+      },
+      "train:test": {
+        "commands": 0,
+        "conflicting_commands": 0,
+        "provenance_groups": 0
+      },
+      "val:test": {
+        "commands": 0,
+        "conflicting_commands": 0,
+        "provenance_groups": 0
+      }
+    },
+    "passed": true
+  },
+  "after": {
+    "normalization": "lowercase_strip",
+    "counts": {
+      "train": 6037,
+      "val": 755,
+      "test": 755
+    },
+    "within_split_label_conflicts": {
+      "train": 0,
+      "val": 0,
+      "test": 0
+    },
+    "overlap": {
+      "train:val": {
+        "commands": 0,
+        "conflicting_commands": 0,
+        "provenance_groups": 0
+      },
+      "train:test": {
+        "commands": 0,
+        "conflicting_commands": 0,
+        "provenance_groups": 0
+      },
+      "val:test": {
+        "commands": 0,
+        "conflicting_commands": 0,
+        "provenance_groups": 0
+      }
+    },
+    "passed": true
+  },
+  "quarantine": {
+    "benchmark_exposure": 12
+  },
+  "label_counts": {
+    "train": {
+      "Persistence": 919,
+      "Discovery / Recon": 844,
+      "Defense Evasion": 1851,
+      "Impact": 152,
+      "Execution": 677,
+      "Lateral Movement": 48,
+      "Collection / Staging": 395,
+      "Privilege Escalation": 190,
+      "Credential Access": 449,
+      "Payload Retrieval": 292,
+      "Context Required": 88,
+      "C2 / Remote Access": 71,
+      "Exfiltration": 61
+    },
+    "val": {
+      "Defense Evasion": 226,
+      "Collection / Staging": 68,
+      "Persistence": 115,
+      "Execution": 99,
+      "Discovery / Recon": 97,
+      "Lateral Movement": 9,
+      "Credential Access": 39,
+      "Context Required": 19,
+      "Exfiltration": 6,
+      "Privilege Escalation": 26,
+      "C2 / Remote Access": 13,
+      "Payload Retrieval": 17,
+      "Impact": 21
+    },
+    "test": {
+      "Collection / Staging": 63,
+      "Persistence": 108,
+      "Execution": 126,
+      "Credential Access": 30,
+      "Defense Evasion": 206,
+      "Discovery / Recon": 117,
+      "Lateral Movement": 10,
+      "Privilege Escalation": 19,
+      "Context Required": 18,
+      "C2 / Remote Access": 13,
+      "Payload Retrieval": 16,
+      "Exfiltration": 8,
+      "Impact": 21
+    }
+  },
+  "unseen_eval_labels": {
+    "val": [],
+    "test": []
+  },
+  "limitations": [
+    "Requires fresh training; old checkpoints have seen rows reassigned to evaluation",
+    "Legacy labels remain weak supervision; independent annotation pending",
+    "Inferred tool groups do not prove template or source independence; review family/source provenance"
+  ],
+  "outputs": {
+    "train": {
+      "path": "data/derived/scientific_v2/behavior/behavior_train.jsonl",
+      "sha256": "510b3cf9837a7f0a5c97f79efb04e9c2dd4df2d76af31307ed6e3737a61fb28d"
+    },
+    "val": {
+      "path": "data/derived/scientific_v2/behavior/behavior_val.jsonl",
+      "sha256": "2fff189539ed4d2de1225438c599109e90345a4517d17af1936c101614930be8"
+    },
+    "test": {
+      "path": "data/derived/scientific_v2/behavior/behavior_test.jsonl",
+      "sha256": "0cbea4ad2fe3788f288810ec2538c1320e88befc41118b095add481deb56cc9d"
+    }
+  }
+}

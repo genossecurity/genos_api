@@ -1,6 +1,5 @@
 import sys
 import os
-import base64
 import logging
 import json
 import time
@@ -67,18 +66,6 @@ def is_valid_key(api_key):
         return False
     return keys_collection.find_one({"key": api_key}) is not None
 
-def safe_base64_decode(command):
-    """Attempt to decode Base64; fallback to plain text."""
-    try:
-        decoded_bytes = base64.b64decode(command, validate=True)
-        decoded_text = decoded_bytes.decode('utf-8')
-        if decoded_text.strip():
-            return decoded_text
-    except Exception:
-        pass
-    return command
-
-
 def _to_percentage(value):
     """Normalize confidence value to percentage with 2 decimals.
 
@@ -92,7 +79,7 @@ def _to_percentage(value):
 
 def _api_label(label):
     """Map internal labels to the public API contract."""
-    return "Suspicious" if label == "Context_Dependent" else label
+    return "Context_Dependent" if label == "Suspicious" else label
 
 
 def _listening_pids_on_port(port):
@@ -234,27 +221,6 @@ def _run_inference(command, include_flags=None):
       evidence, mitre, analysis, ioc, meta
     All sections are included by default when include_flags is None.
     """
-    # --- Try auto-decode Base64 commands ---
-    original_command = command
-    app_decoded = False
-    try:
-        decoded_bytes = base64.b64decode(command, validate=True)
-        # Try UTF-16LE first (PowerShell -EncodedCommand format)
-        try:
-            utf16 = decoded_bytes.decode('utf-16-le')
-            ascii_printable = sum(1 for c in utf16 if '\x20' <= c <= '\x7e' or c in '\r\n\t')
-            if ascii_printable > len(utf16) * 0.6 and len(utf16) > 3:
-                command = utf16
-                app_decoded = True
-            else:
-                raise ValueError("not utf-16le")
-        except (UnicodeDecodeError, ValueError):
-            # Fallback to UTF-8
-            command = decoded_bytes.decode('utf-8')
-            app_decoded = True
-    except Exception:
-        pass  # Assume plain text if decode fails
-
     # --- Run Genos engine ---
     t_start = time.perf_counter()
     raw_result, gpu_memory = _scan_with_gpu_memory(command)
@@ -290,7 +256,7 @@ def _run_inference(command, include_flags=None):
         "label_confidence": round(float(label_conf), 2),
     }
 
-    for key in ("class_probabilities", "decision_margin", "reason", "triggered_features", "routing_policy", "should_run_specialist", "gatekeeper", "behavior"):
+    for key in ("class_probabilities", "decision_margin", "reason", "triggered_features", "routing_policy", "should_run_specialist", "gatekeeper", "behavior", "provenance", "score_type", "calibration", "input_truncated", "mitre_scope"):
         if key in raw_result:
             result[key] = raw_result[key]
 
@@ -301,8 +267,8 @@ def _run_inference(command, include_flags=None):
     # --- Label probabilities ---
     if "label_probabilities" in raw_result:
         probabilities = dict(raw_result["label_probabilities"])
-        if "context_dependent" in probabilities and "suspicious" not in probabilities:
-            probabilities["suspicious"] = probabilities["context_dependent"]
+        if "suspicious" in probabilities:
+            probabilities.setdefault("context_dependent", probabilities.pop("suspicious"))
         result["label_probabilities"] = probabilities
 
     # --- MITRE codes ---
@@ -310,7 +276,8 @@ def _run_inference(command, include_flags=None):
         result["MITRE_codes"] = [
             {
                 "code": t["code"],
-                "confidence": round(float(t["confidence"]), 2)
+                "confidence": round(float(t["confidence"]), 2),
+                "score_type": t.get("score_type", "uncalibrated_model_estimate")
             }
             for t in mitre_predictions
         ]
@@ -318,15 +285,6 @@ def _run_inference(command, include_flags=None):
     # --- Evidence ---
     if flags["evidence"] and "evidence" in raw_result:
         result["evidence"] = raw_result["evidence"]
-        # If the app layer pre-decoded Base64, make sure the evidence block
-        # reflects that so the UI obfuscation banner fires.
-        if app_decoded:
-            ev = result["evidence"]
-            if not ev.get("uses_obfuscation"):
-                ev["uses_obfuscation"] = True
-            if not ev.get("obfuscation_markers"):
-                ev["obfuscation_markers"] = ["base64"]
-
     # --- Analysis ---
     if flags["analysis"]:
         for key in ("mapping_reasons", "why_mapped", "confidence_driver", "analyst_hint"):
@@ -336,11 +294,6 @@ def _run_inference(command, include_flags=None):
         for key in ("decoded_payload", "payload_mitre_codes", "deobfuscated_cmd"):
             if key in raw_result and raw_result[key] is not None:
                 result[key] = raw_result[key]
-        # If the app layer pre-decoded Base64 before the engine saw it, surface the
-        # decoded command so the UI can show the obfuscated → plain comparison.
-        if app_decoded and "deobfuscated_cmd" not in result:
-            result["deobfuscated_cmd"] = command
-
     # --- IOC summary ---
     if flags["ioc"] and "ioc_summary" in raw_result:
         result["ioc_summary"] = raw_result["ioc_summary"]

@@ -2,7 +2,7 @@
 
 Genos is a two-stage neural pipeline for real-time malicious command detection and MITRE ATT&CK technique attribution, served as a REST API over Gunicorn and Flask.
 
-The system was developed as part of an IEEE research programme. This README is derived directly from the source code (`engine.py`, `app.py`, `gunicorn.conf.py`) and reflects the current behaviour of the `main` branch only.
+The system was developed as part of an IEEE research programme. See the [scientific validation report](artifacts/scientific_validation/REPORT.md) for measured results and unresolved validity gaps.
 
 ---
 
@@ -91,34 +91,35 @@ The model outputs three class probabilities mapped as:
 |---|---|---|
 | 0 | Benign | Benign |
 | 1 | Malicious | Malicious |
-| 2 | Context_Dependent | Suspicious |
+| 2 | Context_Dependent | Context_Dependent |
 
-After the neural forward pass, a **rule-based routing layer** applies over the raw class probabilities. Routing can override the model output based on:
+The final verdict is the model's top class after the declared view policy. `Context_Dependent` is preserved in the API and means additional context is required. Regex features provide extracted evidence and explicit heuristic baselines.
 
-- **Hard overrides** — deterministic pattern matches (e.g. base64-decode piped to shell, reverse shell patterns, credential file reads) that force `Malicious` regardless of model confidence
-- **Malicious promotion** — high-risk behavioral features (e.g. exploit tooling, sensitive sources) that promote weak `Benign`/`Suspicious` predictions to `Malicious`
-- **Malicious cap** — commands that are risky but lack definitive attack indicators (e.g. `chmod 777`, `crontab -l`) are downgraded from `Malicious` to `Suspicious`
-- **Benign safe overrides** — high-confidence benign predictions with no suspicious signals pass through directly
-- **Probability routing** — remaining cases route by thresholds, margin, suspicious signal count, and feature set
+The default `GENOS_VIEW_POLICY=mean` averages raw and decoded score distributions when decoding changes the command. `raw` and `decoded` are available for controlled experiments. This choice is not claimed to be empirically optimal. All commands receive behavior and MITRE analysis.
 
-The final public label is one of: `Benign`, `Suspicious`, `Malicious`, or `Context_Dependent` (requires_context action).
+Scores are uncalibrated model estimates unless a validation-fitted, model-bound `GENOS_CALIBRATION_PATH` is supplied. Legacy `confidence` fields use percentages (0–100); `score_type` declares their interpretation. Behavior action tags use the reported `GENOS_BEHAVIOR_ACTION_THRESHOLD` (default 0.5), which has not yet been selected on independent labels.
+
+Checkpoints load strictly. Behavior load failures stop initialization unless `GENOS_ALLOW_BEHAVIOR_FALLBACK=1` explicitly permits the reported heuristic baseline. Responses include model/implementation hashes, representation, preprocessing policy, fallback status, and truncation flags.
+
+See [scientific validation workflow](docs/scientific_validation.md) for the audit, grouped datasets, experiments, annotation protocol, and remaining limitations. Existing benchmark scores are development evidence and do not establish independent operational accuracy.
 
 ### Tier 2 — Specialist (TF-IDF char n-gram + Random Forest)
 
-Tier 2 **always runs**, regardless of the Tier 1 label. Because it uses a TF-IDF + RF pipeline rather than a neural model, inference takes approximately 90 ms and adds negligible overhead.
+MITRE ranking and the behavior encoder **always run**, regardless of the verdict. Measure latency on the deployment hardware; unconditional behavior adds neural inference work.
 
 Model file: `models/specialist_tfidf_char_rf.pkl` (scikit-learn pipeline, loaded with `joblib`).
 
 Input text is built by `_build_variant_a_text()`, which calls the `parser/` module to produce a structured "Variant A" representation of the command:
 
 ```
-RAW: <normalised command>
+RAW: <command with original case>
 RESIDUAL: <parser-extracted residual tokens>
+FEATURES: <parser/rule tags, when present>
 ```
 
-For obfuscated commands the engine runs Tier 2 **twice** — once on the original text, once on the decoded payload — and merges results by taking the highest confidence score per MITRE code. The final response caps at **5** codes.
+When decoding changes the command, the configured view policy combines normalized distributions (mean by default). MITRE returns up to five ranked candidates; this ranker does not yet support a learned no-technique class.
 
-Classes come from `config/specialist_map.json` (108 MITRE techniques). The pipeline's integer class indices are mapped back to MITRE IDs via `_tfidf_idx_to_label`.
+Classes come from `config/specialist_map.json`; the saved classifier may cover only a subset of the map. The pipeline's integer class indices are mapped back to MITRE IDs via `_tfidf_idx_to_label`.
 
 ### Engine output schema
 
@@ -127,7 +128,8 @@ Classes come from `config/specialist_map.json` (108 MITRE techniques). The pipel
 ```json
 {
   "label": "Malicious",
-  "label_confidence": 0.9981,
+  "label_confidence": 99.81,
+  "score_type": "uncalibrated_model_estimate",
   "deobfuscated_cmd": "invoke-expression ...",
   "MITRE_codes": [
     { "code": "T1059", "confidence": 97.43 },
@@ -139,12 +141,11 @@ Classes come from `config/specialist_map.json` (108 MITRE techniques). The pipel
 }
 ```
 
-For obfuscated commands with a decoded payload, two additional fields are populated:
+For obfuscated commands with a decoded payload, the decoded text is also reported:
 
 ```json
 {
-  "decoded_payload": "<deobfuscated text>",
-  "payload_mitre_codes": [ ... ]
+  "decoded_payload": "<deobfuscated text>"
 }
 ```
 
@@ -159,9 +160,9 @@ For `Context_Dependent` labels:
 ```
 
 Notes:
-- `label` is one of: `Benign`, `Suspicious`, `Malicious`, `Context_Dependent`
-- `label_confidence` is a raw probability (0–1) from the engine; `app.py`'s `_to_percentage()` converts it to a percentage for the HTTP response
-- `MITRE_codes` is present on all responses (Tier 2 always runs); it may be empty if no codes exceed the classifier's threshold
+- `label` is one of: `Benign`, `Malicious`, `Context_Dependent`
+- `label_confidence` is a percentage-valued model score (0–100) in both the engine and HTTP response; inspect `score_type` for calibration status
+- `MITRE_codes` contains up to five ranked candidates on every response; there is currently no learned no-technique decision
 - `deobfuscated_cmd` is `null` when the input was not flagged as obfuscated
 
 ---
@@ -172,13 +173,13 @@ Tier 1 uses a CodeBERT neural model. Tier 2 uses a TF-IDF char n-gram + Random F
 
 | File | Purpose |
 |---|---|
-| `models/gatekeeper.pt` | Tier 1 — 3-class CodeBERT gatekeeper (Benign / Suspicious / Malicious) |
+| `models/gatekeeper.pt` | Tier 1 — 3-class CodeBERT gatekeeper (Benign / Context_Dependent / Malicious) |
 | `models/specialist_tfidf_char_rf.pkl` | Tier 2 — active MITRE attribution model (char n-gram TF-IDF + RF) |
-| `models/specialist_tfidf_rf.pkl` | Tier 2 alternative — word-level TF-IDF + RF variant (not loaded by default) |
-| `config/specialist_map.json` | Maps integer class indices to MITRE technique IDs (108 classes) |
-| `config/gatekeeper_meta.json` | Gatekeeper threshold and training metadata read at startup |
+| `models/archive/specialist_tfidf_rf.pkl` | Archived Tier 2 word-level TF-IDF + RF alternative |
+| `config/specialist_map.json` | Maps integer class indices to MITRE technique IDs |
+| `config/gatekeeper_meta.json` | Gatekeeper class-map and training metadata read at startup |
 
-Model weights and large artefacts are tracked with Git LFS (`.gitattributes`). The pkl files are excluded from git entirely via `.gitignore` due to their size (2.4–2.8 GB); they must be provided out-of-band (e.g. direct copy, shared storage, or LFS if migrated).
+Model files are local runtime assets and are excluded from Git by `.gitignore`; provide the active checkpoint files separately when deploying. Historical and experimental checkpoints are grouped under `models/archive/`, and retraining outputs go under `models/experiments/`.
 
 ---
 
@@ -210,15 +211,7 @@ This produces:
 - `data/training/genos_dataset/gatekeeper_real_benign_v1_holdout.jsonl`
 - `data/training/genos_dataset/gatekeeper_real_benign_v1_manifest.json`
 
-To evaluate the current checkpoint on the never-train-on benign holdout before retraining:
-
-```bash
-python3 scripts/benchmark/real_benign_holdout_benchmark.py \
-  --holdout-jsonl data/training/genos_dataset/gatekeeper_real_benign_v1_holdout.jsonl \
-  --prefix gatekeeper_real_benign_v1
-```
-
-This writes summary artifacts under `logs/real_benign_holdout/`.
+Evaluate an independently collected holdout with `scripts/evaluation/evaluate_pipeline.py`, supplying every training source with `--training-data`. The exporter rejects detected command/group overlap. A file called “holdout” alone is not evidence that a checkpoint has never seen its examples.
 
 The intent is scientific separation:
 
@@ -361,6 +354,10 @@ cp .env.example .env
 | `MONGO_URI` | `app.py` | — | Connection string for MongoDB; enables `/scan` route |
 | `INTERNAL_TEST_TOKEN` | `app.py` | — | Optional auth token for `/scan/internal`; unenforced if unset |
 | `GENOS_API_BIND` | `gunicorn.conf.py` | `127.0.0.1:6001` | Gunicorn bind address |
+| `GENOS_VIEW_POLICY` | `engine.py` | `mean` | Raw/decoded distribution fusion policy |
+| `GENOS_CALIBRATION_PATH` | `engine.py` | unset | Validation-fitted artifact bound to the runtime |
+| `GENOS_BEHAVIOR_POLICY_PATH` | `engine.py` | unset | Validation-selected per-action thresholds |
+| `GENOS_ALLOW_BEHAVIOR_FALLBACK` | `engine.py` | `0` | Explicitly allow reported heuristic fallback |
 | `GENOS_MAX_TOKENS` | `engine.py` | `256` | Tokeniser max sequence length |
 | `CURRENT_TIME` | `app.py` | `"2026-03-17T00:00:00.000+00:00"` | Timestamp written into Mongo usage records |
 | `GENOS_T1_EFFECTIVE_BATCH` | `trainer1.py` | `256` | Training only: effective batch size |
@@ -467,42 +464,24 @@ WantedBy=multi-user.target
 
 ---
 
-## Benchmarking and research tooling
+## Evaluation and research tooling
 
-### IEEE pipeline benchmark (`scripts/benchmark/ieee.py`)
-
-Runs a deployment-aligned evaluation comparing the Genos neural pipeline against a TF-IDF + Random Forest baseline.
-
-```bash
-cd genos_api
-python scripts/benchmark/ieee.py
-```
-
-Metrics reported: Tier 1 AUC, precision, recall, F1; Tier 2 top-1 / top-3 accuracy; macro F1; deobfuscation time; end-to-end latency at multiple benign traffic ratios; ROC curve saved to `logs/`.
-
-### Async stress test (`scripts/benchmark/internal_api_test.py`)
-
-Hits the live API with configurable concurrency. Defaults: 500 requests, 50 % malicious, 20 concurrent workers, 85 % confidence threshold.
-
-```bash
-# Requires API running on 127.0.0.1:6001
-python scripts/benchmark/internal_api_test.py
-```
-
-Results are written to `live_stress_report.txt`.
-
-### Training scripts
+The deleted `scripts/benchmark` directory remains retired. Current tools live in `scripts/evaluation`; commands and annotation instructions are in the [scientific validation workflow](docs/scientific_validation.md).
 
 | Script | Purpose |
 |---|---|
-| `scripts/training/trainer1.py` | Train the Tier 1 Gatekeeper binary classifier |
-| `scripts/training/trainer2_hybrid.py` | Train the Tier 2 Specialist MITRE attribution classifier |
-| `scripts/training/trainer_tfidf.py` | Train the TF-IDF baseline classifier |
-| `scripts/data/synthesize_gatekeeper_data.py` | Synthesize gatekeeper training data |
-| `scripts/data/augment_context_sensitivity.py` | Context-sensitivity augmentation |
-| `scripts/data/data_scraper.py` | Raw data collection |
+| `scripts/evaluation/evaluate_pipeline.py` | Export model scores with exposure checks and provenance |
+| `scripts/evaluation/compare_ablations.py` | Paired comparisons with group-bootstrap intervals |
+| `scripts/evaluation/compare_view_policies.py` | Compare raw, decoded, mean, and retired risk-selection policies |
+| `scripts/evaluation/calibrate_scores.py` | Fit temperature on validation and assess held-out test scores |
+| `scripts/evaluation/select_action_thresholds.py` | Select per-action thresholds using validation data |
+| `scripts/evaluation/audit_annotations.py` | Reconcile independent reviews and explicit adjudication |
+| `scripts/evaluation/smoke_runtime.py` | Check real checkpoint/API integration and record predictions |
+| `scripts/training/trainer1.py` | Train the three-class gatekeeper on audited grouped splits |
+| `scripts/training/train_behavior_encoder.py` | Train raw or structured behavior representations |
+| `scripts/training/trainer_tfidf.py` | Train raw or structured MITRE RF baselines |
 
-Training data lives in `data/training/genos_dataset/`. Trainers read from the CSVs with the schema `command` (string), `mitre_id` (string — `"Benign"` or a MITRE technique ID such as `T1059`). Hybrid trainers additionally read from the JSONL files in the same directory.
+These trainers default to the prepared task directories under `data/derived/scientific_v2/` and write isolated experiments under `models/experiments/`. Original legacy data remains under `data/training/`. Labels are still weak supervision until independent reviews are completed.
 
 ---
 
@@ -511,48 +490,40 @@ Training data lives in `data/training/genos_dataset/`. Trainers read from the CS
 ```
 app.py                              Flask application and route handling
 engine.py                           GenosEngine — deobfuscation and two-tier inference
+scientific_validation.py            Shared dataset audits and evaluation metrics
 gunicorn.conf.py                    Gunicorn runtime configuration
 requirements.txt                    Python dependencies
-reqs.txt                            Alias: -r requirements.txt
 .env.example                        Environment variable template
 
 config/
-  specialist_map.json               Active 108-class MITRE technique → integer label map
+  specialist_map.json               MITRE technique → integer label map
   definitive_mitre_map.json         Full MITRE technique reference
   label_map.json                    Human-readable label definitions
-  meta/                             Training run metadata and backups (not loaded at runtime)
-    gatekeeper_meta.json
-    specialist_meta.json
-    specialist_residual_a_meta.json
-    specialist_residual_b_meta.json
-    specialist_map_108.json.bak
-    ...
+  gatekeeper_meta.json              Active gatekeeper metadata
+  meta/                             Historical training metadata and config snapshots
 
 models/
-  gatekeeper.pt                     Tier 1 3-class CodeBERT gatekeeper weights (Git LFS)
-  specialist_tfidf_char_rf.pkl      Tier 2 active model — char n-gram TF-IDF + RF (not in git, >2 GB)
-  specialist_tfidf_rf.pkl           Tier 2 word-level variant (not in git, >2 GB)
-  archive/                          Historical and experimental checkpoints (Git LFS)
-    gatekeeper_pre_augment.pt
-    gatekeeper_pre_context_augment.pt
-    specialist_residual_a.pt
-    specialist_residual_b.pt
+  gatekeeper.pt                     Active Tier 1 checkpoint
+  behavior_encoder.pt               Active behavior checkpoint
+  specialist_tfidf_char_rf.pkl      Active MITRE ranker
+  archive/                          Historical and experimental model files
+  experiments/                      Isolated retraining runs and metadata
 
-data/training/
-  genos_dataset/                    Primary train / val / test splits (CSV)
-    gatekeeper_train.csv            Benign + malicious — Gatekeeper training
-    gatekeeper_val.csv
-    gatekeeper_test.csv
-    specialist_train.csv            Malicious commands — Specialist training
-    specialist_val.csv
-    specialist_test.csv
-    context_augment_*.csv           Context-augmented variants
-    synthetic_gatekeeper_*.csv      Synthetic benign augmentation splits
-    hybrid_specialist_*.jsonl       Hybrid JSONL specialist format
-    provenance.json                 Dataset build provenance record
-  genos_residual/                   Residual variant datasets (JSONL, variants a/b/c)
-  genos_residual_cli/               CLI-specific residual datasets
-  genos_residual_expanded/          Expanded residual datasets
+data/
+  training/                         Source and legacy datasets, grouped by task/version
+    genos_dataset/                  Gatekeeper datasets and supervised patches
+    genos_behavior/                 Behavior labels
+    genos_residual_expanded/        MITRE specialist dataset
+    genos_cache/                    Cached source data
+  derived/                          Prepared splits and local review data (gitignored)
+  provenance/raw/                   Source provenance material
+
+artifacts/
+  scientific_validation/            Compact audits, reports, and experiment summaries
+  demo/                              UI verification artifacts
+
+docs/
+  scientific_validation.md          Data, training, and evaluation workflow
 
 parser/                             Command parsing and rule engine module
   parser.py                         Main parser entry point
@@ -568,38 +539,24 @@ parser/                             Command parsing and rule engine module
   parser_schema.json                Parser output schema
 
 scripts/
+  data/                              Dataset preparation and augmentation
+  evaluation/                        Runtime tests, benchmarks, audits, and calibration
+  ops/                               Review and training orchestration
   training/
     trainer1.py                     Gatekeeper training script
     trainer2_hybrid.py              Specialist hybrid training script
     trainer_tfidf.py                TF-IDF baseline training
     generate_cli_specialist_dataset.py  CLI-specific dataset generation
-  data/
-    augment_context_sensitivity.py  Context-sensitivity augmentation
-    data_scraper.py                 Raw data collection
-    synthesize_gatekeeper_data.py   Synthetic gatekeeper data generation
-  benchmark/
-    ieee.py                         IEEE pipeline benchmark (neural vs TF-IDF baseline)
-    internal_api_test.py            Async live API stress test
-    mitre_benchmark.py              MITRE technique attribution benchmark
-    gatekeeper_3class.py            Three-class gatekeeper evaluation
-    benign_fp_test.py               False-positive testing on benign traffic
-    e2e_llm.py                      End-to-end LLM comparison benchmark
-    tfidf_vs_openai.py              TF-IDF vs OpenAI comparison
-    test_variant_a_inference.py     Residual variant A inference test
-    3class/                         Three-class benchmark results and corpora
-  ops/
-    reload_api.sh                   Stop → start → health-check helper
-    gunicorn.ctl                    Gunicorn process control file
 
-logs/                               Generated benchmark output (gitignored in production)
-  ieee_results_*.json               IEEE benchmark result snapshots
-  ieee_roc_curve_*.png              ROC curve plots
-  mitre_benchmark.json
-  gatekeeper_3class_benchmark.json
-  tfidf_specialist_results.json
-  tfidf_vs_openai.json
-  trainer1_balanced.log
-  real_world_benign_results.csv
+logs/                               Local generated output (gitignored)
+  training/                          Trainer and data-build logs
+  benchmarks/                        Model benchmark reports and plots
+  ablation/                          Ablation run outputs
+  decomposition/                     Gatekeeper decomposition runs
+  real_benign_holdout/                Real-benign holdout results
+  soft_label_v0/                      Soft-label experiments
+  tier1_sanity/                       Tier 1 sanity checks
+  tier1_stress/                       Tier 1 stress runs
 ```
 
 ---

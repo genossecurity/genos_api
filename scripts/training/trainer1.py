@@ -29,6 +29,8 @@ except Exception:  # pragma: no cover
 
 
 BASE_DIR = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(BASE_DIR))
+from scientific_validation import read_rows, require_disjoint, dataset_manifest, sha256_file
 
 
 def resolve_data_path(filename: str) -> str:
@@ -176,7 +178,7 @@ class GatekeeperModel(nn.Module):
         num_classes: int = NUM_CLASSES,
     ) -> None:
         super().__init__()
-        self.encoder = RobertaModel.from_pretrained("microsoft/codebert-base", use_safetensors=True)
+        self.encoder = RobertaModel.from_pretrained(os.getenv("GENOS_CODEBERT_BACKBONE", "microsoft/codebert-base"), use_safetensors=True)
         self.classifier = nn.Sequential(
             nn.Dropout(0.2),
             nn.Linear(768, 1024),
@@ -513,10 +515,18 @@ def train(args: argparse.Namespace) -> None:
     log_interval = max(1, args.log_interval)
     print(f"[*] Training on device: {device}", flush=True)
 
+    data_paths = {name: Path(args.data_dir) / f"gatekeeper_3class_{name}.csv" for name in ("train", "val", "test")}
+    audit_rows = {name: read_rows(path) for name, path in data_paths.items()}
+    for split, extra in (("train", args.train_patch_jsonl), ("train", args.soft_train_jsonl), ("val", args.soft_val_jsonl), ("test", args.soft_test_jsonl)):
+        if extra:
+            path = resolve_optional_data_path(extra)
+            audit_rows[split].extend(read_rows(path))
+            data_paths[f"{split}_extra_{len(data_paths)}"] = path
+    independence = require_disjoint(audit_rows)
     tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
 
     train_dataset = ThreeClassDataset(
-        resolve_data_path("gatekeeper_3class_train.csv"),
+        str(Path(args.data_dir) / "gatekeeper_3class_train.csv"),
         tokenizer,
         max_len=args.max_len,
         phase="Train",
@@ -524,7 +534,7 @@ def train(args: argparse.Namespace) -> None:
         soft_label_jsonl=resolve_optional_data_path(args.soft_train_jsonl),
     )
     val_dataset = ThreeClassDataset(
-        resolve_data_path("gatekeeper_3class_val.csv"),
+        str(Path(args.data_dir) / "gatekeeper_3class_val.csv"),
         tokenizer,
         max_len=args.max_len,
         phase="Validation",
@@ -532,7 +542,7 @@ def train(args: argparse.Namespace) -> None:
         soft_label_jsonl=resolve_optional_data_path(args.soft_val_jsonl),
     )
     test_dataset = ThreeClassDataset(
-        resolve_data_path("gatekeeper_3class_test.csv"),
+        str(Path(args.data_dir) / "gatekeeper_3class_test.csv"),
         tokenizer,
         max_len=args.max_len,
         phase="Test",
@@ -610,12 +620,12 @@ def train(args: argparse.Namespace) -> None:
     if args.stage_loss_weight > 0 or args.action_loss_weight > 0 or args.contrastive_loss_weight > 0:
         raise ValueError("Stage/action/contrastive losses are disabled for Tier 1. Use decision-decomposition losses instead.")
 
-    models_dir = BASE_DIR / "models"
-    config_dir = BASE_DIR / "config"
-    models_dir.mkdir(parents=True, exist_ok=True)
-    config_dir.mkdir(parents=True, exist_ok=True)
-    model_save_path = models_dir / "gatekeeper.pt"
-    meta_save_path = config_dir / "gatekeeper_meta.json"
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    model_save_path = output_dir / "gatekeeper.pt"
+    meta_save_path = output_dir / "gatekeeper_meta.json"
+    if model_save_path.exists():
+        raise ValueError("Output checkpoint already exists; choose a new experiment directory")
 
     best_bundle = None
 
@@ -751,6 +761,13 @@ def train(args: argparse.Namespace) -> None:
     test_metrics["auxiliary"] = auxiliary_head_metrics(test_aux_outputs)
 
     meta = {
+        "training_arguments": json.loads(json.dumps(vars(args), default=str)),
+        "training_code_sha256": sha256_file(__file__),
+        "backbone": os.getenv("GENOS_CODEBERT_BACKBONE", "microsoft/codebert-base"),
+        "dataset_manifest": dataset_manifest(data_paths),
+        "independence_audit": independence,
+        "checkpoint_sha256": sha256_file(model_save_path),
+        "evaluation_scope": "weak_labels_until_independently_annotated",
         "seed": args.seed,
         "epochs": args.epochs,
         "micro_batch_size": args.micro_batch_size,
@@ -786,7 +803,7 @@ def train(args: argparse.Namespace) -> None:
         "soft_train_count": train_dataset.soft_label_count,
         "soft_val_count": val_dataset.soft_label_count,
         "soft_test_count": test_dataset.soft_label_count,
-        "train_patch_count": len(train_dataset.labels) - len(pd.read_csv(resolve_data_path("gatekeeper_3class_train.csv")).dropna(subset=["command"])) - train_dataset.soft_label_count,
+        "train_patch_count": len(train_dataset.labels) - len(pd.read_csv(str(Path(args.data_dir) / "gatekeeper_3class_train.csv")).dropna(subset=["command"])) - train_dataset.soft_label_count,
         "non_benign_loss_weight": args.non_benign_loss_weight,
         "malicious_context_loss_weight": args.malicious_context_loss_weight,
         "ordinal_risk_loss_weight": args.ordinal_risk_loss_weight,
@@ -809,6 +826,8 @@ def train(args: argparse.Namespace) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train the Gatekeeper (Tier 1) model on fixed CSV splits.")
+    parser.add_argument("--data-dir", type=Path, default=BASE_DIR / "data/derived/scientific_v2/gatekeeper")
+    parser.add_argument("--output-dir", type=Path, default=BASE_DIR / "models/experiments/gatekeeper")
     parser.add_argument("--epochs", type=int, default=int(os.getenv("GENOS_T1_EPOCHS", "5")))
     parser.add_argument("--lr", type=float, default=float(os.getenv("GENOS_T1_LR", "1e-5")))
     parser.add_argument("--weight-decay", type=float, default=float(os.getenv("GENOS_T1_WEIGHT_DECAY", "0.01")))
@@ -832,7 +851,7 @@ if __name__ == "__main__":
     parser.add_argument("--non-benign-loss-weight", type=float, default=float(os.getenv("GENOS_T1_NON_BENIGN_LOSS_WEIGHT", "0.0")))
     parser.add_argument("--malicious-context-loss-weight", type=float, default=float(os.getenv("GENOS_T1_MALICIOUS_CONTEXT_LOSS_WEIGHT", "0.0")))
     parser.add_argument("--ordinal-risk-loss-weight", type=float, default=float(os.getenv("GENOS_T1_ORDINAL_RISK_LOSS_WEIGHT", "0.0")))
-    parser.add_argument("--stage-loss-weight", type=float, default=float(os.getenv("GENOS_T1_STAGE_LOSS_WEIGHT", "0.3")))
+    parser.add_argument("--stage-loss-weight", type=float, default=float(os.getenv("GENOS_T1_STAGE_LOSS_WEIGHT", "0.0")))
     parser.add_argument("--action-loss-weight", type=float, default=float(os.getenv("GENOS_T1_ACTION_LOSS_WEIGHT", "0.0")))
     parser.add_argument("--contrastive-loss-weight", type=float, default=float(os.getenv("GENOS_T1_CONTRASTIVE_LOSS_WEIGHT", "0.0")))
     train(parser.parse_args())

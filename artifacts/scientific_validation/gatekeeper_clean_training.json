@@ -1,0 +1,230 @@
+{
+  "training_arguments": {
+    "data_dir": "data/derived/scientific_v2/gatekeeper",
+    "output_dir": "models/experiments/scientific_v2/gatekeeper_42",
+    "epochs": 5,
+    "lr": 1e-05,
+    "weight_decay": 0.01,
+    "max_len": 256,
+    "micro_batch_size": 16,
+    "effective_batch_size": 256,
+    "num_workers": 0,
+    "seed": 42,
+    "label_smoothing": 0.05,
+    "verdict_loss": "hard_ce",
+    "balanced_sampling": true,
+    "sampling_power": 1.0,
+    "class_weight_power": 0.5,
+    "log_interval": 200,
+    "use_compile": false,
+    "deterministic": true,
+    "train_patch_jsonl": "",
+    "soft_train_jsonl": "",
+    "soft_val_jsonl": "",
+    "soft_test_jsonl": "",
+    "non_benign_loss_weight": 0.3,
+    "malicious_context_loss_weight": 0.0,
+    "ordinal_risk_loss_weight": 0.0,
+    "stage_loss_weight": 0.0,
+    "action_loss_weight": 0.0,
+    "contrastive_loss_weight": 0.0
+  },
+  "training_code_sha256": "9268bb6a258bf29003cd9687282e0447d479a6608c447e0dc1b0ce74038bc6b1",
+  "backbone": "/home/sam/genos/genos_api/data/derived/scientific_v1/codebert-base",
+  "dataset_manifest": {
+    "train": {
+      "path": "data/derived/scientific_v2/gatekeeper/gatekeeper_3class_train.csv",
+      "sha256": "785d918e52e7a15de86762fd293435ae9100e2b138c1f4445ab0942fae7e621c"
+    },
+    "val": {
+      "path": "data/derived/scientific_v2/gatekeeper/gatekeeper_3class_val.csv",
+      "sha256": "6ee5e06dd9751b18da1827812c74a075293aabd992de1adf1455eaf7067d1db3"
+    },
+    "test": {
+      "path": "data/derived/scientific_v2/gatekeeper/gatekeeper_3class_test.csv",
+      "sha256": "ddae58d80b0318a0fae555ac49721e1c83def796655157e1ccd523a311150f64"
+    }
+  },
+  "independence_audit": {
+    "normalization": "lowercase_strip",
+    "counts": {
+      "train": 57891,
+      "val": 7237,
+      "test": 7236
+    },
+    "within_split_label_conflicts": {
+      "train": 0,
+      "val": 0,
+      "test": 0
+    },
+    "overlap": {
+      "train:val": {
+        "commands": 0,
+        "conflicting_commands": 0,
+        "provenance_groups": 0
+      },
+      "train:test": {
+        "commands": 0,
+        "conflicting_commands": 0,
+        "provenance_groups": 0
+      },
+      "val:test": {
+        "commands": 0,
+        "conflicting_commands": 0,
+        "provenance_groups": 0
+      }
+    },
+    "passed": true
+  },
+  "checkpoint_sha256": "54389639d4d32fb788409afe8ae19394aa87236104e67cb9c888dc97a64da9d3",
+  "evaluation_scope": "weak_labels_until_independently_annotated",
+  "seed": 42,
+  "epochs": 5,
+  "micro_batch_size": 16,
+  "effective_batch_size": 256,
+  "max_len": 256,
+  "learning_rate": 1e-05,
+  "weight_decay": 0.01,
+  "label_smoothing": 0.05,
+  "verdict_loss": "hard_ce",
+  "balanced_sampling": true,
+  "sampling_power": 1.0,
+  "class_weight_power": 0.5,
+  "num_classes": 3,
+  "label_names": [
+    "Benign",
+    "Malicious",
+    "Context_Dependent"
+  ],
+  "evidence_label_names": [
+    "Routine_Operational",
+    "Direct_Abuse",
+    "Needs_Context"
+  ],
+  "soft_target_schema_keys": [
+    "Routine_Operational",
+    "Needs_Context",
+    "Direct_Abuse"
+  ],
+  "label_map": {
+    "Benign": 0,
+    "Malicious": 1,
+    "Context_Dependent": 2
+  },
+  "id_to_label": {
+    "0": "Benign",
+    "1": "Malicious",
+    "2": "Context_Dependent"
+  },
+  "model_architecture": "shared_codebert_with_decision_decomposition",
+  "decision_heads": [
+    "verdict_logits",
+    "non_benign_logit",
+    "malicious_given_non_benign_logit",
+    "ordinal_risk_logit"
+  ],
+  "non_benign_supervision_source": "verdict_label_projection",
+  "malicious_given_non_benign_supervision_source": "verdict_label_projection",
+  "ordinal_risk_supervision_source": "verdict_label_projection",
+  "train_patch_jsonl": null,
+  "soft_train_jsonl": null,
+  "soft_val_jsonl": null,
+  "soft_test_jsonl": null,
+  "soft_train_count": 0,
+  "soft_val_count": 0,
+  "soft_test_count": 0,
+  "train_patch_count": 0,
+  "non_benign_loss_weight": 0.3,
+  "malicious_context_loss_weight": 0.0,
+  "ordinal_risk_loss_weight": 0.0,
+  "stage_loss_weight": 0.0,
+  "action_loss_weight": 0.0,
+  "contrastive_loss_weight": 0.0,
+  "best_epoch": 5,
+  "class_weights": [
+    0.8266472816467285,
+    0.9960078597068787,
+    1.3754500150680542
+  ],
+  "val_metrics": {
+    "accuracy": 0.9081110957579107,
+    "macro_f1": 0.7146765597353085,
+    "macro_precision": 0.697589117838192,
+    "macro_recall": 0.7345603739833594,
+    "per_class": {
+      "Benign": {
+        "precision": 0.9673744174003107,
+        "recall": 0.9445474464857576,
+        "f1": 0.9558246631417362,
+        "tp": 5604,
+        "fp": 189,
+        "fn": 329
+      },
+      "Malicious": {
+        "precision": 0.74263431542461,
+        "recall": 0.8115530303030303,
+        "f1": 0.7755656108597284,
+        "tp": 857,
+        "fp": 297,
+        "fn": 199
+      },
+      "Context_Dependent": {
+        "precision": 0.38275862068965516,
+        "recall": 0.4475806451612903,
+        "f1": 0.412639405204461,
+        "tp": 111,
+        "fp": 179,
+        "fn": 137
+      }
+    },
+    "loss": 0.3971184367087231,
+    "auxiliary": {
+      "non_benign_auc": 0.9652751998544069,
+      "non_benign_ap": 0.9003707321768518,
+      "malicious_given_non_benign_auc": 0.28036985276148585,
+      "malicious_given_non_benign_ap": 0.7127746401394897,
+      "ordinal_mae": 0.5566451117629024
+    }
+  },
+  "test_metrics": {
+    "accuracy": 0.9096185737976783,
+    "macro_f1": 0.7177526993123285,
+    "macro_precision": 0.7159296218396186,
+    "macro_recall": 0.7233817823242928,
+    "per_class": {
+      "Benign": {
+        "precision": 0.9671337138903304,
+        "recall": 0.9484308736217133,
+        "f1": 0.9576909900650908,
+        "tp": 5591,
+        "fp": 190,
+        "fn": 304
+      },
+      "Malicious": {
+        "precision": 0.7249589490968801,
+        "recall": 0.8275538894095595,
+        "f1": 0.7728665207877462,
+        "tp": 883,
+        "fp": 335,
+        "fn": 184
+      },
+      "Context_Dependent": {
+        "precision": 0.45569620253164556,
+        "recall": 0.39416058394160586,
+        "f1": 0.42270058708414876,
+        "tp": 108,
+        "fp": 129,
+        "fn": 166
+      }
+    },
+    "loss": 0.39761186565332746,
+    "auxiliary": {
+      "non_benign_auc": 0.9707493616539504,
+      "non_benign_ap": 0.9068041166331247,
+      "malicious_given_non_benign_auc": 0.3388191874345836,
+      "malicious_given_non_benign_ap": 0.7077297741144963,
+      "ordinal_mae": 0.5544304370616535
+    }
+  },
+  "model_path": "models/experiments/scientific_v2/gatekeeper_42/gatekeeper.pt"
+}

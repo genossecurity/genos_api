@@ -1,0 +1,1189 @@
+{
+  "runs": [
+    {
+      "seed": 42,
+      "input_format": "raw",
+      "metrics": {
+        "val": {
+          "top1_acc": 0.3841059602649007,
+          "top5_acc": 0.6291390728476821,
+          "macro_f1": 0.20141344760639684,
+          "unseen_label_rows": 1,
+          "calibration": {
+            "n": 755,
+            "accuracy": 0.3841059602649007,
+            "nll": 4.666011569160564,
+            "brier": 0.7567733851609635,
+            "ece_10_equal_width": 0.06697830634868057,
+            "reliability_bins": [
+              {
+                "lower": 0.0,
+                "upper": 0.1,
+                "n": 13,
+                "accuracy": 0.23076923076923078,
+                "confidence": 0.09038461538461538
+              },
+              {
+                "lower": 0.1,
+                "upper": 0.2,
+                "n": 254,
+                "accuracy": 0.1377952755905512,
+                "confidence": 0.15150590551181103
+              },
+              {
+                "lower": 0.2,
+                "upper": 0.3,
+                "n": 181,
+                "accuracy": 0.3259668508287293,
+                "confidence": 0.2448895027624309
+              },
+              {
+                "lower": 0.3,
+                "upper": 0.4,
+                "n": 100,
+                "accuracy": 0.3,
+                "confidence": 0.3388862129325382
+              },
+              {
+                "lower": 0.4,
+                "upper": 0.5,
+                "n": 64,
+                "accuracy": 0.609375,
+                "confidence": 0.4455078125
+              },
+              {
+                "lower": 0.5,
+                "upper": 0.6,
+                "n": 33,
+                "accuracy": 0.7575757575757576,
+                "confidence": 0.5516666666666667
+              },
+              {
+                "lower": 0.6,
+                "upper": 0.7,
+                "n": 30,
+                "accuracy": 0.8,
+                "confidence": 0.6408333333333333
+              },
+              {
+                "lower": 0.7,
+                "upper": 0.8,
+                "n": 18,
+                "accuracy": 0.8888888888888888,
+                "confidence": 0.7470833333333332
+              },
+              {
+                "lower": 0.8,
+                "upper": 0.9,
+                "n": 21,
+                "accuracy": 0.8571428571428571,
+                "confidence": 0.8391666666666666
+              },
+              {
+                "lower": 0.9,
+                "upper": 1.0,
+                "n": 41,
+                "accuracy": 1.0,
+                "confidence": 0.9582926829268292
+              }
+            ]
+          }
+        },
+        "test": {
+          "top1_acc": 0.37880794701986753,
+          "top5_acc": 0.6119205298013245,
+          "macro_f1": 0.21452901388061704,
+          "unseen_label_rows": 2,
+          "calibration": {
+            "n": 755,
+            "accuracy": 0.37880794701986753,
+            "nll": 5.076167411077525,
+            "brier": 0.7736878084179133,
+            "ece_10_equal_width": 0.06343408030106788,
+            "reliability_bins": [
+              {
+                "lower": 0.0,
+                "upper": 0.1,
+                "n": 28,
+                "accuracy": 0.0,
+                "confidence": 0.09036537954665261
+              },
+              {
+                "lower": 0.1,
+                "upper": 0.2,
+                "n": 275,
+                "accuracy": 0.1709090909090909,
+                "confidence": 0.1514818181818182
+              },
+              {
+                "lower": 0.2,
+                "upper": 0.3,
+                "n": 160,
+                "accuracy": 0.34375,
+                "confidence": 0.24631250000000002
+              },
+              {
+                "lower": 0.3,
+                "upper": 0.4,
+                "n": 85,
+                "accuracy": 0.38823529411764707,
+                "confidence": 0.3460882352941177
+              },
+              {
+                "lower": 0.4,
+                "upper": 0.5,
+                "n": 69,
+                "accuracy": 0.5217391304347826,
+                "confidence": 0.4412681159420291
+              },
+              {
+                "lower": 0.5,
+                "upper": 0.6,
+                "n": 46,
+                "accuracy": 0.6956521739130435,
+                "confidence": 0.5429891304347827
+              },
+              {
+                "lower": 0.6,
+                "upper": 0.7,
+                "n": 17,
+                "accuracy": 0.8235294117647058,
+                "confidence": 0.6408823529411765
+              },
+              {
+                "lower": 0.7,
+                "upper": 0.8,
+                "n": 16,
+                "accuracy": 0.8125,
+                "confidence": 0.7546875
+              },
+              {
+                "lower": 0.8,
+                "upper": 0.9,
+                "n": 22,
+                "accuracy": 1.0,
+                "confidence": 0.854659090909091
+              },
+              {
+                "lower": 0.9,
+                "upper": 1.0,
+                "n": 37,
+                "accuracy": 0.918918918918919,
+                "confidence": 0.9471621621621622
+              }
+            ]
+          }
+        }
+      },
+      "checkpoint_sha256": "577f9ad1d7f9724ff6ec1eeec46525764873a5769f76e40a5526b187a6f82450",
+      "dataset_manifest": {
+        "train": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/mitre/specialist_train_variant_a.jsonl",
+          "sha256": "916556824ef1b1d6272857e19eb885fc149ac0267a273f35ae8487f7fb1a0a77"
+        },
+        "val": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/mitre/specialist_val_variant_a.jsonl",
+          "sha256": "d9b2b006665ee93181d6a9bcf70b1b386f552c44bc8ec08bb51de753bac08fc0"
+        },
+        "test": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/mitre/specialist_test_variant_a.jsonl",
+          "sha256": "fa5ea938c77df4dc713d385c88de5de7ba362056941ee3c6a4bd097961d8d8df"
+        }
+      }
+    },
+    {
+      "seed": 42,
+      "input_format": "structured",
+      "metrics": {
+        "val": {
+          "top1_acc": 0.36026490066225164,
+          "top5_acc": 0.5827814569536424,
+          "macro_f1": 0.19924496390084653,
+          "unseen_label_rows": 1,
+          "calibration": {
+            "n": 755,
+            "accuracy": 0.36026490066225164,
+            "nll": 5.210410587122185,
+            "brier": 0.7821234536894263,
+            "ece_10_equal_width": 0.05526395600092386,
+            "reliability_bins": [
+              {
+                "lower": 0.0,
+                "upper": 0.1,
+                "n": 31,
+                "accuracy": 0.03225806451612903,
+                "confidence": 0.09048387096774191
+              },
+              {
+                "lower": 0.1,
+                "upper": 0.2,
+                "n": 222,
+                "accuracy": 0.18018018018018017,
+                "confidence": 0.1483558558558558
+              },
+              {
+                "lower": 0.2,
+                "upper": 0.3,
+                "n": 190,
+                "accuracy": 0.19473684210526315,
+                "confidence": 0.24460818713450294
+              },
+              {
+                "lower": 0.3,
+                "upper": 0.4,
+                "n": 104,
+                "accuracy": 0.40384615384615385,
+                "confidence": 0.34020361713716796
+              },
+              {
+                "lower": 0.4,
+                "upper": 0.5,
+                "n": 64,
+                "accuracy": 0.484375,
+                "confidence": 0.44789207175925927
+              },
+              {
+                "lower": 0.5,
+                "upper": 0.6,
+                "n": 45,
+                "accuracy": 0.6888888888888889,
+                "confidence": 0.5428333333333334
+              },
+              {
+                "lower": 0.6,
+                "upper": 0.7,
+                "n": 15,
+                "accuracy": 0.8,
+                "confidence": 0.6466666666666666
+              },
+              {
+                "lower": 0.7,
+                "upper": 0.8,
+                "n": 19,
+                "accuracy": 0.7368421052631579,
+                "confidence": 0.7434210526315791
+              },
+              {
+                "lower": 0.8,
+                "upper": 0.9,
+                "n": 30,
+                "accuracy": 0.9666666666666667,
+                "confidence": 0.8512500000000001
+              },
+              {
+                "lower": 0.9,
+                "upper": 1.0,
+                "n": 35,
+                "accuracy": 1.0,
+                "confidence": 0.9438571428571427
+              }
+            ]
+          }
+        },
+        "test": {
+          "top1_acc": 0.3483443708609272,
+          "top5_acc": 0.5682119205298013,
+          "macro_f1": 0.19375623126413383,
+          "unseen_label_rows": 2,
+          "calibration": {
+            "n": 755,
+            "accuracy": 0.3483443708609272,
+            "nll": 5.326256977650431,
+            "brier": 0.8013095033112582,
+            "ece_10_equal_width": 0.04007615894039736,
+            "reliability_bins": [
+              {
+                "lower": 0.0,
+                "upper": 0.1,
+                "n": 34,
+                "accuracy": 0.029411764705882353,
+                "confidence": 0.09014705882352941
+              },
+              {
+                "lower": 0.1,
+                "upper": 0.2,
+                "n": 277,
+                "accuracy": 0.16967509025270758,
+                "confidence": 0.15041516245487363
+              },
+              {
+                "lower": 0.2,
+                "upper": 0.3,
+                "n": 164,
+                "accuracy": 0.3170731707317073,
+                "confidence": 0.24408536585365853
+              },
+              {
+                "lower": 0.3,
+                "upper": 0.4,
+                "n": 83,
+                "accuracy": 0.3614457831325301,
+                "confidence": 0.34171686746987956
+              },
+              {
+                "lower": 0.4,
+                "upper": 0.5,
+                "n": 55,
+                "accuracy": 0.4,
+                "confidence": 0.4418636363636364
+              },
+              {
+                "lower": 0.5,
+                "upper": 0.6,
+                "n": 50,
+                "accuracy": 0.62,
+                "confidence": 0.5419
+              },
+              {
+                "lower": 0.6,
+                "upper": 0.7,
+                "n": 16,
+                "accuracy": 0.75,
+                "confidence": 0.63484375
+              },
+              {
+                "lower": 0.7,
+                "upper": 0.8,
+                "n": 13,
+                "accuracy": 0.7692307692307693,
+                "confidence": 0.74
+              },
+              {
+                "lower": 0.8,
+                "upper": 0.9,
+                "n": 25,
+                "accuracy": 0.88,
+                "confidence": 0.8485
+              },
+              {
+                "lower": 0.9,
+                "upper": 1.0,
+                "n": 38,
+                "accuracy": 0.9473684210526315,
+                "confidence": 0.9482236842105263
+              }
+            ]
+          }
+        }
+      },
+      "checkpoint_sha256": "c7566c84080af73e0c0586f49661e75f8750d386f6e7c77b6af0a305e23a5e39",
+      "dataset_manifest": {
+        "train": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/mitre/specialist_train_variant_a.jsonl",
+          "sha256": "916556824ef1b1d6272857e19eb885fc149ac0267a273f35ae8487f7fb1a0a77"
+        },
+        "val": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/mitre/specialist_val_variant_a.jsonl",
+          "sha256": "d9b2b006665ee93181d6a9bcf70b1b386f552c44bc8ec08bb51de753bac08fc0"
+        },
+        "test": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/mitre/specialist_test_variant_a.jsonl",
+          "sha256": "fa5ea938c77df4dc713d385c88de5de7ba362056941ee3c6a4bd097961d8d8df"
+        }
+      }
+    },
+    {
+      "seed": 43,
+      "input_format": "raw",
+      "metrics": {
+        "val": {
+          "top1_acc": 0.38543046357615895,
+          "top5_acc": 0.6304635761589404,
+          "macro_f1": 0.19962353052820359,
+          "unseen_label_rows": 1,
+          "calibration": {
+            "n": 755,
+            "accuracy": 0.38543046357615895,
+            "nll": 4.67889982982016,
+            "brier": 0.7569562289753871,
+            "ece_10_equal_width": 0.05396791560558858,
+            "reliability_bins": [
+              {
+                "lower": 0.0,
+                "upper": 0.1,
+                "n": 18,
+                "accuracy": 0.0,
+                "confidence": 0.09069444444444444
+              },
+              {
+                "lower": 0.1,
+                "upper": 0.2,
+                "n": 247,
+                "accuracy": 0.15384615384615385,
+                "confidence": 0.15278400348584625
+              },
+              {
+                "lower": 0.2,
+                "upper": 0.3,
+                "n": 186,
+                "accuracy": 0.3225806451612903,
+                "confidence": 0.2456931291309066
+              },
+              {
+                "lower": 0.3,
+                "upper": 0.4,
+                "n": 107,
+                "accuracy": 0.34579439252336447,
+                "confidence": 0.34474441905072856
+              },
+              {
+                "lower": 0.4,
+                "upper": 0.5,
+                "n": 58,
+                "accuracy": 0.5862068965517241,
+                "confidence": 0.45
+              },
+              {
+                "lower": 0.5,
+                "upper": 0.6,
+                "n": 32,
+                "accuracy": 0.8125,
+                "confidence": 0.54609375
+              },
+              {
+                "lower": 0.6,
+                "upper": 0.7,
+                "n": 27,
+                "accuracy": 0.7407407407407407,
+                "confidence": 0.6452777777777777
+              },
+              {
+                "lower": 0.7,
+                "upper": 0.8,
+                "n": 18,
+                "accuracy": 0.8888888888888888,
+                "confidence": 0.7455555555555556
+              },
+              {
+                "lower": 0.8,
+                "upper": 0.9,
+                "n": 21,
+                "accuracy": 0.9047619047619048,
+                "confidence": 0.845952380952381
+              },
+              {
+                "lower": 0.9,
+                "upper": 1.0,
+                "n": 41,
+                "accuracy": 1.0,
+                "confidence": 0.9604878048780489
+              }
+            ]
+          }
+        },
+        "test": {
+          "top1_acc": 0.3920529801324503,
+          "top5_acc": 0.6132450331125828,
+          "macro_f1": 0.22498592738375728,
+          "unseen_label_rows": 2,
+          "calibration": {
+            "n": 755,
+            "accuracy": 0.3920529801324503,
+            "nll": 4.981476985157355,
+            "brier": 0.772457569739104,
+            "ece_10_equal_width": 0.06957924528301886,
+            "reliability_bins": [
+              {
+                "lower": 0.0,
+                "upper": 0.1,
+                "n": 21,
+                "accuracy": 0.09523809523809523,
+                "confidence": 0.08845238095238094
+              },
+              {
+                "lower": 0.1,
+                "upper": 0.2,
+                "n": 262,
+                "accuracy": 0.1717557251908397,
+                "confidence": 0.14619274809160307
+              },
+              {
+                "lower": 0.2,
+                "upper": 0.3,
+                "n": 176,
+                "accuracy": 0.3409090909090909,
+                "confidence": 0.24308238636363635
+              },
+              {
+                "lower": 0.3,
+                "upper": 0.4,
+                "n": 95,
+                "accuracy": 0.4105263157894737,
+                "confidence": 0.3435
+              },
+              {
+                "lower": 0.4,
+                "upper": 0.5,
+                "n": 67,
+                "accuracy": 0.5223880597014925,
+                "confidence": 0.44731596733314566
+              },
+              {
+                "lower": 0.5,
+                "upper": 0.6,
+                "n": 41,
+                "accuracy": 0.7560975609756098,
+                "confidence": 0.5393292682926829
+              },
+              {
+                "lower": 0.6,
+                "upper": 0.7,
+                "n": 21,
+                "accuracy": 0.8095238095238095,
+                "confidence": 0.6473809523809523
+              },
+              {
+                "lower": 0.7,
+                "upper": 0.8,
+                "n": 11,
+                "accuracy": 0.8181818181818182,
+                "confidence": 0.7602272727272726
+              },
+              {
+                "lower": 0.8,
+                "upper": 0.9,
+                "n": 22,
+                "accuracy": 1.0,
+                "confidence": 0.8526136363636362
+              },
+              {
+                "lower": 0.9,
+                "upper": 1.0,
+                "n": 39,
+                "accuracy": 0.9230769230769231,
+                "confidence": 0.9462820512820513
+              }
+            ]
+          }
+        }
+      },
+      "checkpoint_sha256": "77d65b2cbe7d4cf054c8e865b1546b4c512a305d3b0c740128aa5a9a6683f7e3",
+      "dataset_manifest": {
+        "train": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/mitre/specialist_train_variant_a.jsonl",
+          "sha256": "916556824ef1b1d6272857e19eb885fc149ac0267a273f35ae8487f7fb1a0a77"
+        },
+        "val": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/mitre/specialist_val_variant_a.jsonl",
+          "sha256": "d9b2b006665ee93181d6a9bcf70b1b386f552c44bc8ec08bb51de753bac08fc0"
+        },
+        "test": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/mitre/specialist_test_variant_a.jsonl",
+          "sha256": "fa5ea938c77df4dc713d385c88de5de7ba362056941ee3c6a4bd097961d8d8df"
+        }
+      }
+    },
+    {
+      "seed": 43,
+      "input_format": "structured",
+      "metrics": {
+        "val": {
+          "top1_acc": 0.3655629139072848,
+          "top5_acc": 0.5801324503311258,
+          "macro_f1": 0.20701551373207866,
+          "unseen_label_rows": 1,
+          "calibration": {
+            "n": 755,
+            "accuracy": 0.3655629139072848,
+            "nll": 4.925142701072008,
+            "brier": 0.7818206906509911,
+            "ece_10_equal_width": 0.03738847600170219,
+            "reliability_bins": [
+              {
+                "lower": 0.0,
+                "upper": 0.1,
+                "n": 25,
+                "accuracy": 0.08,
+                "confidence": 0.08549999999999999
+              },
+              {
+                "lower": 0.1,
+                "upper": 0.2,
+                "n": 246,
+                "accuracy": 0.16666666666666666,
+                "confidence": 0.14974593495934957
+              },
+              {
+                "lower": 0.2,
+                "upper": 0.3,
+                "n": 178,
+                "accuracy": 0.23595505617977527,
+                "confidence": 0.24871991732001708
+              },
+              {
+                "lower": 0.3,
+                "upper": 0.4,
+                "n": 99,
+                "accuracy": 0.3939393939393939,
+                "confidence": 0.3406060606060607
+              },
+              {
+                "lower": 0.4,
+                "upper": 0.5,
+                "n": 55,
+                "accuracy": 0.5454545454545454,
+                "confidence": 0.4469545454545454
+              },
+              {
+                "lower": 0.5,
+                "upper": 0.6,
+                "n": 53,
+                "accuracy": 0.6226415094339622,
+                "confidence": 0.5368650170127901
+              },
+              {
+                "lower": 0.6,
+                "upper": 0.7,
+                "n": 17,
+                "accuracy": 0.6470588235294118,
+                "confidence": 0.6485294117647059
+              },
+              {
+                "lower": 0.7,
+                "upper": 0.8,
+                "n": 17,
+                "accuracy": 0.8235294117647058,
+                "confidence": 0.7414705882352941
+              },
+              {
+                "lower": 0.8,
+                "upper": 0.9,
+                "n": 30,
+                "accuracy": 0.9666666666666667,
+                "confidence": 0.8544166666666668
+              },
+              {
+                "lower": 0.9,
+                "upper": 1.0,
+                "n": 35,
+                "accuracy": 1.0,
+                "confidence": 0.9535714285714286
+              }
+            ]
+          }
+        },
+        "test": {
+          "top1_acc": 0.3456953642384106,
+          "top5_acc": 0.5668874172185431,
+          "macro_f1": 0.20549760003369485,
+          "unseen_label_rows": 2,
+          "calibration": {
+            "n": 755,
+            "accuracy": 0.3456953642384106,
+            "nll": 5.417402234020592,
+            "brier": 0.8008059414757958,
+            "ece_10_equal_width": 0.03714238410596026,
+            "reliability_bins": [
+              {
+                "lower": 0.0,
+                "upper": 0.1,
+                "n": 26,
+                "accuracy": 0.07692307692307693,
+                "confidence": 0.08653846153846154
+              },
+              {
+                "lower": 0.1,
+                "upper": 0.2,
+                "n": 290,
+                "accuracy": 0.1482758620689655,
+                "confidence": 0.14723275862068966
+              },
+              {
+                "lower": 0.2,
+                "upper": 0.3,
+                "n": 164,
+                "accuracy": 0.34146341463414637,
+                "confidence": 0.2433231707317073
+              },
+              {
+                "lower": 0.3,
+                "upper": 0.4,
+                "n": 82,
+                "accuracy": 0.4024390243902439,
+                "confidence": 0.34740853658536586
+              },
+              {
+                "lower": 0.4,
+                "upper": 0.5,
+                "n": 54,
+                "accuracy": 0.3888888888888889,
+                "confidence": 0.4459259259259259
+              },
+              {
+                "lower": 0.5,
+                "upper": 0.6,
+                "n": 44,
+                "accuracy": 0.5454545454545454,
+                "confidence": 0.5366477272727274
+              },
+              {
+                "lower": 0.6,
+                "upper": 0.7,
+                "n": 22,
+                "accuracy": 0.6818181818181818,
+                "confidence": 0.6398863636363635
+              },
+              {
+                "lower": 0.7,
+                "upper": 0.8,
+                "n": 12,
+                "accuracy": 0.8333333333333334,
+                "confidence": 0.75
+              },
+              {
+                "lower": 0.8,
+                "upper": 0.9,
+                "n": 23,
+                "accuracy": 0.9130434782608695,
+                "confidence": 0.8538043478260869
+              },
+              {
+                "lower": 0.9,
+                "upper": 1.0,
+                "n": 38,
+                "accuracy": 0.9473684210526315,
+                "confidence": 0.9507894736842104
+              }
+            ]
+          }
+        }
+      },
+      "checkpoint_sha256": "b526ce64a1667c140e4dba90318a266f255ce96ee7ef84acfab470198980f55c",
+      "dataset_manifest": {
+        "train": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/mitre/specialist_train_variant_a.jsonl",
+          "sha256": "916556824ef1b1d6272857e19eb885fc149ac0267a273f35ae8487f7fb1a0a77"
+        },
+        "val": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/mitre/specialist_val_variant_a.jsonl",
+          "sha256": "d9b2b006665ee93181d6a9bcf70b1b386f552c44bc8ec08bb51de753bac08fc0"
+        },
+        "test": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/mitre/specialist_test_variant_a.jsonl",
+          "sha256": "fa5ea938c77df4dc713d385c88de5de7ba362056941ee3c6a4bd097961d8d8df"
+        }
+      }
+    },
+    {
+      "seed": 44,
+      "input_format": "raw",
+      "metrics": {
+        "val": {
+          "top1_acc": 0.38543046357615895,
+          "top5_acc": 0.6278145695364239,
+          "macro_f1": 0.20210640663206478,
+          "unseen_label_rows": 1,
+          "calibration": {
+            "n": 755,
+            "accuracy": 0.38543046357615895,
+            "nll": 4.728764848228164,
+            "brier": 0.7563170911862795,
+            "ece_10_equal_width": 0.04860834283344259,
+            "reliability_bins": [
+              {
+                "lower": 0.0,
+                "upper": 0.1,
+                "n": 13,
+                "accuracy": 0.15384615384615385,
+                "confidence": 0.08846153846153844
+              },
+              {
+                "lower": 0.1,
+                "upper": 0.2,
+                "n": 253,
+                "accuracy": 0.15810276679841898,
+                "confidence": 0.15210437256593046
+              },
+              {
+                "lower": 0.2,
+                "upper": 0.3,
+                "n": 182,
+                "accuracy": 0.29120879120879123,
+                "confidence": 0.2450412087912088
+              },
+              {
+                "lower": 0.3,
+                "upper": 0.4,
+                "n": 108,
+                "accuracy": 0.37037037037037035,
+                "confidence": 0.3434795824219486
+              },
+              {
+                "lower": 0.4,
+                "upper": 0.5,
+                "n": 53,
+                "accuracy": 0.5094339622641509,
+                "confidence": 0.44613207547169803
+              },
+              {
+                "lower": 0.5,
+                "upper": 0.6,
+                "n": 39,
+                "accuracy": 0.8461538461538461,
+                "confidence": 0.5508333333333332
+              },
+              {
+                "lower": 0.6,
+                "upper": 0.7,
+                "n": 25,
+                "accuracy": 0.72,
+                "confidence": 0.6435
+              },
+              {
+                "lower": 0.7,
+                "upper": 0.8,
+                "n": 22,
+                "accuracy": 0.9090909090909091,
+                "confidence": 0.7413636363636363
+              },
+              {
+                "lower": 0.8,
+                "upper": 0.9,
+                "n": 19,
+                "accuracy": 0.8947368421052632,
+                "confidence": 0.8464473684210526
+              },
+              {
+                "lower": 0.9,
+                "upper": 1.0,
+                "n": 41,
+                "accuracy": 1.0,
+                "confidence": 0.9601829268292683
+              }
+            ]
+          }
+        },
+        "test": {
+          "top1_acc": 0.3933774834437086,
+          "top5_acc": 0.6119205298013245,
+          "macro_f1": 0.22531623512079982,
+          "unseen_label_rows": 2,
+          "calibration": {
+            "n": 755,
+            "accuracy": 0.3933774834437086,
+            "nll": 5.1122835507456115,
+            "brier": 0.7728136585777157,
+            "ece_10_equal_width": 0.0746026490066225,
+            "reliability_bins": [
+              {
+                "lower": 0.0,
+                "upper": 0.1,
+                "n": 19,
+                "accuracy": 0.0,
+                "confidence": 0.09078947368421053
+              },
+              {
+                "lower": 0.1,
+                "upper": 0.2,
+                "n": 276,
+                "accuracy": 0.18478260869565216,
+                "confidence": 0.1490036231884058
+              },
+              {
+                "lower": 0.2,
+                "upper": 0.3,
+                "n": 159,
+                "accuracy": 0.34591194968553457,
+                "confidence": 0.240314465408805
+              },
+              {
+                "lower": 0.3,
+                "upper": 0.4,
+                "n": 97,
+                "accuracy": 0.4020618556701031,
+                "confidence": 0.3437113402061856
+              },
+              {
+                "lower": 0.4,
+                "upper": 0.5,
+                "n": 67,
+                "accuracy": 0.5671641791044776,
+                "confidence": 0.44470149253731345
+              },
+              {
+                "lower": 0.5,
+                "upper": 0.6,
+                "n": 42,
+                "accuracy": 0.6666666666666666,
+                "confidence": 0.5380952380952382
+              },
+              {
+                "lower": 0.6,
+                "upper": 0.7,
+                "n": 19,
+                "accuracy": 0.8947368421052632,
+                "confidence": 0.6351315789473685
+              },
+              {
+                "lower": 0.7,
+                "upper": 0.8,
+                "n": 16,
+                "accuracy": 0.75,
+                "confidence": 0.75
+              },
+              {
+                "lower": 0.8,
+                "upper": 0.9,
+                "n": 20,
+                "accuracy": 1.0,
+                "confidence": 0.8556250000000001
+              },
+              {
+                "lower": 0.9,
+                "upper": 1.0,
+                "n": 40,
+                "accuracy": 0.925,
+                "confidence": 0.94625
+              }
+            ]
+          }
+        }
+      },
+      "checkpoint_sha256": "155b57180a4228358d110109a730e54f58b5e409974cb41f277300938656fe5c",
+      "dataset_manifest": {
+        "train": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/mitre/specialist_train_variant_a.jsonl",
+          "sha256": "916556824ef1b1d6272857e19eb885fc149ac0267a273f35ae8487f7fb1a0a77"
+        },
+        "val": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/mitre/specialist_val_variant_a.jsonl",
+          "sha256": "d9b2b006665ee93181d6a9bcf70b1b386f552c44bc8ec08bb51de753bac08fc0"
+        },
+        "test": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/mitre/specialist_test_variant_a.jsonl",
+          "sha256": "fa5ea938c77df4dc713d385c88de5de7ba362056941ee3c6a4bd097961d8d8df"
+        }
+      }
+    },
+    {
+      "seed": 44,
+      "input_format": "structured",
+      "metrics": {
+        "val": {
+          "top1_acc": 0.3576158940397351,
+          "top5_acc": 0.5814569536423841,
+          "macro_f1": 0.1939423411456877,
+          "unseen_label_rows": 1,
+          "calibration": {
+            "n": 755,
+            "accuracy": 0.3576158940397351,
+            "nll": 4.889544892428256,
+            "brier": 0.781486042593668,
+            "ece_10_equal_width": 0.03459605201720897,
+            "reliability_bins": [
+              {
+                "lower": 0.0,
+                "upper": 0.1,
+                "n": 31,
+                "accuracy": 0.0967741935483871,
+                "confidence": 0.08830645161290322
+              },
+              {
+                "lower": 0.1,
+                "upper": 0.2,
+                "n": 231,
+                "accuracy": 0.15584415584415584,
+                "confidence": 0.14887445887445888
+              },
+              {
+                "lower": 0.2,
+                "upper": 0.3,
+                "n": 187,
+                "accuracy": 0.2192513368983957,
+                "confidence": 0.24327167786463944
+              },
+              {
+                "lower": 0.3,
+                "upper": 0.4,
+                "n": 102,
+                "accuracy": 0.38235294117647056,
+                "confidence": 0.34524509803921566
+              },
+              {
+                "lower": 0.4,
+                "upper": 0.5,
+                "n": 59,
+                "accuracy": 0.5254237288135594,
+                "confidence": 0.4524031269100813
+              },
+              {
+                "lower": 0.5,
+                "upper": 0.6,
+                "n": 46,
+                "accuracy": 0.6739130434782609,
+                "confidence": 0.5544565217391305
+              },
+              {
+                "lower": 0.6,
+                "upper": 0.7,
+                "n": 14,
+                "accuracy": 0.7142857142857143,
+                "confidence": 0.6483928571428571
+              },
+              {
+                "lower": 0.7,
+                "upper": 0.8,
+                "n": 20,
+                "accuracy": 0.75,
+                "confidence": 0.7468750000000001
+              },
+              {
+                "lower": 0.8,
+                "upper": 0.9,
+                "n": 30,
+                "accuracy": 0.9666666666666667,
+                "confidence": 0.8523333333333335
+              },
+              {
+                "lower": 0.9,
+                "upper": 1.0,
+                "n": 35,
+                "accuracy": 1.0,
+                "confidence": 0.9499285714285715
+              }
+            ]
+          }
+        },
+        "test": {
+          "top1_acc": 0.3443708609271523,
+          "top5_acc": 0.5774834437086093,
+          "macro_f1": 0.19363709447946456,
+          "unseen_label_rows": 2,
+          "calibration": {
+            "n": 755,
+            "accuracy": 0.3443708609271523,
+            "nll": 5.362647750549788,
+            "brier": 0.7990586003912215,
+            "ece_10_equal_width": 0.03413907284768212,
+            "reliability_bins": [
+              {
+                "lower": 0.0,
+                "upper": 0.1,
+                "n": 23,
+                "accuracy": 0.043478260869565216,
+                "confidence": 0.08608695652173913
+              },
+              {
+                "lower": 0.1,
+                "upper": 0.2,
+                "n": 287,
+                "accuracy": 0.15331010452961671,
+                "confidence": 0.1475871080139373
+              },
+              {
+                "lower": 0.2,
+                "upper": 0.3,
+                "n": 160,
+                "accuracy": 0.325,
+                "confidence": 0.24634375
+              },
+              {
+                "lower": 0.3,
+                "upper": 0.4,
+                "n": 90,
+                "accuracy": 0.32222222222222224,
+                "confidence": 0.34044444444444444
+              },
+              {
+                "lower": 0.4,
+                "upper": 0.5,
+                "n": 59,
+                "accuracy": 0.5084745762711864,
+                "confidence": 0.4441525423728813
+              },
+              {
+                "lower": 0.5,
+                "upper": 0.6,
+                "n": 44,
+                "accuracy": 0.5227272727272727,
+                "confidence": 0.5465909090909091
+              },
+              {
+                "lower": 0.6,
+                "upper": 0.7,
+                "n": 17,
+                "accuracy": 0.7647058823529411,
+                "confidence": 0.6430882352941176
+              },
+              {
+                "lower": 0.7,
+                "upper": 0.8,
+                "n": 13,
+                "accuracy": 0.8461538461538461,
+                "confidence": 0.7492307692307691
+              },
+              {
+                "lower": 0.8,
+                "upper": 0.9,
+                "n": 25,
+                "accuracy": 0.88,
+                "confidence": 0.8597000000000001
+              },
+              {
+                "lower": 0.9,
+                "upper": 1.0,
+                "n": 37,
+                "accuracy": 0.9459459459459459,
+                "confidence": 0.9526351351351352
+              }
+            ]
+          }
+        }
+      },
+      "checkpoint_sha256": "af22273971dea954f730dbc9e28c2277e9be5df42816e06add84fd992a052d72",
+      "dataset_manifest": {
+        "train": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/mitre/specialist_train_variant_a.jsonl",
+          "sha256": "916556824ef1b1d6272857e19eb885fc149ac0267a273f35ae8487f7fb1a0a77"
+        },
+        "val": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/mitre/specialist_val_variant_a.jsonl",
+          "sha256": "d9b2b006665ee93181d6a9bcf70b1b386f552c44bc8ec08bb51de753bac08fc0"
+        },
+        "test": {
+          "path": "/home/sam/genos/genos_api/data/derived/scientific_v2/mitre/specialist_test_variant_a.jsonl",
+          "sha256": "fa5ea938c77df4dc713d385c88de5de7ba362056941ee3c6a4bd097961d8d8df"
+        }
+      }
+    }
+  ],
+  "paired_comparisons": {
+    "42": {
+      "n": 755,
+      "groups": 755,
+      "accuracy_delta_right_minus_left": -0.030463576158940398,
+      "paired_group_bootstrap_95_percent_interval": [
+        -0.05695364238410596,
+        -0.003973509933774834
+      ],
+      "iterations": 2000,
+      "seed": 42,
+      "limitation": "Conditional on these labels, groups, training runs, and test population; does not establish operational validity"
+    },
+    "43": {
+      "n": 755,
+      "groups": 755,
+      "accuracy_delta_right_minus_left": -0.046357615894039736,
+      "paired_group_bootstrap_95_percent_interval": [
+        -0.0728476821192053,
+        -0.018543046357615896
+      ],
+      "iterations": 2000,
+      "seed": 42,
+      "limitation": "Conditional on these labels, groups, training runs, and test population; does not establish operational validity"
+    },
+    "44": {
+      "n": 755,
+      "groups": 755,
+      "accuracy_delta_right_minus_left": -0.04900662251655629,
+      "paired_group_bootstrap_95_percent_interval": [
+        -0.07417218543046358,
+        -0.02119205298013245
+      ],
+      "iterations": 2000,
+      "seed": 42,
+      "limitation": "Conditional on these labels, groups, training runs, and test population; does not establish operational validity"
+    }
+  },
+  "scope": "Newly trained models; weak labels; disjoint inferred tool families; no operational-validity claim"
+}

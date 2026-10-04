@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import random
 import sys
 import time
@@ -9,13 +10,16 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.amp import autocast, GradScaler
 from sklearn.metrics import accuracy_score, f1_score
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from transformers import RobertaModel, RobertaTokenizer
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-DATA_DIR = BASE_DIR / "data" / "training" / "genos_behavior"
+sys.path.insert(0, str(BASE_DIR))
+from scientific_validation import read_rows, representation, require_disjoint, dataset_manifest, sha256_file
+DATA_DIR = BASE_DIR / "data/derived/scientific_v2/behavior"
 CONFIG_DIR = BASE_DIR / "config"
 MODELS_DIR = BASE_DIR / "models"
 
@@ -62,7 +66,7 @@ class BehaviorDataset(Dataset):
 class BehaviorEncoderModel(nn.Module):
     def __init__(self, num_stages, num_actions):
         super().__init__()
-        self.encoder = RobertaModel.from_pretrained("microsoft/codebert-base", use_safetensors=True)
+        self.encoder = RobertaModel.from_pretrained(os.getenv("GENOS_CODEBERT_BACKBONE", "microsoft/codebert-base"), use_safetensors=True)
         self.dropout = nn.Dropout(0.2)
         self.stage_head = nn.Linear(768, num_stages)
         self.action_head = nn.Linear(768, num_actions)
@@ -76,13 +80,15 @@ class BehaviorEncoderModel(nn.Module):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", type=Path, default=DATA_DIR)
+    parser.add_argument("--amp", action="store_true", help="Use CUDA float16 autocast with gradient scaling")
+    parser.add_argument("--input-format", choices=["raw", "structured"], default="structured")
     parser.add_argument("--epochs", type=int, default=4)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--log-every", type=int, default=25)
     parser.add_argument("--lr", type=float, default=2e-5)
     parser.add_argument("--max-length", type=int, default=256)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--output", type=Path, default=MODELS_DIR / "behavior_encoder.pt")
+    parser.add_argument("--output", type=Path, default=MODELS_DIR / "experiments/behavior/behavior_encoder.pt")
     parser.add_argument(
         "--weighted-loss", action="store_true",
         help="Weight stage CrossEntropyLoss by inverse class frequency to address imbalance",
@@ -102,13 +108,13 @@ def set_seed(seed):
         torch.cuda.manual_seed_all(seed)
 
 
-def load_rows(path: Path):
+def load_rows(path: Path, input_format="structured"):
     rows = []
     with open(path, "r", encoding="utf-8") as handle:
         for line in handle:
             raw = json.loads(line)
             rows.append(Row(
-                input_text=raw["input_text"],
+                input_text=representation(raw, input_format),
                 stage_label=raw["stage_label"],
                 action_tags=list(raw.get("action_tags") or []),
             ))
@@ -121,7 +127,7 @@ def load_maps():
     return stage_map, action_map
 
 
-def evaluate(model, loader, device):
+def evaluate(model, loader, device, amp_enabled=False):
     model.eval()
     stage_preds = []
     stage_true = []
@@ -135,7 +141,8 @@ def evaluate(model, loader, device):
             stage_target = batch["stage_target"].to(device)
             action_target = batch["action_target"].to(device)
 
-            stage_logits, action_logits = model(input_ids, attention_mask)
+            with autocast(device_type=device.type, dtype=torch.float16, enabled=amp_enabled):
+                stage_logits, action_logits = model(input_ids, attention_mask)
             stage_preds.extend(torch.argmax(stage_logits, dim=1).cpu().tolist())
             stage_true.extend(stage_target.cpu().tolist())
 
@@ -154,15 +161,23 @@ def evaluate(model, loader, device):
 def main():
     args = parse_args()
     set_seed(args.seed)
+    if args.output.exists():
+        raise ValueError("Output checkpoint already exists; choose a new experiment path")
+    paths = {split: args.data_dir / f"behavior_{split}.jsonl" for split in ("train", "val", "test")}
+    independence = require_disjoint({split: read_rows(path) for split, path in paths.items()})
 
     stage_map, action_map = load_maps()
+    for path in paths.values():
+        for row in read_rows(path):
+            if row["stage_label"] not in stage_map or set(row.get("action_tags", [])) - action_map.keys():
+                raise ValueError(f"Unmapped stage or action label in {path}")
     print(f"[+] Loaded label maps: stages={len(stage_map)} actions={len(action_map)}", flush=True)
     tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
     print("[+] Loaded tokenizer: microsoft/codebert-base", flush=True)
 
-    train_rows = load_rows(args.data_dir / "behavior_train.jsonl")
-    val_rows = load_rows(args.data_dir / "behavior_val.jsonl")
-    test_rows = load_rows(args.data_dir / "behavior_test.jsonl")
+    train_rows = load_rows(paths["train"], args.input_format)
+    val_rows = load_rows(paths["val"], args.input_format)
+    test_rows = load_rows(paths["test"], args.input_format)
     print(
         f"[+] Loaded dataset rows: train={len(train_rows)} val={len(val_rows)} test={len(test_rows)}",
         flush=True,
@@ -177,6 +192,8 @@ def main():
     test_loader = DataLoader(test_ds, batch_size=args.batch_size)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    amp_enabled = args.amp and device.type == "cuda"
+    scaler = GradScaler(enabled=amp_enabled)
     model = BehaviorEncoderModel(len(stage_map), len(action_map)).to(device)
     print(f"[+] Loaded model on device={device}", flush=True)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
@@ -204,6 +221,7 @@ def main():
 
     best_val = -1.0
     best_state = None
+    best_val_metrics = None
     total_batches = max(1, len(train_loader))
     progress_is_tty = sys.stderr.isatty()
 
@@ -226,12 +244,14 @@ def main():
             action_target = batch["action_target"].to(device)
 
             optimizer.zero_grad()
-            stage_logits, action_logits = model(input_ids, attention_mask)
-            stage_loss = stage_loss_fn(stage_logits, stage_target)
-            action_loss = action_loss_fn(action_logits, action_target)
-            loss = stage_loss + action_loss
-            loss.backward()
-            optimizer.step()
+            with autocast(device_type=device.type, dtype=torch.float16, enabled=amp_enabled):
+                stage_logits, action_logits = model(input_ids, attention_mask)
+                stage_loss = stage_loss_fn(stage_logits, stage_target)
+                action_loss = action_loss_fn(action_logits, action_target)
+                loss = stage_loss + action_loss
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
             running_loss += loss.item()
             loop.set_postfix(avg_loss=f"{running_loss / step:.4f}")
 
@@ -243,11 +263,12 @@ def main():
                     flush=True,
                 )
 
-        val_metrics = evaluate(model, val_loader, device)
+        val_metrics = evaluate(model, val_loader, device, amp_enabled)
         score = val_metrics["stage_macro_f1"] + val_metrics["action_micro_f1"]
         if score > best_val:
             best_val = score
-            best_state = {k: v.cpu() for k, v in model.state_dict().items()}
+            best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+            best_val_metrics = dict(val_metrics)
 
         elapsed = time.perf_counter() - start
         print(
@@ -263,15 +284,25 @@ def main():
         raise RuntimeError("Training produced no checkpoint")
 
     model.load_state_dict(best_state)
-    test_metrics = evaluate(model, test_loader, device)
+    test_metrics = evaluate(model, test_loader, device, amp_enabled)
     print(json.dumps({"test": test_metrics}, indent=2))
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     torch.save(best_state, args.output)
     meta = {
-        "backbone": "microsoft/codebert-base",
+        "training_arguments": json.loads(json.dumps(vars(args), default=str)),
+        "training_code_sha256": sha256_file(__file__),
+        "seed": args.seed,
+        "epochs": args.epochs,
+        "input_format": args.input_format,
+        "dataset_manifest": dataset_manifest(paths),
+        "independence_audit": independence,
+        "checkpoint_sha256": sha256_file(args.output),
+        "evaluation_scope": "rule_derived_behavior_labels",
+        "backbone": os.getenv("GENOS_CODEBERT_BACKBONE", "microsoft/codebert-base"),
         "stage_map": stage_map,
         "action_map": action_map,
+        "val_metrics": best_val_metrics,
         "test_metrics": test_metrics,
         "max_length": args.max_length,
     }

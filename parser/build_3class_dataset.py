@@ -1435,7 +1435,7 @@ def main():
         if mal_top_up:
             stats["synthetic_malicious"] += _top_up_rows(rows, mal_reserve, "Malicious", mal_top_up)
 
-        random.seed(hash(split))
+        random.seed({"train": 42, "val": 43, "test": 44}[split])
         random.shuffle(rows)
 
         total = len(rows)

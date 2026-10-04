@@ -1,0 +1,158 @@
+{
+  "benchmark_exclusions": {
+    "benchmarks": {
+      "path": "data/derived/scientific_v1/development_benchmarks.jsonl",
+      "sha256": "f9cd28def0a167b55d42856724b1329f9e0a13597cd9e2ee4405496a1bb8d04c"
+    }
+  },
+  "kind": "gatekeeper",
+  "seed": 42,
+  "inputs": {
+    "train": {
+      "path": "/home/sam/genos/genos_api/data/training/genos_dataset/gatekeeper_3class_train.csv",
+      "sha256": "ccd871ea623d22df3414aa74fc3c050835a4263b5ec971cecaa819d30cbb926c"
+    },
+    "val": {
+      "path": "/home/sam/genos/genos_api/data/training/genos_dataset/gatekeeper_3class_val.csv",
+      "sha256": "8252bbb4998fe1d2c98c605dfdeca1c733a6c6d5a280d37d67152a86cd4389dc"
+    },
+    "test": {
+      "path": "/home/sam/genos/genos_api/data/training/genos_dataset/gatekeeper_3class_test.csv",
+      "sha256": "702dad274f8b4882026a2db8ec49dc2b3579776282168f181a2211297b0fa69b"
+    }
+  },
+  "before": {
+    "normalization": "lowercase_strip",
+    "counts": {
+      "train": 53190,
+      "val": 9487,
+      "test": 10039
+    },
+    "within_split_label_conflicts": {
+      "train": 0,
+      "val": 0,
+      "test": 0
+    },
+    "overlap": {
+      "train:val": {
+        "commands": 40,
+        "conflicting_commands": 17,
+        "provenance_groups": 0
+      },
+      "train:test": {
+        "commands": 80,
+        "conflicting_commands": 44,
+        "provenance_groups": 0
+      },
+      "val:test": {
+        "commands": 10,
+        "conflicting_commands": 7,
+        "provenance_groups": 0
+      }
+    },
+    "passed": false
+  },
+  "benchmark_patch": {
+    "patch": {
+      "path": "/home/sam/genos/genos_api/data/training/genos_dataset/gatekeeper_benign_core_patch_v2a.jsonl",
+      "sha256": "9cf80967232baf449e4928206412055acf1ce137e2af879445dc416227800e89"
+    }
+  },
+  "benchmark_patch_overlaps": {
+    "expanded_benign": {
+      "n": 500,
+      "overlap": 194
+    },
+    "trivial_benign": {
+      "n": 100,
+      "overlap": 41
+    },
+    "routine_admin": {
+      "n": 100,
+      "overlap": 84
+    },
+    "context_needed_dual_use": {
+      "n": 100,
+      "overlap": 8
+    },
+    "direct_abuse": {
+      "n": 100,
+      "overlap": 0
+    }
+  },
+  "after": {
+    "normalization": "lowercase_strip",
+    "counts": {
+      "train": 57891,
+      "val": 7237,
+      "test": 7236
+    },
+    "within_split_label_conflicts": {
+      "train": 0,
+      "val": 0,
+      "test": 0
+    },
+    "overlap": {
+      "train:val": {
+        "commands": 0,
+        "conflicting_commands": 0,
+        "provenance_groups": 0
+      },
+      "train:test": {
+        "commands": 0,
+        "conflicting_commands": 0,
+        "provenance_groups": 0
+      },
+      "val:test": {
+        "commands": 0,
+        "conflicting_commands": 0,
+        "provenance_groups": 0
+      }
+    },
+    "passed": true
+  },
+  "quarantine": {
+    "benchmark_exposure": 181,
+    "conflicting_labels": 131
+  },
+  "label_counts": {
+    "train": {
+      "Malicious": 19452,
+      "Benign": 28239,
+      "Context_Dependent": 10200
+    },
+    "val": {
+      "Malicious": 1056,
+      "Benign": 5933,
+      "Context_Dependent": 248
+    },
+    "test": {
+      "Malicious": 1067,
+      "Benign": 5895,
+      "Context_Dependent": 274
+    }
+  },
+  "unseen_eval_labels": {
+    "val": [],
+    "test": []
+  },
+  "limitations": [
+    "Requires fresh training; old checkpoints have seen rows reassigned to evaluation",
+    "Legacy labels remain weak supervision; independent annotation pending",
+    "Inferred tool groups do not prove template or source independence; review family/source provenance"
+  ],
+  "outputs": {
+    "train": {
+      "path": "data/derived/scientific_v2/gatekeeper/gatekeeper_3class_train.csv",
+      "sha256": "785d918e52e7a15de86762fd293435ae9100e2b138c1f4445ab0942fae7e621c"
+    },
+    "val": {
+      "path": "data/derived/scientific_v2/gatekeeper/gatekeeper_3class_val.csv",
+      "sha256": "6ee5e06dd9751b18da1827812c74a075293aabd992de1adf1455eaf7067d1db3"
+    },
+    "test": {
+      "path": "data/derived/scientific_v2/gatekeeper/gatekeeper_3class_test.csv",
+      "sha256": "ddae58d80b0318a0fae555ac49721e1c83def796655157e1ccd523a311150f64"
+    }
+  }
+}

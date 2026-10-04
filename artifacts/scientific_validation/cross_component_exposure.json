@@ -1,0 +1,62 @@
+{
+  "scope": "Component experiments only; each component has disjoint own training and evaluation splits. Combining their datasets does not create an untouched end-to-end holdout.",
+  "sources": {
+    "gatekeeper:train": {
+      "path": "data/derived/scientific_v2/gatekeeper/gatekeeper_3class_train.csv",
+      "sha256": "785d918e52e7a15de86762fd293435ae9100e2b138c1f4445ab0942fae7e621c"
+    },
+    "gatekeeper:val": {
+      "path": "data/derived/scientific_v2/gatekeeper/gatekeeper_3class_val.csv",
+      "sha256": "6ee5e06dd9751b18da1827812c74a075293aabd992de1adf1455eaf7067d1db3"
+    },
+    "gatekeeper:test": {
+      "path": "data/derived/scientific_v2/gatekeeper/gatekeeper_3class_test.csv",
+      "sha256": "ddae58d80b0318a0fae555ac49721e1c83def796655157e1ccd523a311150f64"
+    },
+    "mitre:train": {
+      "path": "data/derived/scientific_v2/mitre/specialist_train_variant_a.jsonl",
+      "sha256": "916556824ef1b1d6272857e19eb885fc149ac0267a273f35ae8487f7fb1a0a77"
+    },
+    "mitre:val": {
+      "path": "data/derived/scientific_v2/mitre/specialist_val_variant_a.jsonl",
+      "sha256": "d9b2b006665ee93181d6a9bcf70b1b386f552c44bc8ec08bb51de753bac08fc0"
+    },
+    "mitre:test": {
+      "path": "data/derived/scientific_v2/mitre/specialist_test_variant_a.jsonl",
+      "sha256": "fa5ea938c77df4dc713d385c88de5de7ba362056941ee3c6a4bd097961d8d8df"
+    },
+    "behavior:train": {
+      "path": "data/derived/scientific_v2/behavior/behavior_train.jsonl",
+      "sha256": "510b3cf9837a7f0a5c97f79efb04e9c2dd4df2d76af31307ed6e3737a61fb28d"
+    },
+    "behavior:val": {
+      "path": "data/derived/scientific_v2/behavior/behavior_val.jsonl",
+      "sha256": "2fff189539ed4d2de1225438c599109e90345a4517d17af1936c101614930be8"
+    },
+    "behavior:test": {
+      "path": "data/derived/scientific_v2/behavior/behavior_test.jsonl",
+      "sha256": "0cbea4ad2fe3788f288810ec2538c1320e88befc41118b095add481deb56cc9d"
+    }
+  },
+  "normalized_command_overlaps": {
+    "gatekeeper:train|gatekeeper:val": 0,
+    "gatekeeper:train|gatekeeper:test": 0,
+    "gatekeeper:train|mitre:val": 259,
+    "gatekeeper:train|mitre:test": 276,
+    "gatekeeper:train|behavior:val": 259,
+    "gatekeeper:train|behavior:test": 276,
+    "mitre:train|gatekeeper:val": 751,
+    "mitre:train|gatekeeper:test": 798,
+    "mitre:train|mitre:val": 0,
+    "mitre:train|mitre:test": 0,
+    "mitre:train|behavior:val": 0,
+    "mitre:train|behavior:test": 0,
+    "behavior:train|gatekeeper:val": 751,
+    "behavior:train|gatekeeper:test": 798,
+    "behavior:train|mitre:val": 0,
+    "behavior:train|mitre:test": 0,
+    "behavior:train|behavior:val": 0,
+    "behavior:train|behavior:test": 0
+  },
+  "required_for_joint_evaluation": "A new source/template-grouped holdout excluded from every component training and development set"
+}

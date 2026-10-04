@@ -23,7 +23,14 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
-from scripts.benchmark.tier1_case_sets import build_expanded_benign_commands, build_hard_negative_cases
+def _retired_benchmark_source(*args, **kwargs):
+    raise RuntimeError(
+        "Benchmark-derived training patches are retired. Use independent provenance "
+        "and scripts/data/prepare_scientific_splits.py; see docs/scientific_validation.md."
+    )
+
+build_expanded_benign_commands = _retired_benchmark_source
+build_hard_negative_cases = _retired_benchmark_source
 
 
 def parse_args() -> argparse.Namespace:

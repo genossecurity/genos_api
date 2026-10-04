@@ -1,0 +1,74 @@
+{
+  "user_direction": "Use the prepared queues; reviews are still needed",
+  "queues": [
+    {
+      "task": "gatekeeper",
+      "split": "validation",
+      "path": "data/derived/scientific_v2/gatekeeper/annotation_validation_queue.jsonl",
+      "sha256": "0b8f0a8d993105c82d67d565cbd857d5c28ec8bcb75b44666681622a466e6d80",
+      "examples": 300,
+      "completed_reviews": 0,
+      "status": "awaiting_two_independent_reviews"
+    },
+    {
+      "task": "gatekeeper",
+      "split": "test",
+      "path": "data/derived/scientific_v2/gatekeeper/annotation_queue.jsonl",
+      "sha256": "5ed361e32bf9d41d236e48bf3a0d6c6b5bd5b2b6ee78e539b9090cb92dbbda6c",
+      "examples": 300,
+      "completed_reviews": 0,
+      "status": "awaiting_two_independent_reviews"
+    },
+    {
+      "task": "mitre",
+      "split": "validation",
+      "path": "data/derived/scientific_v2/mitre/annotation_validation_queue.jsonl",
+      "sha256": "a7ea7480a6bf3b70ffb582282899094a43ff26701e6608b3c17a6695336f3b7c",
+      "examples": 300,
+      "completed_reviews": 0,
+      "status": "awaiting_two_independent_reviews"
+    },
+    {
+      "task": "mitre",
+      "split": "test",
+      "path": "data/derived/scientific_v2/mitre/annotation_queue.jsonl",
+      "sha256": "958f6723819392786902b1ad90d82df8a8f39960539de003feba65efa5451495",
+      "examples": 300,
+      "completed_reviews": 0,
+      "status": "awaiting_two_independent_reviews"
+    },
+    {
+      "task": "behavior",
+      "split": "validation",
+      "path": "data/derived/scientific_v2/behavior/annotation_validation_queue.jsonl",
+      "sha256": "a7ea7480a6bf3b70ffb582282899094a43ff26701e6608b3c17a6695336f3b7c",
+      "examples": 300,
+      "completed_reviews": 0,
+      "status": "awaiting_two_independent_reviews"
+    },
+    {
+      "task": "behavior",
+      "split": "test",
+      "path": "data/derived/scientific_v2/behavior/annotation_queue.jsonl",
+      "sha256": "958f6723819392786902b1ad90d82df8a8f39960539de003feba65efa5451495",
+      "examples": 300,
+      "completed_reviews": 0,
+      "status": "awaiting_two_independent_reviews"
+    }
+  ],
+  "note": "No independent labels or reviewer identities have been fabricated. Source context and family/template provenance require review.",
+  "unique_commands": 1184,
+  "cross_task_queue_overlaps": {
+    "gatekeeper:validation|mitre:validation": 3,
+    "gatekeeper:validation|mitre:test": 3,
+    "gatekeeper:validation|behavior:validation": 3,
+    "gatekeeper:validation|behavior:test": 3,
+    "gatekeeper:test|mitre:validation": 6,
+    "gatekeeper:test|mitre:test": 4,
+    "gatekeeper:test|behavior:validation": 6,
+    "gatekeeper:test|behavior:test": 4,
+    "mitre:validation|behavior:validation": 300,
+    "mitre:test|behavior:test": 300
+  },
+  "reuse_note": "MITRE and behavior queues are identical within each split; the same independently collected command annotations can support both tasks. Do not tune a task using any command reserved for its final test."
+}
