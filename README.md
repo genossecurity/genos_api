@@ -1,6 +1,6 @@
 # Genos API
 
-Genos is a two-stage neural pipeline for real-time malicious command detection and MITRE ATT&CK technique attribution, served as a REST API over Gunicorn and Flask.
+Genos is a command-analysis API with a three-class gatekeeper, an 11-label multi-label family specialist, and a behavior encoder, served over Gunicorn and Flask.
 
 The system was developed as part of an IEEE research programme. See the [scientific validation report](artifacts/scientific_validation/REPORT.md) for measured results and unresolved validity gaps.
 
@@ -95,7 +95,7 @@ The model outputs three class probabilities mapped as:
 
 The final verdict is the model's top class after the declared view policy. `Context_Dependent` is preserved in the API and means additional context is required. Regex features provide extracted evidence and explicit heuristic baselines.
 
-The default `GENOS_VIEW_POLICY=mean` averages raw and decoded score distributions when decoding changes the command. `raw` and `decoded` are available for controlled experiments. This choice is not claimed to be empirically optimal. All commands receive behavior and MITRE analysis.
+The default `GENOS_VIEW_POLICY=mean` averages raw and decoded gatekeeper scores when decoding changes the command. The family specialist receives the deobfuscated command. `raw` and `decoded` remain available for gatekeeper experiments. All commands receive behavior and family analysis.
 
 Scores are uncalibrated model estimates unless a validation-fitted, model-bound `GENOS_CALIBRATION_PATH` is supplied. Legacy `confidence` fields use percentages (0–100); `score_type` declares their interpretation. Behavior action tags use the reported `GENOS_BEHAVIOR_ACTION_THRESHOLD` (default 0.5), which has not yet been selected on independent labels.
 
@@ -103,23 +103,11 @@ Checkpoints load strictly. Behavior load failures stop initialization unless `GE
 
 See [scientific validation workflow](docs/scientific_validation.md) for the audit, grouped datasets, experiments, annotation protocol, and remaining limitations. Existing benchmark scores are development evidence and do not establish independent operational accuracy.
 
-### Tier 2 — Specialist (TF-IDF char n-gram + Random Forest)
+### Tier 2 — Family Specialist
 
-MITRE ranking and the behavior encoder **always run**, regardless of the verdict. Measure latency on the deployment hardware; unconditional behavior adds neural inference work.
+The default specialist is a multi-label linear model over char and word TF-IDF n-grams. It emits probabilities for Execution, Persistence, Privilege Escalation, Defense Evasion, Credential Access, Discovery, Lateral Movement, Command-and-Control / Payload Retrieval, Exfiltration, Impact, and Benign Admin. Its model rows and runtime response contain family labels, not technique IDs.
 
-Model file: `models/specialist_tfidf_char_rf.pkl` (scikit-learn pipeline, loaded with `joblib`).
-
-Input text is built by `_build_variant_a_text()`, which calls the `parser/` module to produce a structured "Variant A" representation of the command:
-
-```
-RAW: <command with original case>
-RESIDUAL: <parser-extracted residual tokens>
-FEATURES: <parser/rule tags, when present>
-```
-
-When decoding changes the command, the configured view policy combines normalized distributions (mean by default). MITRE returns up to five ranked candidates; this ranker does not yet support a learned no-technique class.
-
-Classes come from `config/specialist_map.json`; the saved classifier may cover only a subset of the map. The pipeline's integer class indices are mapped back to MITRE IDs via `_tfidf_idx_to_label`.
+Runtime artifact: `models/family_specialist_tfidf.joblib`. It uses the deobfuscated command, lowercased and stripped. `GENOS_SPECIALIST_MODE=mitre` explicitly selects the retained legacy technique ranker for secondary top-5 comparisons; it is not the default.
 
 ### Engine output schema
 
@@ -131,13 +119,14 @@ Classes come from `config/specialist_map.json`; the saved classifier may cover o
   "label_confidence": 99.81,
   "score_type": "uncalibrated_model_estimate",
   "deobfuscated_cmd": "invoke-expression ...",
-  "MITRE_codes": [
-    { "code": "T1059", "confidence": 97.43 },
-    { "code": "T1021", "confidence": 1.22 },
-    { "code": "T1078", "confidence": 0.81 },
-    { "code": "T1003", "confidence": 0.48 },
-    { "code": "T1087", "confidence": 0.06 }
-  ]
+  "specialist_mode": "family",
+  "attack_families": {
+    "decision_threshold": 0.5,
+    "predicted_families": [
+      { "family": "Execution", "probability": 82.4, "selected": true }
+    ],
+    "all_family_scores": ["one score for each of the 11 families"]
+  }
 }
 ```
 
@@ -162,24 +151,34 @@ For `Context_Dependent` labels:
 Notes:
 - `label` is one of: `Benign`, `Malicious`, `Context_Dependent`
 - `label_confidence` is a percentage-valued model score (0–100) in both the engine and HTTP response; inspect `score_type` for calibration status
-- `MITRE_codes` contains up to five ranked candidates on every response; there is currently no learned no-technique decision
+- Default responses contain multi-label `attack_families`; `MITRE_codes` is only emitted when the legacy `mitre` specialist mode is explicitly selected
 - `deobfuscated_cmd` is `null` when the input was not flagged as obfuscated
 
 ---
 
 ## Models
 
-Tier 1 uses a CodeBERT neural model. Tier 2 uses a TF-IDF char n-gram + Random Forest sklearn pipeline.
+The gatekeeper uses CodeBERT by default. The primary specialist is an 11-family calibrated linear TF-IDF model. Behavior analysis remains a separate CodeBERT encoder.
 
 | File | Purpose |
 |---|---|
 | `models/gatekeeper.pt` | Tier 1 — 3-class CodeBERT gatekeeper (Benign / Context_Dependent / Malicious) |
-| `models/specialist_tfidf_char_rf.pkl` | Tier 2 — active MITRE attribution model (char n-gram TF-IDF + RF) |
+| `models/family_specialist_tfidf.joblib` | Default specialist — calibrated multi-label 11-family classifier |
+| `models/specialist_tfidf_char_rf.pkl` | Legacy secondary MITRE technique ranker, only used in explicit `mitre` mode |
 | `models/archive/specialist_tfidf_rf.pkl` | Archived Tier 2 word-level TF-IDF + RF alternative |
-| `config/specialist_map.json` | Maps integer class indices to MITRE technique IDs |
+| `config/specialist_map.json` | Legacy MITRE-mode label map |
 | `config/gatekeeper_meta.json` | Gatekeeper class-map and training metadata read at startup |
 
 Model files are local runtime assets and are excluded from Git by `.gitignore`; provide the active checkpoint files separately when deploying. Historical and experimental checkpoints are grouped under `models/archive/`, and retraining outputs go under `models/experiments/`.
+
+An experimental calibrated linear TF-IDF gatekeeper can be selected without loading the CodeBERT gate checkpoint:
+
+```bash
+GENOS_GATEKEEPER_BACKEND=tfidf
+GENOS_GATEKEEPER_TFIDF_PATH=models/experiments/tfidf_gatekeeper_20261004_seed42/gatekeeper_tfidf.joblib
+```
+
+CodeBERT remains the default gatekeeper. The default specialist mode is `family`; the legacy technique ranker remains available only when `GENOS_SPECIALIST_MODE=mitre`. Behavior still uses its own CodeBERT encoder.
 
 ---
 
@@ -254,10 +253,12 @@ Response (malicious):
 {
   "label": "Malicious",
   "label_confidence": 99.81,
-  "MITRE_codes": [
-    { "code": "T1087", "confidence": 97.43 },
-    { "code": "T1069", "confidence": 1.22 }
-  ]
+  "specialist_mode": "family",
+  "attack_families": {
+    "predicted_families": [
+      { "family": "Discovery", "probability": 97.43, "selected": true }
+    ]
+  }
 }
 ```
 
@@ -267,7 +268,12 @@ Response (benign):
 {
   "label": "Benign",
   "label_confidence": 99.99,
-  "MITRE_codes": []
+  "specialist_mode": "family",
+  "attack_families": {
+    "predicted_families": [
+      { "family": "Benign Admin", "probability": 99.9, "selected": true }
+    ]
+  }
 }
 ```
 
@@ -477,7 +483,11 @@ The deleted `scripts/benchmark` directory remains retired. Current tools live in
 | `scripts/evaluation/select_action_thresholds.py` | Select per-action thresholds using validation data |
 | `scripts/evaluation/audit_annotations.py` | Reconcile independent reviews and explicit adjudication |
 | `scripts/evaluation/smoke_runtime.py` | Check real checkpoint/API integration and record predictions |
+| `scripts/evaluation/compare_tfidf_codebert_gatekeepers.py` | Paired grouped comparison, including obfuscated and runtime-view slices |
+| `scripts/data/build_tactic_family_dataset.py` | Build template-grouped, multi-label family splits from source tactic metadata |
+| `scripts/training/train_family_specialist.py` | Train the 11-label calibrated family specialist |
 | `scripts/training/trainer1.py` | Train the three-class gatekeeper on audited grouped splits |
+| `scripts/training/train_tfidf_gatekeeper.py` | Train an experimental calibrated CPU linear gatekeeper |
 | `scripts/training/train_behavior_encoder.py` | Train raw or structured behavior representations |
 | `scripts/training/trainer_tfidf.py` | Train raw or structured MITRE RF baselines |
 
@@ -496,8 +506,8 @@ requirements.txt                    Python dependencies
 .env.example                        Environment variable template
 
 config/
-  specialist_map.json               MITRE technique → integer label map
-  definitive_mitre_map.json         Full MITRE technique reference
+  specialist_map.json               Legacy MITRE-mode technique map
+  definitive_mitre_map.json         Legacy integer technique map
   label_map.json                    Human-readable label definitions
   gatekeeper_meta.json              Active gatekeeper metadata
   meta/                             Historical training metadata and config snapshots
@@ -505,7 +515,8 @@ config/
 models/
   gatekeeper.pt                     Active Tier 1 checkpoint
   behavior_encoder.pt               Active behavior checkpoint
-  specialist_tfidf_char_rf.pkl      Active MITRE ranker
+  family_specialist_tfidf.joblib    Active 11-family multi-label specialist
+  specialist_tfidf_char_rf.pkl      Legacy secondary MITRE ranker
   archive/                          Historical and experimental model files
   experiments/                      Isolated retraining runs and metadata
 
@@ -513,7 +524,7 @@ data/
   training/                         Source and legacy datasets, grouped by task/version
     genos_dataset/                  Gatekeeper datasets and supervised patches
     genos_behavior/                 Behavior labels
-    genos_residual_expanded/        MITRE specialist dataset
+    genos_residual_expanded/        Legacy MITRE technique dataset
     genos_cache/                    Cached source data
   derived/                          Prepared splits and local review data (gitignored)
   provenance/raw/                   Source provenance material

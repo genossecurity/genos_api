@@ -1,18 +1,18 @@
 # Scientific validation
 
-This change establishes auditable inference and experiments. It does not establish independent operational accuracy. The active checkpoints retain their original weak supervision. New experimental checkpoints are saved separately and have not been promoted.
+The runtime default now uses a multi-label 11-family TF-IDF specialist. This improves the output taxonomy, not the quality of the weak labels; independent operational accuracy is not established.
 
 ## Runtime contract
 
 - Public and internal labels are `Benign`, `Malicious`, and `Context_Dependent`. The last returns `action: requires_context`; clients must accept it instead of `Suspicious`.
-- Every command receives behavior and MITRE analysis. Heuristic behavior fallback is disabled unless `GENOS_ALLOW_BEHAVIOR_FALLBACK=1`; failure reason and actual model type are reported.
-- `GENOS_VIEW_POLICY=mean` averages raw/decoded distributions; `raw` and `decoded` support experiments. Mean pooling is a declared engineering default, not a validated optimum. The gatekeeper, behavior encoder, and MITRE ranker use this policy. Behavior fallback uses the decoded command and is explicitly a different baseline.
+- Every command receives behavior and family analysis. Family mode does not load the MITRE map/model and does not return `MITRE_codes`. Set `GENOS_SPECIALIST_MODE=mitre` only for legacy technique-ranking comparisons. Heuristic behavior fallback is disabled unless `GENOS_ALLOW_BEHAVIOR_FALLBACK=1`.
+- `GENOS_VIEW_POLICY=mean` averages raw/decoded gatekeeper distributions; `raw` and `decoded` support experiments. Mean pooling is a declared engineering default, not a validated optimum. The family specialist receives the deobfuscated command. The behavior encoder retains its own configured representation.
 - The API passes the original text to the engine. Bare Base64 decoding and wrapped-payload decoding are centralized. The gatekeeper retains training's lowercase/strip normalization. MITRE and behavior representations retain their own training formats.
 - Legacy `confidence` and `class_probabilities` fields remain percentage-valued model estimates. `score_type` distinguishes uncalibrated estimates from validation temperature scaling. Temperature scaling preserves argmax; it is not a fix for wrong labels. Behavior action thresholds remain explicitly reported defaults pending validation.
 - `GENOS_BEHAVIOR_POLICY_PATH` accepts per-action thresholds selected on validation exports by `scripts/evaluation/select_action_thresholds.py`. The artifact must match the runtime signature. Actions lacking positive or negative validation examples retain the explicit 0.5 default. Select this policy before fitting temperature calibration, so calibration binds to the finalized pipeline. Action probability estimates remain uncalibrated.
 - Model heads load strictly. Metadata maps, token limits, and new MITRE artifact hashes/representations are checked. Legacy MITRE artifacts without metadata are explicitly marked unverified.
 - `provenance` records checkpoint, implementation, metadata hashes, input format, view policy, optional deobfuscator availability, and execution details. Calibration files must match the runtime signature exactly.
-- MITRE is still a closed-set candidate ranker. Its five outputs are not five established attack techniques. The relevance evaluator supports explicit no-technique and multilabel annotations; teaching the model to abstain requires a subsequent model change.
+- Family scores are independent calibrated probabilities, not a softmax distribution; multiple families may be selected. Technique-level top-5 remains a separate legacy secondary metric and must not be interpreted as family-classifier output.
 - Parser/rule features are extracted evidence, not a causal explanation of the learned verdict. The UI labels scores accordingly.
 
 ## Audit and grouped datasets
@@ -62,6 +62,8 @@ This reports full agreement and verdict Cohen's kappa, and separates accepted ex
 
 ## Controlled training
 
+The current family model, dataset audit, grouped confidence intervals, per-family metrics, and known label conflicts are recorded in [family specialist results](../artifacts/scientific_validation/family_specialist_11_label_results.md). Rebuild the family dataset from the prepared source pools with `scripts/data/build_tactic_family_dataset.py`, then train with `scripts/training/train_family_specialist.py`. The emitted rows contain family labels and command/template data only; technique IDs are used only to convert the source labels and are omitted from the family model artifacts.
+
 All active trainers check normalized-command conflicts and all supplied group axes before training. Supplemental patches and soft-label files are included in the gatekeeper check. Training writes experiment artifacts, not active runtime checkpoints.
 
 ```bash
@@ -95,6 +97,22 @@ venv/bin/python scripts/evaluation/rule_baseline.py \
   --dataset data/derived/scientific_v2/gatekeeper/gatekeeper_3class_test.csv \
   --output artifacts/scientific_validation/my_rule_baseline.json
 ```
+
+The optional linear gatekeeper experiment uses the same grouped Gatekeeper splits and benign training patch, with group-aware cross-validated sigmoid calibration:
+
+```bash
+venv/bin/python scripts/training/train_tfidf_gatekeeper.py \
+  --data-dir data/derived/scientific_v2/gatekeeper \
+  --train-patch data/training/genos_dataset/gatekeeper_benign_core_patch_v2a.jsonl \
+  --output-dir models/experiments/tfidf_gatekeeper_seed42
+
+venv/bin/python scripts/evaluation/compare_tfidf_codebert_gatekeepers.py \
+  --codebert-checkpoint-dir models/experiments/retrain-20261004-104842/gatekeeper/seed_42 \
+  --tfidf-model models/experiments/tfidf_gatekeeper_seed42/gatekeeper_tfidf.joblib \
+  --output artifacts/scientific_validation/tfidf_gatekeeper_comparison.json
+```
+
+CodeBERT remains the default. To try the fitted CPU gate in the runtime, set `GENOS_GATEKEEPER_BACKEND=tfidf` and `GENOS_GATEKEEPER_TFIDF_PATH` to the joblib artifact. This switches only gatekeeper verdict inference; behavior still uses its separate CodeBERT encoder.
 
 For a repeatable multi-seed run across the three components, use `scripts/ops/model_training_orchestrator.py`. It audits hashes, class counts, and split disjointness before training, then runs the trainers and creates `benchmark.json` from their validation/test metrics. Gatekeeper training includes the existing 250-example `gatekeeper_benign_core_patch_v2a.jsonl` by default; the preflight verifies it does not overlap the frozen evaluation splits, and the trainer records its hash. Use `--no-gatekeeper-train-patch` to omit it. The default is a dry run:
 

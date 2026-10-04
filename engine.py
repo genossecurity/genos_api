@@ -6,11 +6,13 @@ import os
 import re
 import warnings
 import hashlib
+from contextlib import nullcontext
 from importlib.metadata import version as package_version
 
 from scientific_validation import PREPROCESSING_VERSION, sha256_file, temperature_scale
 
 import joblib
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -332,6 +334,9 @@ class GenosEngine:
         prior_alphas=None,
         view_policy=None,
         allow_behavior_fallback=None,
+        gatekeeper_backend=None,
+        specialist_mode=None,
+        family_specialist_path=None,
     ):
         self.view_policy = view_policy or os.getenv("GENOS_VIEW_POLICY", "mean")
         if self.view_policy not in {"raw", "decoded", "mean"}:
@@ -342,37 +347,46 @@ class GenosEngine:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
         self.max_length = int(os.getenv("GENOS_MAX_TOKENS", "256"))
+        self.gatekeeper_backend = (gatekeeper_backend or os.getenv("GENOS_GATEKEEPER_BACKEND", "codebert")).strip().lower()
+        if self.gatekeeper_backend not in {"codebert", "tfidf"}:
+            raise ValueError("GENOS_GATEKEEPER_BACKEND must be codebert or tfidf")
+        self.specialist_mode = (specialist_mode or os.getenv("GENOS_SPECIALIST_MODE", "family")).strip().lower()
+        if self.specialist_mode not in {"mitre", "family"}:
+            raise ValueError("GENOS_SPECIALIST_MODE must be mitre or family")
+        self.gatekeeper_model = None
+        self.gatekeeper_model_path = None
+        self.gatekeeper_model_metadata = {}
         self.gatekeeper_meta_path = None
         self.gatekeeper_meta = {}
         self._gate_labels = list(self._GATE_LABELS)
 
-        t1_path = _resolve_asset_path(t1_path)
+        t1_path = _resolve_asset_path(t1_path) if self.gatekeeper_backend == "codebert" else None
         t2_path = _resolve_asset_path(t2_path)
 
-        # Prefer explicit specialist map JSON when provided (backward compatibility).
-        map_candidates = ["config/specialist_map.json", "models/specialist_map.json"]
-        if map_path:
-            map_candidates = [map_path]
-            if not os.path.exists(_resolve_asset_path(map_path)):
-                raise FileNotFoundError(map_path)
+        if self.specialist_mode == "mitre":
+            map_candidates = ["config/specialist_map.json", "models/specialist_map.json"]
+            if map_path:
+                map_candidates = [map_path]
+                if not os.path.exists(_resolve_asset_path(map_path)):
+                    raise FileNotFoundError(map_path)
 
-        resolved_map_path = None
-        for candidate in map_candidates:
-            resolved = _resolve_asset_path(candidate)
-            if os.path.exists(resolved):
-                resolved_map_path = resolved
-                break
+            resolved_map_path = None
+            for candidate in map_candidates:
+                resolved = _resolve_asset_path(candidate)
+                if os.path.exists(resolved):
+                    resolved_map_path = resolved
+                    break
 
-        if resolved_map_path:
-            self.s_map = self._load_map_from_json(resolved_map_path)
+            if resolved_map_path:
+                self.s_map = self._load_map_from_json(resolved_map_path)
+            else:
+                raw_csv_path = _resolve_asset_path(
+                    raw_mitre_path,
+                    ["data/art/mitre_atlas_raw.csv"],
+                )
+                self.s_map = self._build_map_from_csv(raw_csv_path)
         else:
-            raw_csv_path = _resolve_asset_path(
-                raw_mitre_path,
-                [
-                    "data/art/mitre_atlas_raw.csv"
-                ],
-            )
-            self.s_map = self._build_map_from_csv(raw_csv_path)
+            self.s_map = {}
 
         self.gatekeeper_meta_path = _resolve_asset_path(gatekeeper_meta_path or "config/gatekeeper_meta.json")
         with open(self.gatekeeper_meta_path, encoding="utf-8") as handle:
@@ -383,12 +397,30 @@ class GenosEngine:
         if int(self.gatekeeper_meta.get("max_len", self.max_length)) != self.max_length:
             raise ValueError("Gatekeeper training/runtime token limits differ")
 
-        self.t1 = Tier1_Gatekeeper().to(self.device)
-        self.t1.load_state_dict(torch.load(t1_path, map_location=self.device, weights_only=True), strict=True)
-        self.t1.eval()
-        expected_hash = self.gatekeeper_meta.get("checkpoint_sha256")
-        if expected_hash and expected_hash != sha256_file(t1_path):
-            raise ValueError("Gatekeeper checkpoint hash differs from metadata")
+        if self.gatekeeper_backend == "codebert":
+            self.gatekeeper_model_path = t1_path
+            self.t1 = Tier1_Gatekeeper().to(self.device)
+            self.t1.load_state_dict(torch.load(t1_path, map_location=self.device, weights_only=True), strict=True)
+            self.t1.eval()
+            expected_hash = self.gatekeeper_meta.get("checkpoint_sha256")
+            if expected_hash and expected_hash != sha256_file(t1_path):
+                raise ValueError("Gatekeeper checkpoint hash differs from metadata")
+        else:
+            tfidf_path = os.getenv("GENOS_GATEKEEPER_TFIDF_PATH")
+            if not tfidf_path:
+                raise ValueError("GENOS_GATEKEEPER_TFIDF_PATH is required for the tfidf gatekeeper backend")
+            self.gatekeeper_model_path = _resolve_asset_path(tfidf_path)
+            self.gatekeeper_model = joblib.load(self.gatekeeper_model_path)
+            metadata_path = os.path.splitext(self.gatekeeper_model_path)[0] + ".json"
+            with open(metadata_path, encoding="utf-8") as handle:
+                self.gatekeeper_model_metadata = json.load(handle)
+            if self.gatekeeper_model_metadata.get("checkpoint_sha256") != sha256_file(self.gatekeeper_model_path):
+                raise ValueError("TF-IDF gatekeeper checkpoint differs from metadata")
+            if self.gatekeeper_model_metadata.get("class_names") != self._gate_labels:
+                raise ValueError("TF-IDF gatekeeper class order differs from runtime")
+            if sorted(int(index) for index in self.gatekeeper_model.classes_) != list(range(len(self._gate_labels))):
+                raise ValueError("TF-IDF gatekeeper classes must be contiguous in training order")
+            self.gatekeeper_meta_path = metadata_path
         # Behavior inference is required; heuristic fallback requires an explicit flag.
         self.behavior_model_path = _resolve_behavior_model_path(t2_path)
         self.behavior_model = None
@@ -404,30 +436,54 @@ class GenosEngine:
             raise RuntimeError("Required parser/residual pipeline is unavailable")
         self.use_residual_format = use_residual_format
         self.prior_alphas = prior_alphas or {"strong": 2.0, "weak": 1.5, "none": 0.0}
-        # Forward map {mitre_id: int_index} used by build_prior_vector
         self._specialist_map_fwd = {mitre: idx for idx, mitre in self.s_map.items()}
-        # Behavior staging and MITRE ranking are separate models. The saved
-        # TF-IDF classifier ranks techniques for every command, including benign.
-        mitre_model_path = _resolve_asset_path(os.getenv(
-            "GENOS_MITRE_MODEL_PATH", "models/specialist_tfidf_char_rf.pkl"
-        ))
-        self.t2 = joblib.load(mitre_model_path)
-        mitre_meta_path = os.path.splitext(mitre_model_path)[0] + ".json"
+        self.family_specialist_bundle = None
+        self.family_specialist_metadata = None
+        self.family_specialist_path = None
+        self.family_labels = []
         self.mitre_metadata = None
-        if os.path.exists(mitre_meta_path):
-            with open(mitre_meta_path, encoding="utf-8") as handle:
-                self.mitre_metadata = json.load(handle)
-            expected_format = "structured" if self.use_residual_format else "raw"
-            if self.mitre_metadata.get("input_format") != expected_format:
-                raise ValueError("MITRE training/runtime input formats differ")
-            if self.mitre_metadata.get("checkpoint_sha256") != sha256_file(mitre_model_path):
-                raise ValueError("MITRE checkpoint hash differs from metadata")
-            if {str(k): int(v) for k, v in self.mitre_metadata.get("label_map", {}).items()} != {v: k for k,v in self.s_map.items()}:
-                raise ValueError("MITRE checkpoint label map differs from runtime")
-        self._tfidf_idx_to_label = dict(self.s_map)
-        unknown_classes = {int(index) for index in self.t2.classes_} - self.s_map.keys()
-        if unknown_classes:
-            raise ValueError(f"MITRE classifier has unmapped class indices: {sorted(unknown_classes)}")
+        mitre_model_path = None
+        if self.specialist_mode == "mitre":
+            mitre_model_path = _resolve_asset_path(os.getenv(
+                "GENOS_MITRE_MODEL_PATH", "models/specialist_tfidf_char_rf.pkl"
+            ))
+            self.t2 = joblib.load(mitre_model_path)
+            mitre_meta_path = os.path.splitext(mitre_model_path)[0] + ".json"
+            if os.path.exists(mitre_meta_path):
+                with open(mitre_meta_path, encoding="utf-8") as handle:
+                    self.mitre_metadata = json.load(handle)
+                expected_format = "structured" if self.use_residual_format else "raw"
+                if self.mitre_metadata.get("input_format") != expected_format:
+                    raise ValueError("MITRE training/runtime input formats differ")
+                if self.mitre_metadata.get("checkpoint_sha256") != sha256_file(mitre_model_path):
+                    raise ValueError("MITRE checkpoint hash differs from metadata")
+                if {str(k): int(v) for k, v in self.mitre_metadata.get("label_map", {}).items()} != {v: k for k, v in self.s_map.items()}:
+                    raise ValueError("MITRE checkpoint label map differs from runtime")
+            self._tfidf_idx_to_label = dict(self.s_map)
+            unknown_classes = {int(index) for index in self.t2.classes_} - self.s_map.keys()
+            if unknown_classes:
+                raise ValueError(f"MITRE classifier has unmapped class indices: {sorted(unknown_classes)}")
+        else:
+            requested_path = family_specialist_path or os.getenv(
+                "GENOS_FAMILY_SPECIALIST_PATH", "models/family_specialist_tfidf.joblib"
+            )
+            self.family_specialist_path = _resolve_asset_path(requested_path)
+            self.family_specialist_bundle = joblib.load(self.family_specialist_path)
+            family_meta_path = os.path.splitext(self.family_specialist_path)[0] + ".json"
+            with open(family_meta_path, encoding="utf-8") as handle:
+                self.family_specialist_metadata = json.load(handle)
+            if self.family_specialist_metadata.get("checkpoint_sha256") != sha256_file(self.family_specialist_path):
+                raise ValueError("Family specialist checkpoint differs from metadata")
+            self.family_labels = list(self.family_specialist_metadata.get("family_labels") or [])
+            if len(self.family_labels) != 11 or self.family_labels != self.family_specialist_bundle.get("family_labels"):
+                raise ValueError("Family specialist metadata and model must declare the same 11 labels")
+            if self.family_specialist_metadata.get("technique_ids_in_model_or_rows") is not False:
+                raise ValueError("Family specialist artifact must not use technique IDs as model labels or row fields")
+            self.family_specialist_threshold = float(self.family_specialist_bundle.get("decision_threshold", 0.5))
+            if not 0 < self.family_specialist_threshold < 1:
+                raise ValueError("Family specialist threshold must be in (0, 1)")
+            self.t2 = None
+            self._tfidf_idx_to_label = {}
 
         self.provenance = {
             "preprocessing_version": PREPROCESSING_VERSION,
@@ -436,20 +492,26 @@ class GenosEngine:
                 "parser/rule_engine.py", "parser/build_residual_dataset.py")},
             "view_policy": self.view_policy,
             "max_length": self.max_length,
-            "gatekeeper_sha256": sha256_file(t1_path),
+            "gatekeeper_backend": self.gatekeeper_backend,
+            "gatekeeper_device": "cpu" if self.gatekeeper_backend == "tfidf" else self.device.type,
+            "gatekeeper_sha256": sha256_file(self.gatekeeper_model_path),
             "gatekeeper_metadata_sha256": sha256_file(self.gatekeeper_meta_path) if self.gatekeeper_meta_path else None,
-            "mitre_sha256": sha256_file(mitre_model_path),
-            "mitre_metadata_status": "verified" if self.mitre_metadata else "legacy_missing_training_manifest",
+            "specialist_mode": self.specialist_mode,
+            "mitre_sha256": sha256_file(mitre_model_path) if mitre_model_path else None,
+            "mitre_metadata_status": ("verified" if self.mitre_metadata else "legacy_missing_training_manifest") if self.specialist_mode == "mitre" else "disabled_family_mode",
+            "family_specialist_sha256": sha256_file(self.family_specialist_path) if self.family_specialist_path else None,
+            "family_specialist_metadata_sha256": sha256_file(os.path.splitext(self.family_specialist_path)[0] + ".json") if self.family_specialist_path else None,
+            "family_labels": self.family_labels,
             "training_validity": "independent_annotation_not_established",
             "mitre_label_map": self.s_map,
-            "mitre_input_format": "structured" if self.use_residual_format else "raw",
+            "mitre_input_format": ("structured" if self.use_residual_format else "raw") if self.specialist_mode == "mitre" else None,
             "behavior_sha256": sha256_file(self.behavior_model_path) if self.behavior_model is not None else None,
             "behavior_input_format": getattr(self, "behavior_input_format", "structured"),
             "behavior_metadata_sha256": sha256_file(os.path.splitext(self.behavior_model_path)[0] + ".json") if self.behavior_model is not None else None,
             "behavior_action_threshold": self.behavior_action_threshold,
             "torch_version": torch.__version__,
             "package_versions": {name: package_version(name) for name in ("transformers", "scikit-learn", "numpy", "joblib")},
-            "encoder_config_sha256": hashlib.sha256(self.t1.encoder.config.to_json_string().encode()).hexdigest(),
+            "encoder_config_sha256": hashlib.sha256(self.t1.encoder.config.to_json_string().encode()).hexdigest() if self.gatekeeper_backend == "codebert" else None,
             "tokenizer_sha256": hashlib.sha256(self.tokenizer.backend_tokenizer.to_str().encode()).hexdigest(),
             "deobfuscation_policy": {"entropy_threshold": 5.2, "entropy_delta_stop": 0.01, "max_layers": self.max_deobfuscation_layers},
             "device_type": self.device.type,
@@ -459,7 +521,15 @@ class GenosEngine:
             "behavior_model_type": "behavior_encoder" if self.behavior_model is not None else "heuristic_bootstrap",
             "behavior_fallback_reason": self.behavior_load_error,
             "optional_deobfuscator": "pyminusone" if pyminusone is not None else None,
-            "base_score_semantics": "uncalibrated_model_estimates",
+            "base_score_semantics": (
+                "cross_validated_calibrated_family_specialist_and_uncalibrated_gatekeeper_behavior"
+                if self.specialist_mode == "family" and self.gatekeeper_backend == "codebert"
+                else "cross_validated_calibrated_family_specialist_gatekeeper_and_uncalibrated_behavior"
+                if self.specialist_mode == "family"
+                else "cross_validated_calibrated_gatekeeper_and_uncalibrated_specialist_behavior"
+                if self.gatekeeper_backend == "tfidf"
+                else "uncalibrated_model_estimates"
+            ),
         }
         self.behavior_action_thresholds = {}
         policy_path = os.getenv("GENOS_BEHAVIOR_POLICY_PATH")
@@ -497,7 +567,33 @@ class GenosEngine:
         return probabilities
 
     def _score_status(self, component):
-        return "validation_temperature_scaled" if getattr(self, "calibration", None) and component in self.calibration.get("temperatures", {}) else "uncalibrated_model_estimate"
+        if getattr(self, "calibration", None) and component in self.calibration.get("temperatures", {}):
+            return "validation_temperature_scaled"
+        if component == "gatekeeper" and getattr(self, "gatekeeper_backend", "codebert") == "tfidf":
+            return "cross_validated_calibrated_model_estimate"
+        if component == "family_specialist" and getattr(self, "specialist_mode", "mitre") == "family":
+            return "cross_validated_calibrated_model_estimate"
+        if component == "mitre" and getattr(self, "specialist_mode", "mitre") == "family":
+            return "disabled_family_mode"
+        return "uncalibrated_model_estimate"
+
+    def _gate_probs(self, text: str) -> torch.Tensor:
+        normalized = (text or "").lower().strip()
+        if self.gatekeeper_backend == "tfidf":
+            probabilities = self.gatekeeper_model.predict_proba([normalized])[0]
+            class_probabilities = {int(index): float(value) for index, value in zip(self.gatekeeper_model.classes_, probabilities)}
+            ordered = [class_probabilities[index] for index in range(len(self._gate_labels))]
+            return torch.as_tensor([ordered], dtype=torch.float32)
+
+        encoded = self.tokenizer(
+            normalized,
+            return_tensors="pt",
+            truncation=True,
+            padding="max_length",
+            max_length=self.max_length,
+        ).to(self.device)
+        outputs = self.t1(encoded["input_ids"], encoded["attention_mask"])
+        return F.softmax(outputs["verdict_logits"].float(), dim=1)
 
     def _load_gatekeeper_labels(self, meta: dict) -> list[str] | None:
         label_names = meta.get("label_names")
@@ -869,6 +965,8 @@ class GenosEngine:
                                     deobfuscated_cmd=decoded_cmd if was_obfuscated else None)
 
     def _mitre_distribution(self, raw_cmd: str, decoded_cmd: str | None = None):
+        if self.specialist_mode != "mitre":
+            raise RuntimeError("Technique scoring is disabled in family specialist mode")
         commands = list(dict.fromkeys(cmd for cmd in (raw_cmd, decoded_cmd) if cmd is not None))
         texts = [self._build_variant_a_text(cmd)[0] if self.use_residual_format else cmd for cmd in commands]
         probabilities = self.t2.predict_proba(texts)
@@ -889,6 +987,30 @@ class GenosEngine:
                   for column, index in enumerate(self.t2.classes_)]
         ranked.sort(key=lambda item: (-item[1], item[0]))
         return [{"code": code, "confidence": round(probability * 100, 2), "score_type": self._score_status("mitre")} for code, probability in ranked[:5]]
+
+    def _predict_family_specialist(self, command: str) -> dict:
+        normalized = (command or "").lower().strip()
+        vector = self.family_specialist_bundle["vectorizer"].transform([normalized])
+        probabilities = []
+        for estimator in self.family_specialist_bundle["estimators"]:
+            classes = np.asarray(estimator.classes_, dtype=int)
+            positive_index = np.flatnonzero(classes == 1)
+            if len(positive_index) != 1:
+                raise RuntimeError("Family estimator has no positive class")
+            probabilities.append(float(estimator.predict_proba(vector)[0, positive_index[0]]))
+        score_rows = [
+            {"family": family, "probability": round(probability * 100, 2), "selected": probability >= self.family_specialist_threshold}
+            for family, probability in zip(self.family_labels, probabilities)
+        ]
+        selected = [row for row in score_rows if row["selected"]]
+        selected.sort(key=lambda row: (-row["probability"], row["family"]))
+        return {
+            "model_type": "tfidf_family_specialist",
+            "score_type": self._score_status("family_specialist"),
+            "decision_threshold": self.family_specialist_threshold,
+            "predicted_families": selected,
+            "all_family_scores": score_rows,
+        }
 
     def _extract_behavior_action_tags(self, sem: dict, rules: dict, features: dict) -> list[str]:
         tags = {
@@ -1477,40 +1599,16 @@ class GenosEngine:
                 break
 
         processed_cmd = current_cmd.lower().strip()
-        inputs = self.tokenizer(
-            processed_cmd,
-            return_tensors="pt",
-            truncation=True,
-            padding="max_length",
-            max_length=self.max_length,
-        ).to(self.device)
-
-        # When the command was deobfuscated, also tokenize the raw form so we
-        # can evaluate the declared raw/decoded view policy.
-        raw_inputs = None
-        if was_obfuscated:
-            raw_processed = raw_cmd.strip().lower()
-            if raw_processed != processed_cmd:
-                raw_inputs = self.tokenizer(
-                    raw_processed,
-                    return_tensors="pt",
-                    truncation=True,
-                    padding="max_length",
-                    max_length=self.max_length,
-                ).to(self.device)
+        raw_processed = raw_cmd.strip().lower()
 
         device_type = "cuda" if "cuda" in self.device.type else "cpu"
         autocast_dtype = torch.float16 if device_type == "cuda" else torch.bfloat16
 
         with torch.no_grad():
-            with autocast(device_type=device_type, dtype=autocast_dtype):
-                g_outputs = self.t1(inputs["input_ids"], inputs["attention_mask"])
-                g_probs = F.softmax(g_outputs["verdict_logits"].float(), dim=1)
-                raw_g_probs = None
-
-                if raw_inputs is not None:
-                    raw_g_outputs = self.t1(raw_inputs["input_ids"], raw_inputs["attention_mask"])
-                    raw_g_probs = F.softmax(raw_g_outputs["verdict_logits"].float(), dim=1)
+            gate_autocast = autocast(device_type=device_type, dtype=autocast_dtype) if self.gatekeeper_backend == "codebert" else nullcontext()
+            with gate_autocast:
+                g_probs = self._gate_probs(processed_cmd)
+                raw_g_probs = self._gate_probs(raw_processed) if was_obfuscated and raw_processed != processed_cmd else None
 
                 gate = self._select_gate_summary(g_probs, raw_g_probs)
                 routing_features = self._extract_routing_features(
@@ -1578,13 +1676,29 @@ class GenosEngine:
                 }
                 response["provenance"] = self.provenance
                 response["score_type"] = self._score_status("gatekeeper")
-                response["mitre_scope"] = "closed_set_candidate_ranking"
-                response["calibration"] = {"gatekeeper": self._score_status("gatekeeper"), "mitre": self._score_status("mitre"), "behavior": self._score_status("behavior") if self.behavior_model is not None else "heuristic_baseline"}
-                response["MITRE_codes"] = self._predict_mitre_codes(
-                    raw_cmd.strip(), current_cmd if was_obfuscated and current_cmd != raw_cmd.strip() else None,
-                )
+                if self.specialist_mode == "mitre":
+                    response["mitre_scope"] = "closed_set_candidate_ranking"
+                    response["calibration"] = {
+                        "gatekeeper": self._score_status("gatekeeper"),
+                        "mitre": self._score_status("mitre"),
+                        "behavior": self._score_status("behavior") if self.behavior_model is not None else "heuristic_baseline",
+                    }
+                    response["MITRE_codes"] = self._predict_mitre_codes(
+                        raw_cmd.strip(), current_cmd if was_obfuscated and current_cmd != raw_cmd.strip() else None,
+                    )
+                else:
+                    response["specialist_mode"] = "family"
+                    response["mitre_scope"] = "disabled_family_specialist_mode"
+                    response["calibration"] = {
+                        "gatekeeper": self._score_status("gatekeeper"),
+                        "family_specialist": self._score_status("family_specialist"),
+                        "mitre": "disabled",
+                        "behavior": self._score_status("behavior") if self.behavior_model is not None else "heuristic_baseline",
+                    }
                 if routed["should_run_specialist"]:
                     specialist_cmd = current_cmd if was_obfuscated and current_cmd != raw_cmd.strip() else raw_cmd.strip()
+                    if self.specialist_mode == "family":
+                        response["attack_families"] = self._predict_family_specialist(specialist_cmd)
                     behavior, _ = self._predict_behavior(
                         specialist_cmd,
                         routed["label"],
@@ -1622,7 +1736,12 @@ class GenosEngine:
                         "gatekeeper": [gate["class_probabilities"][name] for name in self._GATE_LABELS],
                         "behavior": behavior_probabilities,
                         "behavior_actions": action_probabilities,
-                        "mitre": list(map(float, self._mitre_distribution(raw_cmd.strip(), current_cmd if was_obfuscated else None))),
                     }
+                    if self.specialist_mode == "mitre":
+                        response["_evaluation"]["mitre"] = list(map(float, self._mitre_distribution(raw_cmd.strip(), current_cmd if was_obfuscated else None)))
+                    else:
+                        response["_evaluation"]["family_specialist"] = [
+                            row["probability"] / 100 for row in response["attack_families"]["all_family_scores"]
+                        ]
 
         return response

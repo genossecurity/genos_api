@@ -217,8 +217,8 @@ def _scan_with_gpu_memory(command):
 def _run_inference(command, include_flags=None):
     """Run engine, normalize response, and apply include flags.
 
-    include_flags is an optional dict of section booleans:
-      evidence, mitre, analysis, ioc, meta
+        include_flags is an optional dict of section booleans:
+            evidence, families, mitre, analysis, ioc, meta
     All sections are included by default when include_flags is None.
     """
     # --- Run Genos engine ---
@@ -240,6 +240,7 @@ def _run_inference(command, include_flags=None):
     flags = {
         "evidence": True,
         "mitre": True,
+        "families": True,
         "analysis": True,
         "ioc": True,
         "meta": True,
@@ -256,7 +257,7 @@ def _run_inference(command, include_flags=None):
         "label_confidence": round(float(label_conf), 2),
     }
 
-    for key in ("class_probabilities", "decision_margin", "reason", "triggered_features", "routing_policy", "should_run_specialist", "gatekeeper", "behavior", "provenance", "score_type", "calibration", "input_truncated", "mitre_scope"):
+    for key in ("class_probabilities", "decision_margin", "reason", "triggered_features", "routing_policy", "should_run_specialist", "gatekeeper", "behavior", "provenance", "score_type", "calibration", "input_truncated", "mitre_scope", "specialist_mode"):
         if key in raw_result:
             result[key] = raw_result[key]
 
@@ -272,7 +273,7 @@ def _run_inference(command, include_flags=None):
         result["label_probabilities"] = probabilities
 
     # --- MITRE codes ---
-    if flags["mitre"]:
+    if flags["mitre"] and "MITRE_codes" in raw_result:
         result["MITRE_codes"] = [
             {
                 "code": t["code"],
@@ -281,6 +282,8 @@ def _run_inference(command, include_flags=None):
             }
             for t in mitre_predictions
         ]
+    if flags["families"] and "attack_families" in raw_result:
+        result["attack_families"] = raw_result["attack_families"]
 
     # --- Evidence ---
     if flags["evidence"] and "evidence" in raw_result:

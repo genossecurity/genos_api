@@ -12,6 +12,7 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import torch
+from sklearn.feature_extraction.text import TfidfVectorizer
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from engine import GenosEngine, _resolve_behavior_model_path
@@ -24,6 +25,9 @@ from scripts.evaluation.audit_annotations import reconcile
 from scripts.evaluation.select_action_thresholds import select_thresholds, fit_export as fit_action_export
 from scripts.evaluation.evaluate_mitre_relevance import evaluate as evaluate_relevance
 from scripts.ops import model_training_orchestrator as training_orchestrator
+from scripts.training.train_tfidf_gatekeeper import LABELS as GATE_TFIDF_LABELS
+from scripts.training.train_tfidf_gatekeeper import WORD_TOKEN_PATTERN, build_model as build_tfidf_gatekeeper
+from sklearn.model_selection import StratifiedGroupKFold
 import hashlib
 
 
@@ -58,6 +62,7 @@ class RuntimeTests(unittest.TestCase):
     def setUp(self):
         self.engine=GenosEngine.__new__(GenosEngine)
         self.engine._gate_labels=list(GenosEngine._GATE_LABELS)
+        self.engine.specialist_mode='mitre'
         self.engine.view_policy='mean'
         self.engine.calibration=None
         self.engine.use_residual_format=False
@@ -134,6 +139,17 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(route['label'], 'Malicious')
         self.assertEqual(route['routing_policy'], 'model_top_class')
 
+    def test_tfidf_gate_probs_use_runtime_class_order_and_normalization(self):
+        self.engine.gatekeeper_backend='tfidf'
+        self.engine.gatekeeper_model=SimpleNamespace(
+            classes_=np.array([2,0,1]),
+            predict_proba=Mock(return_value=np.array([[.3,.2,.5]])),
+        )
+        probabilities=self.engine._gate_probs(' WHOAMI ')
+        np.testing.assert_allclose(probabilities.numpy(), [[.2,.5,.3]])
+        self.engine.gatekeeper_model.predict_proba.assert_called_once_with(['whoami'])
+        self.assertEqual(self.engine._score_status('gatekeeper'), 'cross_validated_calibrated_model_estimate')
+
 
 class TrainingBenchmarkTests(unittest.TestCase):
     def test_candidate_selection_uses_validation_not_test(self):
@@ -150,6 +166,29 @@ class TrainingBenchmarkTests(unittest.TestCase):
         report = summarize_training_runs(candidates)
         self.assertEqual(report['best_by_validation']['gatekeeper']['seed'], 43)
         self.assertEqual(report['summaries'][0]['test_metrics_by_seed'][0]['macro_f1'], 0.95)
+
+
+class TfidfGatekeeperTests(unittest.TestCase):
+    def test_word_features_keep_shell_flags(self):
+        tokens = TfidfVectorizer(token_pattern=WORD_TOKEN_PATTERN).build_analyzer()(
+            'powershell -enc AbCd== /c whoami --no-profile'
+        )
+        self.assertIn('-enc', tokens)
+        self.assertIn('/c', tokens)
+        self.assertIn('--no-profile', tokens)
+
+    def test_group_calibrated_linear_gate_returns_three_ordered_probabilities(self):
+        phrases = ['pwd harmless', 'curl payload', 'maybe context']
+        texts = [f'{phrase} --option{group} /c {group}' for phrase in phrases for group in range(6)]
+        targets = np.repeat(np.arange(len(GATE_TFIDF_LABELS)), 6)
+        groups = np.asarray([f'{label}:{group}' for label in range(len(GATE_TFIDF_LABELS)) for group in range(6)])
+        folds = list(StratifiedGroupKFold(n_splits=3, shuffle=True, random_state=42).split(np.zeros(len(targets)), targets, groups))
+        model = build_tfidf_gatekeeper(42, folds, char_features=5000, word_features=5000)
+        model.fit(texts, targets)
+        probabilities = model.predict_proba(['pwd harmless', 'curl payload'])
+        self.assertEqual(model.classes_.tolist(), [0, 1, 2])
+        self.assertEqual(probabilities.shape, (2, 3))
+        np.testing.assert_allclose(probabilities.sum(axis=1), [1, 1], atol=1e-6)
 
 
 class TrainingOrchestratorTests(unittest.TestCase):
@@ -301,6 +340,18 @@ class ApiTests(unittest.TestCase):
         self.assertNotIn('suspicious',result['label_probabilities'])
         self.assertEqual(result['MITRE_codes'][0]['score_type'],'uncalibrated_model_estimate')
         self.assertEqual(result['provenance']['view_policy'],'mean')
+
+    def test_family_specialist_api_does_not_add_mitre_codes(self):
+        family_result={
+            'label':'Malicious', 'label_confidence':80, 'specialist_mode':'family',
+            'attack_families':{'predicted_families':[{'family':'Execution','probability':82.0}], 'all_family_scores':[]},
+            'mitre_scope':'disabled_family_specialist_mode',
+        }
+        with patch.object(self.api,'_scan_with_gpu_memory',return_value=(family_result,{})):
+            result=self.api._run_inference('bash -c whoami')
+        self.assertEqual(result['attack_families'],family_result['attack_families'])
+        self.assertEqual(result['specialist_mode'],'family')
+        self.assertNotIn('MITRE_codes',result)
 
 
 if __name__=='__main__':unittest.main()

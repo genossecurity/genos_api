@@ -176,6 +176,21 @@ function renderBehavior(d, rows, command) {
   $('semanticTags').innerHTML = chips(list(ev.semantic_features),'semantic');
 }
 function renderMitre(d) {
+  const heading = $('mitreHeading');
+  const headingLabel = heading?.querySelector('span');
+  const headingDetail = heading?.querySelector('small');
+  const families = d.attack_families;
+  if (families && Array.isArray(families.all_family_scores)) {
+    if (headingLabel) headingLabel.textContent = 'ATTACK FAMILIES';
+    if (headingDetail) headingDetail.textContent = 'MULTI-LABEL / 11 FAMILIES';
+    const selected = list(families.predicted_families);
+    $('mitreList').innerHTML = selected.length ? selected.map(row =>
+      `<span class="technique family-technique"><span class="technique-name">${esc(row.family)}</span><span class="technique-score" aria-label="${Number(row.probability).toFixed(1)} percent model score">${Number(row.probability).toFixed(1)}%</span></span>`
+    ).join('') : '<p class="muted">No family exceeded the model threshold</p>';
+    return;
+  }
+  if (headingLabel) headingLabel.textContent = 'THREAT MAPPING';
+  if (headingDetail) headingDetail.textContent = 'MITRE ATT&CK / TOP 5';
   const techniques = [...list(d.MITRE_codes)].sort((a,b)=>(Number(b?.confidence) || 0)-(Number(a?.confidence) || 0)).slice(0,5);
   $('mitreList').innerHTML = techniques.length ? techniques.map(t => {
     const id = String(typeof t === 'string' ? t : t.code || t.id || '');

@@ -18,6 +18,7 @@ def main():
     parser.add_argument('--gatekeeper', default='models/gatekeeper.pt')
     parser.add_argument('--gatekeeper-meta', default='config/gatekeeper_meta.json')
     parser.add_argument('--behavior', default='models/behavior_encoder.pt')
+    parser.add_argument('--specialist-mode', choices=['family', 'mitre'], default=None)
     parser.add_argument('--view-policy', choices=['raw', 'decoded', 'mean'], default='mean')
     parser.add_argument('--api', action='store_true')
     parser.add_argument('--output', type=Path, required=True)
@@ -26,20 +27,31 @@ def main():
         raise ValueError('Choose a new output path; keep prior evidence')
     from engine import GenosEngine
     engine = GenosEngine(t1_path=args.gatekeeper, t2_path=args.behavior,
-                         gatekeeper_meta_path=args.gatekeeper_meta, view_policy=args.view_policy)
+                         gatekeeper_meta_path=args.gatekeeper_meta, view_policy=args.view_policy,
+                         specialist_mode=args.specialist_mode)
     cases = []
     for command in ['pwd', 'whoami', 'd2hvYW1p', 'curl https://example.org/tool.sh -o /tmp/tool.sh']:
         result = engine.scan(command, include_evaluation=True)
-        for component in ['gatekeeper', 'mitre', 'behavior']:
+        components = ['gatekeeper', 'behavior'] + (['mitre'] if engine.specialist_mode == 'mitre' else ['family_specialist'])
+        for component in components:
             scores = np.asarray(result['_evaluation'][component], dtype=float)
-            if scores.ndim != 1 or not np.isfinite(scores).all() or (scores < 0).any() or not np.isclose(scores.sum(), 1, atol=1e-5):
+            if scores.ndim != 1 or not np.isfinite(scores).all() or (scores < 0).any() or (scores > 1).any():
                 raise AssertionError(f'Invalid {component} distribution')
+            if component != 'family_specialist' and not np.isclose(scores.sum(), 1, atol=1e-5):
+                raise AssertionError(f'Invalid normalized {component} distribution')
         if not result['should_run_specialist'] or result['behavior']['model_type'] != 'behavior_encoder':
             raise AssertionError('Learned behavior must run for every smoke case')
+        if engine.specialist_mode == 'family':
+            if 'MITRE_codes' in result or len(result['attack_families']['all_family_scores']) != 11:
+                raise AssertionError('Family mode must return 11 family scores and no MITRE codes')
+        elif 'MITRE_codes' not in result:
+            raise AssertionError('MITRE mode did not return technique candidates')
         if command == 'd2hvYW1p' and result['deobfuscated_cmd'] != 'whoami':
             raise AssertionError('Bare Base64 decoding failed')
         cases.append({'command': command, 'label': result['label'],
                       'class_scores': result['class_probabilities'],
+                      'specialist_mode': engine.specialist_mode,
+                      'family_predictions': result.get('attack_families', {}).get('predicted_families'),
                       'behavior': result['attack_stage'],
                       'behavior_model_type': result['behavior']['model_type'],
                       'view': result['gatekeeper']['model_view'],
@@ -59,6 +71,8 @@ def main():
             raise AssertionError('API changed verdict or score semantics')
         if result.get('deobfuscated_cmd') != 'whoami' or result['provenance'] != engine.provenance:
             raise AssertionError('API lost decoding or provenance')
+        if engine.specialist_mode == 'family' and ('MITRE_codes' in result or 'attack_families' not in result):
+            raise AssertionError('API lost family output or returned technique codes in family mode')
         api_status = 'passed'
     report = {'provenance': engine.provenance, 'cases': cases, 'api_and_templates': api_status,
               'scope': 'Structural integration checks; examples are development cases, not an independent accuracy estimate'}
