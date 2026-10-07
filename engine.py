@@ -10,6 +10,16 @@ from contextlib import nullcontext
 from importlib.metadata import version as package_version
 
 from scientific_validation import PREPROCESSING_VERSION, sha256_file, temperature_scale
+from baseline import (
+    BASELINE_VERSION,
+    SIGNATURE_SCHEMA_VERSION,
+    BaselineEvaluation,
+    BaselineMode,
+    BaselineStatus,
+    BaselineStore,
+    ExecutionContext,
+    SignatureExtractor,
+)
 
 import joblib
 import numpy as np
@@ -435,6 +445,12 @@ class GenosEngine:
         if not _RESIDUAL_PIPELINE_AVAILABLE:
             raise RuntimeError("Required parser/residual pipeline is unavailable")
         self.use_residual_format = use_residual_format
+        self.baseline_mode = os.getenv("GENOS_BASELINE_MODE", "audit").strip().lower()
+        try:
+            self.baseline_mode = BaselineMode(self.baseline_mode)
+        except ValueError as exc:
+            raise ValueError("GENOS_BASELINE_MODE must be learn, audit, or enforce") from exc
+        self.baseline_store = BaselineStore(mode=self.baseline_mode)
         self.prior_alphas = prior_alphas or {"strong": 2.0, "weak": 1.5, "none": 0.0}
         self._specialist_map_fwd = {mitre: idx for idx, mitre in self.s_map.items()}
         self.family_specialist_bundle = None
@@ -509,6 +525,9 @@ class GenosEngine:
             "behavior_input_format": getattr(self, "behavior_input_format", "structured"),
             "behavior_metadata_sha256": sha256_file(os.path.splitext(self.behavior_model_path)[0] + ".json") if self.behavior_model is not None else None,
             "behavior_action_threshold": self.behavior_action_threshold,
+            "baseline_mode": self.baseline_mode.value,
+            "baseline_version": BASELINE_VERSION,
+            "signature_schema_version": SIGNATURE_SCHEMA_VERSION,
             "torch_version": torch.__version__,
             "package_versions": {name: package_version(name) for name in ("transformers", "scikit-learn", "numpy", "joblib")},
             "encoder_config_sha256": hashlib.sha256(self.t1.encoder.config.to_json_string().encode()).hexdigest() if self.gatekeeper_backend == "codebert" else None,
@@ -1578,7 +1597,78 @@ class GenosEngine:
             class_probs=class_probs,
         )
 
-    def scan(self, raw_cmd, include_evaluation=False):
+    def scan(self, raw_cmd, include_evaluation=False, context=None, baseline_store=None):
+        baseline_eval = None
+        baseline_signature = None
+        baseline_ctx = None
+        if context is not None:
+            if isinstance(context, ExecutionContext):
+                baseline_ctx = context
+            elif isinstance(context, dict):
+                baseline_ctx = ExecutionContext.from_dict(context)
+
+        store = baseline_store if baseline_store is not None else getattr(self, "baseline_store", None)
+        if store is not None and baseline_ctx is not None:
+            try:
+                parsed = _parse_command(raw_cmd)
+                baseline_signature = SignatureExtractor.extract(parsed)
+                baseline_eval = store.evaluate(baseline_signature, baseline_ctx)
+            except Exception:
+                baseline_eval = BaselineEvaluation(
+                    status=BaselineStatus.UNSCOPED,
+                    scope="none",
+                    seen_count=0,
+                    first_seen=None,
+                    novelty_score=0.0,
+                    lineage_novel=False,
+                    surprise_exe=0.0,
+                    surprise_full=0.0,
+                    should_run_genos=True,
+                    rejection_reason="parse_error",
+                )
+        else:
+            baseline_eval = BaselineEvaluation(
+                status=BaselineStatus.UNSCOPED,
+                scope="none",
+                seen_count=0,
+                first_seen=None,
+                novelty_score=0.0,
+                lineage_novel=False,
+                surprise_exe=0.0,
+                surprise_full=0.0,
+                should_run_genos=True,
+                rejection_reason="missing_context",
+            )
+
+        if baseline_eval.status == BaselineStatus.KNOWN_STABLE and not baseline_eval.should_run_genos:
+            return {
+                "label": "Benign",
+                "internal_label": "Benign",
+                "public_label": "Benign",
+                "label_confidence": 100.0,
+                "model_confidence": 100.0,
+                "confidence_driver": "baseline_known_stable",
+                "class_probabilities": {"Benign": 100.0, "Context_Dependent": 0.0, "Malicious": 0.0},
+                "label_probabilities": {"benign": 100.0, "malicious": 0.0, "context_dependent": 0.0},
+                "decision_margin": 100.0,
+                "reason": "known_stable_baseline",
+                "triggered_features": [],
+                "routing_policy": "baseline",
+                "should_run_specialist": False,
+                "baseline_status": baseline_eval.status.value,
+                "scope": baseline_eval.scope,
+                "seen_count": baseline_eval.seen_count,
+                "first_seen": baseline_eval.first_seen.isoformat() if baseline_eval.first_seen else None,
+                "lineage_novel": baseline_eval.lineage_novel,
+                "novelty_score": baseline_eval.novelty_score,
+                "action": "pass",
+                "provenance": {
+                    **self.provenance,
+                    "baseline_version": BASELINE_VERSION,
+                    "signature_schema_version": SIGNATURE_SCHEMA_VERSION,
+                },
+            }
+
         current_cmd = raw_cmd.strip()
         was_obfuscated = self.is_obfuscated(current_cmd)
 
@@ -1674,8 +1764,14 @@ class GenosEngine:
                     "raw": len(self.tokenizer.encode(raw_cmd.lower().strip(), truncation=False)) > self.max_length,
                     "decoded": len(self.tokenizer.encode(processed_cmd, truncation=False)) > self.max_length,
                 }
-                response["provenance"] = self.provenance
+                response["provenance"] = {**self.provenance, "baseline_version": BASELINE_VERSION, "signature_schema_version": SIGNATURE_SCHEMA_VERSION}
                 response["score_type"] = self._score_status("gatekeeper")
+                response["baseline_status"] = baseline_eval.status.value if baseline_eval else BaselineStatus.UNSCOPED.value
+                response["scope"] = baseline_eval.scope if baseline_eval else "none"
+                response["seen_count"] = baseline_eval.seen_count if baseline_eval else 0
+                response["first_seen"] = baseline_eval.first_seen.isoformat() if baseline_eval and baseline_eval.first_seen else None
+                response["lineage_novel"] = baseline_eval.lineage_novel if baseline_eval else False
+                response["novelty_score"] = baseline_eval.novelty_score if baseline_eval else 0.0
                 if self.specialist_mode == "mitre":
                     response["mitre_scope"] = "closed_set_candidate_ranking"
                     response["calibration"] = {
@@ -1743,5 +1839,10 @@ class GenosEngine:
                         response["_evaluation"]["family_specialist"] = [
                             row["probability"] / 100 for row in response["attack_families"]["all_family_scores"]
                         ]
+
+        if baseline_store is None and hasattr(self, "baseline_store") and baseline_ctx is not None and baseline_signature is not None:
+            self.baseline_store.observe_and_admit(baseline_signature, baseline_ctx, response)
+        elif baseline_store is not None and baseline_ctx is not None and baseline_signature is not None:
+            baseline_store.observe_and_admit(baseline_signature, baseline_ctx, response)
 
         return response
