@@ -14,7 +14,7 @@
   <script src="{{ url_for('static', filename='api-builder.js') }}" defer></script>
 </head>
 <body>
-<main class="shell" data-endpoint="{{ url_for('scan_get') }}">
+<main class="shell" data-endpoint="{{ url_for('scan_get') }}" data-example-endpoint="https://genossec.com/api/scan">
   <header class="brand">
     <a class="brand-home" href="{{ url_for('index') }}"><span class="brand-mark">G</span><span>Genos <small>Command security analysis</small></span></a>
     <nav aria-label="Main navigation">
@@ -43,14 +43,19 @@
         <div class="code-cell">
           <div class="cell-label"><span>Request</span><button type="button" class="copy-btn" data-copy="basic">Copy curl</button></div>
           <div class="code-panel">
-            <pre><code id="basicCurl"></code></pre>
+            <pre><code id="basicCurl">curl 'https://genossec.com/api/scan' \
+  --data-urlencode 'command=&lt;COMMAND&gt;'</code></pre>
             <div class="code-footer"><span><b class="method">GET</b> Tier 1 classification</span></div>
           </div>
         </div>
         <div class="code-cell">
           <div class="cell-label"><span id="basicResponseLabel">Response</span><span class="response-status" id="basicStatus" role="status">Example JSON</span></div>
           <div class="code-panel response-panel">
-            <pre><code id="basicResponse"></code></pre>
+            <pre><code id="basicResponse">{
+  "label": "Context_Dependent",
+  "label_confidence": 99.0,
+  "deobfuscated_cmd": null
+}</code></pre>
             <p class="response-note">Classification + confidence (0–100). <code>deobfuscated_cmd</code> is <code>null</code> when no obfuscation is detected.</p>
           </div>
         </div>
@@ -117,7 +122,7 @@
     <p class="hint">Invalid or unknown parameters return HTTP 400. Tier 2 and IOC extraction are independent options.</p>
   </details>
   <p id="copyStatus" class="copy-status" role="status" aria-live="polite"></p>
-  <noscript><p class="panel">Enable JavaScript to customize and copy requests. Basic call: <code>curl --get --silent --show-error '{{ url_for('scan_get', _external=True) }}' --data-urlencode 'command=&lt;COMMAND&gt;'</code></p></noscript>
+  <noscript><p class="panel">Enable JavaScript to customize and copy requests. Basic call: <code>curl 'https://genossec.com/api/scan' --data-urlencode 'command=&lt;COMMAND&gt;'</code></p></noscript>
   <footer>Genos API · Automatic decoding → Tier 1 → Optional Tier 2 + IOCs</footer>
 </main>
 </body>

@@ -1,5 +1,7 @@
 (() => {
-  const endpoint = new URL(document.querySelector('[data-endpoint]').dataset.endpoint, location.href);
+  const shell = document.querySelector('[data-endpoint]');
+  const endpoint = new URL(shell.dataset.endpoint, location.href);
+  const exampleEndpoint = new URL(shell.dataset.exampleEndpoint || endpoint.href, location.href);
   const commandInput = document.getElementById('command');
   const tier2 = document.getElementById('tier2');
   const allIocs = document.getElementById('allIocs');
@@ -35,14 +37,8 @@
   }
 
   function makeCurl(params) {
-    const parts = ['curl --get --silent --show-error', '  ' + shellQuote(endpoint.href)];
+    const parts = ['curl ' + shellQuote(exampleEndpoint.href)];
     params.forEach((value, key) => parts.push('  --data-urlencode ' + shellQuote(key + '=' + value)));
-    return parts.join(' \\\n');
-  }
-
-  function basicCurl() {
-    const parts = ['curl --get --silent --show-error', '  ' + shellQuote(endpoint.href)];
-    parts.push('  --data-urlencode ' + shellQuote('command=<COMMAND>'));
     return parts.join(' \\\n');
   }
 
@@ -67,12 +63,12 @@
     if (selected.length) summary.push(selected.length === iocOptions.length ? 'all IOCs' : selected.length + ' IOC types');
     document.getElementById('selectionSummary').textContent = summary.join(' · ');
     document.getElementById('copyStatus').textContent = '';
+    curlText.basic = document.getElementById('basicCurl').textContent;
+    document.getElementById('customCurl').textContent = curlText.custom = makeCurl(parameters(true));
+    document.getElementById('customResponse').textContent = JSON.stringify(exampleResponse(true), null, 2);
     ['basic', 'custom'].forEach(name => {
-      curlText[name] = name === 'basic' ? basicCurl() : makeCurl(parameters(true));
-      document.getElementById(name + 'Curl').textContent = curlText[name];
-      document.getElementById(name + 'Response').textContent = JSON.stringify(exampleResponse(name === 'custom'), null, 2);
       const status = document.getElementById(name + 'Status');
-      status.textContent = 'Illustrative values';
+      if (name === 'custom') status.textContent = 'Illustrative values';
       status.classList.remove('error', 'loading');
     });
     document.querySelectorAll('[data-copy], [data-run]').forEach(button => {
@@ -83,6 +79,7 @@
   async function copyRequest(name) {
     const text = curlText[name];
     const status = document.getElementById('copyStatus');
+    const button = document.querySelector('[data-copy="' + name + '"]');
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(text);
@@ -99,7 +96,21 @@
         finally { textarea.remove(); active?.focus(); }
         if (!copied) throw new Error('Clipboard unavailable');
       }
-      status.textContent = 'Copied. Paste into bash or zsh to run the request.';
+      const originalText = button.dataset.originalText || button.textContent;
+      button.dataset.originalText = originalText;
+      button.textContent = 'Copied';
+      button.classList.add('copied');
+      button.parentElement.querySelector('.copy-feedback')?.remove();
+      const feedback = document.createElement('span');
+      feedback.className = 'copy-feedback';
+      feedback.textContent = 'Copied to Clipboard';
+      button.parentElement.appendChild(feedback);
+      window.setTimeout(() => {
+        feedback.remove();
+        button.textContent = originalText;
+        button.classList.remove('copied');
+      }, 1800);
+      status.textContent = '';
     } catch (_) {
       status.textContent = 'Copy is unavailable in this browser. Select the curl command and copy it manually.';
     }
