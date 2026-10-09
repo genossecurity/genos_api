@@ -611,8 +611,12 @@ class GenosEngine:
                 store.observe_and_admit(baseline_signature, baseline_ctx, response)
             return response
 
-        # Deobfuscation Stage
-        current_cmd, was_obfuscated, _ = self.deobfuscator.deobfuscate_with_metadata(raw_cmd)
+        # Obfuscation detection and deobfuscation happen before Stage 1.
+        was_obfuscated = self.deobfuscator.is_obfuscated(raw_cmd)
+        if was_obfuscated:
+            current_cmd, _, _ = self.deobfuscator.deobfuscate_with_metadata(raw_cmd)
+        else:
+            current_cmd = raw_cmd.strip()
         processed_cmd = current_cmd.lower().strip()
         raw_processed = raw_cmd.strip().lower()
 
@@ -631,6 +635,10 @@ class GenosEngine:
                     current_cmd if was_obfuscated else None,
                 )
                 routed = self._route_gatekeeper(gate, routing_features)
+                # Stage 1 benign verdicts stop here; suspicious results continue to Stage 2.
+                run_stage2 = routed["label"] != "Benign" and (
+                    routed["should_run_specialist"] or include_evaluation
+                )
 
                 # Class probabilities formatting
                 benign_p = round(gate.get("benign_prob", 0.0) * 100, 2)
@@ -665,7 +673,7 @@ class GenosEngine:
                     "reason": routed["reason"],
                     "triggered_features": routed["triggered_features"],
                     "routing_policy": routed["routing_policy"],
-                    "should_run_specialist": routed["should_run_specialist"],
+                    "should_run_specialist": run_stage2,
                     "gatekeeper": {
                         "decision_mode": routed["routing_policy"],
                         "label_names": list(self._gate_labels),
@@ -719,7 +727,7 @@ class GenosEngine:
                         "mitre": self._score_status("mitre"),
                         "behavior": self._score_status("behavior") if self.behavior_model is not None else "heuristic_baseline",
                     }
-                    if routed["should_run_specialist"] or include_evaluation:
+                    if run_stage2:
                         response["MITRE_codes"] = self._predict_mitre_codes(
                             raw_cmd.strip(),
                             current_cmd if was_obfuscated and current_cmd != raw_cmd.strip() else None,
@@ -738,7 +746,7 @@ class GenosEngine:
                 behavior_probabilities = None
                 action_probabilities = None
 
-                if routed["should_run_specialist"] or include_evaluation:
+                if run_stage2:
                     specialist_cmd = current_cmd if was_obfuscated and current_cmd != raw_cmd.strip() else raw_cmd.strip()
                     if self.specialist_mode == "family":
                         response["attack_families"] = self._predict_family_specialist(specialist_cmd)
@@ -791,11 +799,18 @@ class GenosEngine:
                         "behavior_actions": action_probabilities,
                     }
                     if self.specialist_mode == "mitre":
-                        response["_evaluation"]["mitre"] = list(map(float, self._mitre_distribution(raw_cmd.strip(), current_cmd if was_obfuscated else None)))
+                        response["_evaluation"]["mitre"] = (
+                            list(map(float, self._mitre_distribution(raw_cmd.strip(), current_cmd if was_obfuscated else None)))
+                            if run_stage2 else None
+                        )
                     else:
-                        response["_evaluation"]["family_specialist"] = [
-                            row["probability"] / 100 for row in response.get("attack_families", {}).get("all_family_scores", [])
-                        ]
+                        response["_evaluation"]["family_specialist"] = (
+                            [
+                                row["probability"] / 100
+                                for row in response.get("attack_families", {}).get("all_family_scores", [])
+                            ]
+                            if run_stage2 else None
+                        )
 
         # Write-back sighting to BaselineStore
         if store is not None and baseline_ctx is not None and baseline_signature is not None:
