@@ -6,6 +6,7 @@ my_flask_env/
 .env
 logs/
 models/
+parser/
 
 # Generated frozen datasets and local annotation queues
 data/derived/
