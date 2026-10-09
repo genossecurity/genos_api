@@ -68,7 +68,7 @@
     display: flex; align-items: center; justify-content: space-between; gap: 16px;
     border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px; background: var(--panel); box-shadow: var(--shadow);
   }
-  .verdict-left { display: flex; align-items: center; gap: 14px; }
+  .verdict-left { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; min-width: 0; }
   .verdict-pill {
     display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px;
     font-weight: 800; font-size: .95rem; letter-spacing: .02em; text-transform: uppercase;
@@ -78,8 +78,26 @@
   .verdict-pill.context_dependent { background: rgba(210,153,34,.14); color: var(--context); border: 1px solid rgba(210,153,34,.4); }
   .verdict-pill.malicious { background: rgba(248,81,73,.14); color: var(--malicious); border: 1px solid rgba(248,81,73,.4); }
   .verdict-conf { font-size: 1.6rem; font-weight: 900; }
-  .verdict-meta { color: var(--muted); font-size: .8rem; text-align: right; }
+  .verdict-meta { flex-shrink: 0; color: var(--muted); font-size: .8rem; text-align: right; }
   .verdict-meta div + div { margin-top: 2px; }
+  .verdict-summary { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0; padding: 0; border-radius: 999px; overflow: hidden; }
+  .verdict-stage-section, .verdict-classification-section { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px 12px; min-width: 0; padding: 20px 22px; font-size: 1rem; line-height: 1.5; }
+  .verdict-stage-label { color: var(--soft); font-weight: 400; }
+  .verdict-stage { color: var(--accent); font-size: 1rem; font-weight: 800; line-height: inherit; text-decoration: underline; text-underline-offset: 3px; }
+  .verdict-stage:hover { filter: brightness(1.2); }
+  .verdict-stage:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+  .verdict-classification-section { align-self: stretch; border-left: 1px solid var(--border); }
+  .verdict-summary .verdict-pill { padding: 0; border: 0; background: transparent; font-size: inherit; letter-spacing: normal; text-transform: none; }
+  .verdict-summary .verdict-conf { color: var(--soft); font-size: inherit; font-weight: 700; white-space: nowrap; }
+  .verdict-time { color: var(--muted); white-space: nowrap; }
+  @media (max-width: 640px) {
+    .verdict-summary { grid-template-columns: minmax(0, 1fr); border-radius: 24px; }
+    .verdict-classification-section { border-left: 0; border-top: 1px solid var(--border); }
+  }
+  @media (max-width: 540px) {
+    .verdict-card { flex-direction: column; align-items: flex-start; }
+    .verdict-meta { text-align: left; }
+  }
 
   .decoded-box { margin-top: 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--inset); padding: 12px 14px; }
   .decoded-box .label { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; font-weight: 700; }
@@ -150,6 +168,20 @@
   const scanBtn = document.getElementById('scanBtn');
   const scanStatus = document.getElementById('scanStatus');
   const results = document.getElementById('results');
+  const STAGE_MITRE_URLS = {
+    'Execution': 'https://attack.mitre.org/tactics/TA0002/',
+    'Persistence': 'https://attack.mitre.org/tactics/TA0003/',
+    'Privilege Escalation': 'https://attack.mitre.org/tactics/TA0004/',
+    'Defense Evasion': 'https://attack.mitre.org/tactics/TA0005/',
+    'Credential Access': 'https://attack.mitre.org/tactics/TA0006/',
+    'Discovery / Recon': 'https://attack.mitre.org/tactics/TA0007/',
+    'Lateral Movement': 'https://attack.mitre.org/tactics/TA0008/',
+    'Collection / Staging': 'https://attack.mitre.org/tactics/TA0009/',
+    'C2 / Remote Access': 'https://attack.mitre.org/tactics/TA0011/',
+    'Payload Retrieval': 'https://attack.mitre.org/techniques/T1105/',
+    'Exfiltration': 'https://attack.mitre.org/tactics/TA0010/',
+    'Impact': 'https://attack.mitre.org/tactics/TA0040/',
+  };
 
   const themeButtons = document.querySelectorAll('[data-theme-btn]');
   function applyTheme(theme) {
@@ -367,33 +399,44 @@
       : label.toLowerCase().includes('malicious') ? 'malicious' : 'suspicious';
 
     const card = document.createElement('div');
-    card.className = 'verdict-card';
+    card.className = 'verdict-card verdict-summary';
 
     const left = document.createElement('div');
-    left.className = 'verdict-left';
+    left.className = 'verdict-stage-section';
+    const stageLabel = document.createElement('span');
+    stageLabel.className = 'verdict-stage-label';
+    stageLabel.textContent = 'MITRE Stage:';
+    left.appendChild(stageLabel);
+    if (data.attack_stage) {
+      const stage = document.createElement('a');
+      stage.className = 'verdict-stage';
+      stage.textContent = data.attack_stage;
+      const stageUrl = STAGE_MITRE_URLS[data.attack_stage];
+      stage.href = stageUrl || 'https://attack.mitre.org/tactics/';
+      stage.target = '_blank';
+      stage.rel = 'noopener noreferrer';
+      stage.title = stageUrl ? `View ${data.attack_stage} in MITRE ATT&CK` : 'Explore MITRE ATT&CK tactics';
+      left.appendChild(stage);
+    }
+    card.appendChild(left);
+
+    const right = document.createElement('div');
+    right.className = 'verdict-classification-section';
     const pill = document.createElement('span');
     pill.className = 'verdict-pill ' + pillClass;
     pill.textContent = label.replace(/_/g, ' ');
-    left.appendChild(pill);
+    right.appendChild(pill);
     const conf = document.createElement('span');
     conf.className = 'verdict-conf';
     conf.textContent = `${Number(data.label_confidence).toFixed(1)}%`;
-    left.appendChild(conf);
-    card.appendChild(left);
-
-    const meta = document.createElement('div');
-    meta.className = 'verdict-meta';
-    if (data.attack_stage) {
-      const s = document.createElement('div');
-      s.textContent = `Stage: ${data.attack_stage}`;
-      meta.appendChild(s);
-    }
+    right.appendChild(conf);
     if (typeof data.elapsed_ms === 'number') {
-      const t = document.createElement('div');
+      const t = document.createElement('span');
+      t.className = 'verdict-time';
       t.textContent = `${data.elapsed_ms} ms`;
-      meta.appendChild(t);
+      right.appendChild(t);
     }
-    card.appendChild(meta);
+    card.appendChild(right);
     results.appendChild(card);
 
     if (data.deobfuscated_cmd || data.decoded_payload) {
