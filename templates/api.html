@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API Builder · Genos</title>
+  <script>
+    try {
+      document.documentElement.dataset.theme = localStorage.getItem('genos-theme') ||
+        (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    } catch (_) { document.documentElement.dataset.theme = 'dark'; }
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='api-builder.css') }}">
+  <script src="{{ url_for('static', filename='api-builder.js') }}" defer></script>
+</head>
+<body>
+<main class="shell" data-endpoint="{{ url_for('scan_get') }}">
+  <header class="brand">
+    <a class="brand-home" href="{{ url_for('index') }}"><span class="brand-mark">G</span><span>Genos <small>Command security analysis</small></span></a>
+    <nav aria-label="Main navigation">
+      <a href="{{ url_for('index') }}">Scanner</a>
+      <a href="{{ url_for('api_builder') }}" aria-current="page">API builder</a>
+    </nav>
+    <div class="theme-toggle" role="group" aria-label="Color theme">
+      <button type="button" data-theme-btn="light" aria-pressed="false">Light</button>
+      <button type="button" data-theme-btn="dark" aria-pressed="true">Dark</button>
+    </div>
+  </header>
+
+  <div class="intro">
+    <p class="eyebrow">Developer tools</p>
+    <h1>Your command. Your response.</h1>
+    <p>Start with a classification. Add stage analysis and the indicators you need, then copy a ready-to-run GET request.</p>
+  </div>
+
+  <section class="basic" aria-labelledby="basicHeading">
+    <div class="section-heading">
+      <div><span class="step">01</span><h2 id="basicHeading">The basic API call</h2></div>
+      <span class="badge">Tier 1 by default</span>
+    </div>
+    <div class="panel basic-panel">
+      <div class="basic-grid">
+        <div class="code-cell">
+          <div class="cell-label"><span>Request</span><button type="button" class="copy-btn" data-copy="basic">Copy curl</button></div>
+          <div class="code-panel">
+            <pre><code id="basicCurl"></code></pre>
+            <div class="code-footer"><span><b class="method">GET</b> Tier 1 classification</span></div>
+          </div>
+        </div>
+        <div class="code-cell">
+          <div class="cell-label"><span id="basicResponseLabel">Response</span><span class="response-status" id="basicStatus" role="status">Example JSON</span></div>
+          <div class="code-panel response-panel">
+            <pre><code id="basicResponse"></code></pre>
+            <p class="response-note">Classification + confidence (0–100). <code>deobfuscated_cmd</code> is <code>null</code> when no obfuscation is detected.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="builder" aria-labelledby="builderHeading">
+    <div class="section-heading"><div><span class="step">02</span><h2 id="builderHeading">Build your response</h2></div><span class="muted">Only ask for what you need</span></div>
+    <div class="builder-grid">
+      <div class="panel options">
+        <label class="input-label" for="command">Command to analyze</label>
+        <textarea id="command" rows="2" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="commandHint" required>cat /etc/shadow</textarea>
+        <p class="hint" id="commandHint">Used by the customizable request. Obfuscation is detected and decoded automatically before classification.</p>
+        <div class="included">
+          <label class="option"><input type="checkbox" checked disabled><span><strong>Tier 1</strong><small>Classification and confidence. Always included.</small></span></label>
+          <div class="automatic"><span class="dot"></span><span>Automatic deobfuscation</span><span class="badge">Always on</span></div>
+        </div>
+        <label class="option tier2-option" for="tier2"><input id="tier2" type="checkbox"><span><strong>Tier 2 · MITRE stage</strong><small>Add the attack stage and its confidence. Benign results skip Tier 2.</small></span></label>
+        <fieldset>
+          <legend>Indicators of compromise</legend>
+          <p class="hint">Pick individual types or include all. Leave unchecked to skip IOC extraction.</p>
+          <label class="option select-all"><input id="allIocs" type="checkbox"><span>All IOC types</span></label>
+          <div class="ioc-options">
+            {% set labels = {'urls': 'URLs', 'domains': 'Domains', 'ips': 'IP addresses', 'ports': 'Ports', 'files': 'File paths', 'registry': 'Registry paths'} %}
+            {% for field in ioc_fields %}
+            <label class="option"><input type="checkbox" data-ioc="{{ field }}"><span>{{ labels[field] }}</span></label>
+            {% endfor %}
+          </div>
+        </fieldset>
+        <button type="button" id="resetOptions" class="text-btn">Reset to Tier 1 only</button>
+      </div>
+      <div class="custom-output">
+        <div class="code-cell">
+          <div class="cell-label"><span>Request</span><button type="button" class="copy-btn" data-copy="custom">Copy curl</button></div>
+          <div class="code-panel">
+            <pre><code id="customCurl"></code></pre>
+            <div class="code-footer"><span id="selectionSummary">Tier 1 only</span><button type="button" class="run-btn" data-run="custom">Run request</button></div>
+          </div>
+        </div>
+        <div class="code-cell">
+          <div class="cell-label"><span id="customResponseLabel">Response</span><span class="response-status" id="customStatus" role="status">Example JSON</span></div>
+          <div class="code-panel response-panel">
+            <pre><code id="customResponse"></code></pre>
+            <p class="response-note">Examples show the selected fields. Run the request to get real results for your command.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <details class="panel reference">
+    <summary>Query parameter reference <span class="muted">3 parameters, one endpoint</span></summary>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Parameter</th><th>Default</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>command</code></td><td>Required</td><td>The command to analyze. Use curl’s <code>--data-urlencode</code> to preserve spaces and special characters.</td></tr>
+          <tr><td><code>tier2</code></td><td><code>false</code></td><td>Set <code>true</code> to add a <code>tier2</code> object with <code>stage</code> and <code>stage_confidence</code>. A benign result returns <code>status: "skipped_benign"</code> with null stage fields. <code>1</code> and <code>0</code> also work.</td></tr>
+          <tr><td><code>iocs</code></td><td>Omitted</td><td>Use <code>all</code>, or a comma-separated selection: <code>{{ ioc_fields|join(', ') }}</code>. Only selected keys are returned; empty arrays mean none found.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="hint">Invalid or unknown parameters return HTTP 400. Tier 2 and IOC extraction are independent options.</p>
+  </details>
+  <p id="copyStatus" class="copy-status" role="status" aria-live="polite"></p>
+  <noscript><p class="panel">Enable JavaScript to customize and copy requests. Basic call: <code>curl --get --silent --show-error '{{ url_for('scan_get', _external=True) }}' --data-urlencode 'command=&lt;COMMAND&gt;'</code></p></noscript>
+  <footer>Genos API · Automatic decoding → Tier 1 → Optional Tier 2 + IOCs</footer>
+</main>
+</body>
+</html>

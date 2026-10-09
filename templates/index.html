@@ -41,6 +41,8 @@
   .brand-mark { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 7px; background: var(--mark); color: var(--accent); font-weight: 900; }
   .brand-title { font-weight: 800; letter-spacing: -.02em; font-size: 1.05rem; }
   .brand-sub { color: var(--muted); font-size: .8rem; }
+  .api-link { color: var(--accent); font-weight: 700; text-decoration: none; padding: 6px 10px; }
+  .api-link:hover { text-decoration: underline; }
 
   /* ── Command Input Box ───────────────────────────────── */
   .scan-box { border: 1px solid var(--border); background: var(--panel); border-radius: 10px; padding: 16px; box-shadow: var(--shadow); }
@@ -142,6 +144,7 @@
       <div class="brand-title">Genos Scanner</div>
       <div class="brand-sub">Command security analysis</div>
     </div>
+    <a class="api-link" href="{{ url_for('api_builder') }}">API builder</a>
     <div class="theme-toggle" role="group" aria-label="Color theme">
       <button type="button" data-theme-btn="light" aria-pressed="false">Light</button>
       <button type="button" data-theme-btn="dark" aria-pressed="true">Dark</button>

@@ -26,7 +26,7 @@ When the process starts:
    - `config/specialist_map.json` ← current live path
    - `models/specialist_map.json`
    - If none found: built dynamically by reading `mitre_id` values from the raw MITRE CSV and sorting them
-5. `RobertaTokenizer` is loaded from `microsoft/codebert-base` (downloaded on first run, cached by HuggingFace).
+5. The shared CodeBERT tokenizer/config are loaded from `GENOS_CODEBERT_PATH` (with an optional local-only mode).
 6. Both model checkpoints are loaded with `torch.load(..., weights_only=True)`.
 7. The app calls `engine.scan("warmup")` before accepting traffic; `/health` returns `{"status": "ok"}` once this completes.
 
@@ -61,7 +61,7 @@ After the loop, the processed command is **lowercased and stripped** before toke
 
 ### Tokenisation
 
-Uses `RobertaTokenizer` from `microsoft/codebert-base`:
+Uses the local CodeBERT directory configured by `GENOS_CODEBERT_PATH`:
 
 - `max_length`: `256` (override with `GENOS_MAX_TOKENS` env var)
 - `padding`: `max_length`
@@ -224,13 +224,87 @@ The intent is scientific separation:
 
 Served by Gunicorn on `127.0.0.1:6001` by default.
 
+### Local Hugging Face weights
+
+The gatekeeper and behavior model checkpoints in `models/` still need the
+CodeBERT tokenizer/config files. Download that shared Hugging Face artifact once
+into the repository, then startup reads it from disk:
+
+```bash
+venv/bin/python -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='microsoft/codebert-base', local_dir='models/codebert-base')"
+```
+
+Set these values in `.env`:
+
+```dotenv
+GENOS_CODEBERT_PATH=models/codebert-base
+GENOS_HF_LOCAL_ONLY=1
+```
+
+With local-only mode enabled, missing files fail during startup instead of
+triggering a network download. A direct Hugging Face cache snapshot can also be
+used as `GENOS_CODEBERT_PATH`.
+
+### API request builder — `/api`
+
+Open `/api` (also linked from the scanner) to enter a command, select optional
+Tier 2 analysis and IOC types, copy a shell-safe curl request, or run it in the
+page. Response examples are illustrative; the Run buttons show actual results.
+
+### `GET /api/scan` — customizable analysis
+
+The default request runs Tier 1 and automatically detects and decodes obfuscation:
+
+```bash
+curl --get --silent --show-error 'http://127.0.0.1:6001/api/scan' \
+  --data-urlencode 'command=cat /etc/shadow'
+```
+
+Example response (confidence values are illustrative):
+
+```json
+{
+  "label": "Context_Dependent",
+  "label_confidence": 99.0,
+  "deobfuscated_cmd": null
+}
+```
+
+| Query parameter | Default | Meaning |
+|---|---|---|
+| `command` | Required | Command text; use `--data-urlencode` for spaces and special characters. |
+| `tier2` | `false` | `true` adds stage analysis for non-benign commands. `1` and `0` are also accepted. |
+| `iocs` | Omitted | `all`, or a comma-separated selection of `urls,domains,ips,ports,files,registry`. |
+
+Tier 2 and IOC extraction are independent and only run when requested. Tier 1 is
+always included. This endpoint analyzes each request without baseline shortcuts
+or baseline sighting writes. Existing POST scanner routes retain their full response.
+
+```bash
+curl --get --silent --show-error 'http://127.0.0.1:6001/api/scan' \
+  --data-urlencode 'command=cat /etc/shadow' \
+  --data-urlencode 'tier2=true' \
+  --data-urlencode 'iocs=urls,ips,files'
+```
+
+This adds `tier2: {"status": "completed", "stage": "Credential Access",
+"stage_confidence": 98.4}` and an `iocs` object containing only the requested keys.
+All confidence values use a 0–100 scale. Benign commands skip Tier 2 even when
+requested, returning `status: "skipped_benign"` and null stage fields.
+`deobfuscated_cmd` is null when no obfuscation was detected; selected IOC types
+with no matches return empty arrays. Omit `iocs` to exclude IOC data entirely.
+Invalid, duplicated, or unknown query parameters return HTTP 400. Responses use
+`Cache-Control: no-store`.
+
 ### `GET /health`
 
 ```json
 { "status": "ok" }
 ```
 
-Returns `"loading"` if the engine warm-up has not yet completed.
+The app loads model weights and completes a warm-up inference before the web
+server begins serving pages. If initialization fails, the process exits instead
+of serving an unready scanner.
 
 ### `POST /scan` — MongoDB-authenticated
 
@@ -429,8 +503,9 @@ print(result)
 |---|---|---|
 | `bind` | `127.0.0.1:6001` | Loopback only; expose via reverse proxy |
 | `workers` | `1` | One model copy in GPU memory; more workers multiplies VRAM usage |
-| `worker_class` | `sync` | CUDA cannot survive a post-fork environment |
-| `timeout` | `300` | Covers model loading on startup |
+| `worker_class` | `gthread` | Serve pages alongside inference; scans share an inference lock |
+| `threads` | `4` | Request concurrency; configurable with `GENOS_API_THREADS` (minimum 2) |
+| `timeout` | `300` | Worker heartbeat timeout |
 | `preload_app` | not set | Omitted deliberately; pre-loading would fork after CUDA initialisation |
 
 ### Reverse proxy (recommended)

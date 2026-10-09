@@ -7,17 +7,15 @@ import logging
 from threading import Lock
 from datetime import datetime, timezone
 
-import torch
 from flask import Flask, request, jsonify, render_template
 from dotenv import load_dotenv
+from genos.engine import GenosEngine
+from genos.specialist import FAMILY_LABELS
 
 # Add current directory to path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
-
-from genos.engine import GenosEngine
-from genos.specialist import FAMILY_LABELS
 
 # Load environment variables
 load_dotenv()
@@ -28,22 +26,35 @@ load_dotenv()
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
+_inference_lock = Lock()
+
+# Public GET API names map to the engine's evidence fields.
+IOC_FIELDS = {
+    "urls": "urls",
+    "domains": "domains",
+    "ips": "ips",
+    "ports": "ports",
+    "files": "file_paths",
+    "registry": "registry_paths",
+}
+
+
+# Load both model weights and the warm-up inference before routes can serve a page.
 app.logger.info("Initializing Genos Engine...")
 engine = GenosEngine(
     t1_path=os.path.join(BASE_DIR, "models/gatekeeper.pt"),
     t2_path=os.path.join(BASE_DIR, "models/behavior_encoder.pt"),
 )
-
 app.logger.info("Running warm-up inference pass...")
 engine.scan("warmup")
 app.logger.info("Genos Engine ready (11 MITRE tactic families active).")
-
-_inference_lock = Lock()
 
 
 # -----------------------------------------------------------------------------
 # Helper Functions
 # -----------------------------------------------------------------------------
+
+
 def _api_label(label: str) -> str:
     """Map internal labels to public contract."""
     return "Context_Dependent" if label == "Suspicious" else label
@@ -122,8 +133,11 @@ def _free_port(port: int, timeout: float = 3.0) -> None:
 
 def _scan_with_gpu_memory(command: str) -> tuple[dict, dict]:
     """Execute scan while profiling CUDA memory allocations."""
+    scan_engine = engine
+    import torch
+
     with _inference_lock:
-        device = engine.device
+        device = scan_engine.device
         memory = {
             "status": "cpu" if device.type != "cuda" else "unavailable",
             "device_name": None,
@@ -141,7 +155,7 @@ def _scan_with_gpu_memory(command: str) -> tuple[dict, dict]:
             except (RuntimeError, AssertionError):
                 baseline = None
 
-        result = engine.scan(command)
+        result = scan_engine.scan(command)
 
         if baseline is not None:
             try:
@@ -256,12 +270,88 @@ def _run_inference(command: str, include_flags: dict | None = None) -> dict:
 
 
 # -----------------------------------------------------------------------------
-# Routes (No dashboard, just index and demo templates)
+# Routes
 # -----------------------------------------------------------------------------
 @app.route("/", methods=["GET"])
 def index():
     """Main web scanner interface."""
     return render_template("index.html")
+
+
+@app.route("/api", methods=["GET"])
+def api_builder():
+    """Interactive GET request builder."""
+    return render_template("api.html", ioc_fields=IOC_FIELDS)
+
+
+def _get_api_response(payload: dict, status: int = 200):
+    response = jsonify(payload)
+    response.status_code = status
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@app.route("/api/scan", methods=["GET"])
+def scan_get():
+    """Tier 1 by default; opt into Tier 2 and selected IOC fields."""
+    allowed = {"command", "tier2", "iocs"}
+    unknown = set(request.args) - allowed
+    if unknown:
+        return _get_api_response({"error": "Unknown parameter(s): " + ", ".join(sorted(unknown))}, 400)
+    if any(len(request.args.getlist(key)) != 1 for key in request.args):
+        return _get_api_response({"error": "Each parameter must be supplied only once"}, 400)
+
+    command = request.args.get("command", "").strip()
+    if not command:
+        return _get_api_response({"error": "Command parameter is required and cannot be empty"}, 400)
+
+    tier2_value = request.args.get("tier2", "false").lower()
+    if tier2_value not in {"true", "false", "1", "0"}:
+        return _get_api_response({"error": "tier2 must be true or false (1 or 0 also accepted)"}, 400)
+    tier2 = tier2_value in {"true", "1"}
+
+    selected_iocs = []
+    if "iocs" in request.args:
+        ioc_value = request.args["iocs"].strip().lower()
+        selected_iocs = list(IOC_FIELDS) if ioc_value == "all" else list(dict.fromkeys(
+            field.strip() for field in ioc_value.split(",")
+        ))
+        if any(field not in IOC_FIELDS for field in selected_iocs):
+            return _get_api_response({
+                "error": "iocs must be all or a comma-separated list of: " + ", ".join(IOC_FIELDS)
+            }, 400)
+
+    try:
+        scan_engine = engine
+        with _inference_lock:
+            raw_result = scan_engine.scan(
+                command, run_specialist=tier2, collect_iocs=bool(selected_iocs),
+                use_baseline=False,
+            )
+        result = {
+            "label": _api_label(raw_result["label"]),
+            "label_confidence": round(float(raw_result["label_confidence"]), 2),
+            "deobfuscated_cmd": raw_result.get("deobfuscated_cmd"),
+        }
+        if tier2:
+            behavior = raw_result.get("behavior") or {}
+            completed = bool(raw_result.get("should_run_specialist"))
+            result["tier2"] = {
+                "status": "completed" if completed else (
+                    "skipped_benign" if raw_result["label"] == "Benign" else "unavailable"
+                ),
+                "stage": behavior.get("stage") if completed else None,
+                "stage_confidence": behavior.get("stage_confidence") if completed else None,
+            }
+        if selected_iocs:
+            evidence = raw_result.get("evidence") or {}
+            result["iocs"] = {
+                field: evidence.get(IOC_FIELDS[field], []) for field in selected_iocs
+            }
+        return _get_api_response(result)
+    except Exception:
+        app.logger.exception("Inference error during GET command scan")
+        return _get_api_response({"error": "Inference failed"}, 500)
 
 @app.route("/health", methods=["GET"])
 def health():
@@ -270,7 +360,7 @@ def health():
         "status": "ok",
         "engine_ready": True,
         "specialist_mode": engine.specialist_mode,
-        "supported_families": len(FAMILY_LABELS),
+        "supported_families": len(engine.family_labels),
         "device": engine.device.type,
     })
 
@@ -278,9 +368,10 @@ def health():
 @app.route("/api/families", methods=["GET"])
 def families():
     """Return the 11 MITRE ATT&CK tactic heads/families."""
+    family_labels = engine.family_labels
     return jsonify({
-        "count": len(FAMILY_LABELS),
-        "families": FAMILY_LABELS,
+        "count": len(family_labels),
+        "families": family_labels,
     })
 
 

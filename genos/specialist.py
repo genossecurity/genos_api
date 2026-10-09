@@ -37,6 +37,7 @@ from torch.amp import autocast
 from transformers import RobertaConfig, RobertaModel, RobertaTokenizer
 
 from .scientific_validation import sha256_file
+from .huggingface import pretrained_kwargs, resolve_backbone
 from .evidence import (
     HIGH_SIGNAL_FLAGS as _HIGH_SIGNAL_FLAGS,
     INTERPRETER_NAMES as _INTERPRETER_NAMES,
@@ -118,9 +119,12 @@ class _MeanPool(nn.Module):
 
 
 class Tier2_Specialist(nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self, num_classes, backbone_path="microsoft/codebert-base", local_files_only=False):
         super().__init__()
-        self.encoder = RobertaModel(RobertaConfig.from_pretrained("microsoft/codebert-base"))
+        config = RobertaConfig.from_pretrained(
+            backbone_path, **pretrained_kwargs(backbone_path, local_files_only)
+        )
+        self.encoder = RobertaModel(config)
         self.pool = _MeanPool()
         self.classifier = nn.Sequential(
             nn.Dropout(0.2),
@@ -138,9 +142,12 @@ class Tier2_Specialist(nn.Module):
 
 
 class BehaviorEncoderModel(nn.Module):
-    def __init__(self, num_stages: int, num_actions: int):
+    def __init__(self, num_stages: int, num_actions: int, backbone_path="microsoft/codebert-base", local_files_only=False):
         super().__init__()
-        self.encoder = RobertaModel(RobertaConfig.from_pretrained("microsoft/codebert-base"))
+        config = RobertaConfig.from_pretrained(
+            backbone_path, **pretrained_kwargs(backbone_path, local_files_only)
+        )
+        self.encoder = RobertaModel(config)
         self.dropout = nn.Dropout(0.2)
         self.stage_head = nn.Linear(768, num_stages)
         self.action_head = nn.Linear(768, num_actions)
@@ -257,13 +264,19 @@ class Specialist:
         view_policy: str = "mean",
         use_residual_format: bool = True,
         allow_behavior_fallback: bool = False,
+        backbone_path: Optional[str] = None,
+        local_files_only: bool = False,
     ):
         self.specialist_mode = specialist_mode.strip().lower()
         if self.specialist_mode not in {"family", "mitre"}:
             raise ValueError("Specialist mode must be family or mitre")
 
         self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.tokenizer = tokenizer or RobertaTokenizer.from_pretrained("microsoft/codebert-base")
+        self.backbone_path, resolved_local_only = resolve_backbone(backbone_path)
+        self.local_files_only = local_files_only or resolved_local_only
+        self.tokenizer = tokenizer or RobertaTokenizer.from_pretrained(
+            self.backbone_path, **pretrained_kwargs(self.backbone_path, self.local_files_only)
+        )
         self.max_length = max_length
         self.view_policy = view_policy
         self.use_residual_format = use_residual_format
@@ -345,7 +358,10 @@ class Specialist:
                 raise ValueError("Behavior training/runtime token limits differ")
             if meta.get("checkpoint_sha256") and meta["checkpoint_sha256"] != sha256_file(self.behavior_model_path):
                 raise ValueError("Behavior checkpoint hash differs from metadata")
-            model = BehaviorEncoderModel(len(stage_map), len(action_map)).to(self.device)
+            model = BehaviorEncoderModel(
+                len(stage_map), len(action_map), backbone_path=self.backbone_path,
+                local_files_only=self.local_files_only,
+            ).to(self.device)
             state_dict = torch.load(self.behavior_model_path, map_location=self.device, weights_only=True)
             model.load_state_dict(state_dict, strict=True)
             model.eval()

@@ -22,6 +22,7 @@ from torch.amp import autocast
 from transformers import RobertaConfig, RobertaModel, RobertaTokenizer
 
 from .scientific_validation import sha256_file
+from .huggingface import pretrained_kwargs, resolve_backbone
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -59,9 +60,12 @@ def _resolve_asset_path(path_value: str, fallback_relpaths: list[str] | None = N
 class Tier1_Gatekeeper(nn.Module):
     """Shared CodeBERT model with classification and auxiliary heads."""
 
-    def __init__(self, num_classes=3):
+    def __init__(self, num_classes=3, backbone_path="microsoft/codebert-base", local_files_only=False):
         super().__init__()
-        self.encoder = RobertaModel(RobertaConfig.from_pretrained("microsoft/codebert-base"))
+        config = RobertaConfig.from_pretrained(
+            backbone_path, **pretrained_kwargs(backbone_path, local_files_only)
+        )
+        self.encoder = RobertaModel(config)
         self.classifier = nn.Sequential(
             nn.Dropout(0.2),
             nn.Linear(768, 1024),
@@ -344,12 +348,18 @@ class Gatekeeper:
         max_length: int = 256,
         view_policy: str = "mean",
         two_class: bool = True,
+        backbone_path: Optional[str] = None,
+        local_files_only: bool = False,
     ):
         self.backend = backend.strip().lower()
         if self.backend not in {"codebert", "tfidf"}:
             raise ValueError("Gatekeeper backend must be codebert or tfidf")
         self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.tokenizer = tokenizer or RobertaTokenizer.from_pretrained("microsoft/codebert-base")
+        self.backbone_path, resolved_local_only = resolve_backbone(backbone_path)
+        self.local_files_only = local_files_only or resolved_local_only
+        self.tokenizer = tokenizer or RobertaTokenizer.from_pretrained(
+            self.backbone_path, **pretrained_kwargs(self.backbone_path, self.local_files_only)
+        )
         self.max_length = max_length
         self.view_policy = view_policy
         self.two_class = two_class
@@ -368,7 +378,10 @@ class Gatekeeper:
         if self.backend == "codebert":
             t1_path = _resolve_asset_path(model_path or "models/gatekeeper.pt")
             self.model_path = t1_path
-            self.t1 = Tier1_Gatekeeper(num_classes=len(self._labels)).to(self.device)
+            self.t1 = Tier1_Gatekeeper(
+                num_classes=len(self._labels), backbone_path=self.backbone_path,
+                local_files_only=self.local_files_only,
+            ).to(self.device)
             self.t1.load_state_dict(torch.load(t1_path, map_location=self.device, weights_only=True), strict=True)
             self.t1.eval()
             expected_hash = self.meta.get("checkpoint_sha256")

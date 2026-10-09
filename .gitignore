@@ -5,7 +5,7 @@ my_flask_env/
 *$py.class
 .env
 logs/
-models/
+models/codebert-base/
 
 # Generated frozen datasets and local annotation queues
 data/derived/

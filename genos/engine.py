@@ -32,6 +32,7 @@ from torch.amp import autocast
 from transformers import RobertaConfig, RobertaModel, RobertaTokenizer
 
 from .scientific_validation import PREPROCESSING_VERSION, sha256_file, temperature_scale
+from .huggingface import pretrained_kwargs, resolve_backbone
 from .baseline import (
     BASELINE_VERSION,
     SIGNATURE_SCHEMA_VERSION,
@@ -162,7 +163,10 @@ class GenosEngine:
             else allow_behavior_fallback
         )
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
+        self.codebert_path, self.codebert_local_only = resolve_backbone()
+        self.tokenizer = RobertaTokenizer.from_pretrained(
+            self.codebert_path, **pretrained_kwargs(self.codebert_path, self.codebert_local_only)
+        )
         self.max_length = int(os.getenv("GENOS_MAX_TOKENS", "256"))
         self.gatekeeper_backend = (gatekeeper_backend or os.getenv("GENOS_GATEKEEPER_BACKEND", "codebert")).strip().lower()
         if self.gatekeeper_backend not in {"codebert", "tfidf"}:
@@ -190,6 +194,8 @@ class GenosEngine:
             max_length=self.max_length,
             view_policy=self.view_policy,
             two_class=self.two_class_gatekeeper,
+            backbone_path=self.codebert_path,
+            local_files_only=self.codebert_local_only,
         )
 
         self.specialist = Specialist(
@@ -202,6 +208,8 @@ class GenosEngine:
             view_policy=self.view_policy,
             use_residual_format=use_residual_format,
             allow_behavior_fallback=self.allow_behavior_fallback,
+            backbone_path=self.codebert_path,
+            local_files_only=self.codebert_local_only,
         )
 
         # Baseline engine
@@ -523,7 +531,11 @@ class GenosEngine:
             fleet=os.getenv("GENOS_DEFAULT_FLEET", "default-fleet"),
         )
 
-    def scan(self, raw_cmd: str, include_evaluation: bool = False, context: Any = None, baseline_store: Any = None) -> dict:
+    def scan(
+        self, raw_cmd: str, include_evaluation: bool = False, context: Any = None,
+        baseline_store: Any = None, *, run_specialist: bool = True,
+        collect_iocs: bool = True, use_baseline: bool = True,
+    ) -> dict:
         """
         Execute full Genos inspection pipeline:
         1. Baseline pre-filter & evaluation (with write-back on hit)
@@ -531,6 +543,10 @@ class GenosEngine:
         3. Gatekeeper triage (Benign vs Suspicious, with routing feature overrides)
         4. Specialist execution for Suspicious commands (11 families & behavior)
         5. Evidence gathering & baseline store write-back
+
+        run_specialist and collect_iocs independently control optional work.
+        use_baseline=False always analyzes the command without baseline shortcuts
+        or sighting writes, as required by the stateless GET API.
         """
         baseline_eval = None
         baseline_signature = None
@@ -541,10 +557,10 @@ class GenosEngine:
                 baseline_ctx = context
             elif isinstance(context, dict):
                 baseline_ctx = ExecutionContext.from_dict(context)
-        elif _env_flag("GENOS_ENABLE_DEFAULT_CONTEXT", True):
+        elif use_baseline and _env_flag("GENOS_ENABLE_DEFAULT_CONTEXT", True):
             baseline_ctx = self._create_default_context()
 
-        store = baseline_store if baseline_store is not None else getattr(self, "baseline_store", None)
+        store = (baseline_store if baseline_store is not None else getattr(self, "baseline_store", None)) if use_baseline else None
         if store is not None and baseline_ctx is not None:
             try:
                 parsed = _parse_command(raw_cmd)
@@ -635,8 +651,8 @@ class GenosEngine:
                     current_cmd if was_obfuscated else None,
                 )
                 routed = self._route_gatekeeper(gate, routing_features)
-                # Stage 1 benign verdicts stop here; suspicious results continue to Stage 2.
-                run_stage2 = routed["label"] != "Benign" and (
+                # Stage 2 is optional and only applies to non-benign verdicts.
+                run_stage2 = run_specialist and routed["label"] != "Benign" and (
                     routed["should_run_specialist"] or include_evaluation
                 )
 
@@ -742,7 +758,7 @@ class GenosEngine:
                         "behavior": self._score_status("behavior") if self.behavior_model is not None else "heuristic_baseline",
                     }
 
-                # Specialist Analysis (runs only when flagged suspicious or evaluation requested)
+                # Optional Stage 2 specialist analysis.
                 behavior_probabilities = None
                 action_probabilities = None
 
@@ -765,7 +781,7 @@ class GenosEngine:
 
                     if was_obfuscated and specialist_cmd != raw_cmd.strip():
                         response["decoded_payload"] = specialist_cmd
-                else:
+                elif routed["label"] == "Benign":
                     # Benign commands bypass heavy specialist models
                     response["attack_stage"] = "Benign Administration"
                     response["behavior"] = {
@@ -775,7 +791,7 @@ class GenosEngine:
                         "model_type": "benign_bypass",
                     }
 
-                if _RESIDUAL_PIPELINE_AVAILABLE:
+                if collect_iocs and _RESIDUAL_PIPELINE_AVAILABLE:
                     evidence = self._collect_indicator_evidence(raw_cmd.strip(), current_cmd, was_obfuscated)
                     evidence.update({
                         "triggered_features": routed["triggered_features"],

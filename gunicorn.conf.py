@@ -9,12 +9,12 @@ bind = os.getenv("GENOS_API_BIND", "127.0.0.1:6001")
 # Single worker to avoid loading the model into GPU memory multiple times
 workers = 1
 
-# The type of workers to use
-worker_class = "sync"
+# Serve concurrent requests after the single model instance has loaded.
+# Inference remains serialized by the application's inference lock.
+worker_class = "gthread"
+threads = max(2, int(os.getenv("GENOS_API_THREADS", "4")))
 
-# Timeout for workers — must be long enough to cover model loading + inference.
-# The worker loads both CodeBERT models and runs a warm-up pass on startup;
-# once loaded, individual requests are fast (<1s).
+# The app module loads weights and completes warm-up before Gunicorn serves pages.
 timeout = 300
 
 # Logging
