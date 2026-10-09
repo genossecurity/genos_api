@@ -245,6 +245,37 @@ def build_evidence(
     }
 
 
+_SEGMENT_SPLIT_RE = re.compile(r"\|\||&&|;|\||&(?!>)")
+_PREFIX_WRAPPERS = frozenset({"sudo", "env", "nohup", "time", "exec", "command", "nice", "xargs"})
+
+
+def extract_binary_inventory(*commands: Optional[str]) -> List[dict]:
+    """Inventory every binary invoked across pipe/chain segments of the given command views."""
+    inventory: Dict[str, dict] = {}
+    for command in commands:
+        if not command:
+            continue
+        for segment in _SEGMENT_SPLIT_RE.split(command):
+            tokens = segment.strip().split()
+            while tokens and (re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=\S*", tokens[0]) or tokens[0].lower() in _PREFIX_WRAPPERS):
+                tokens.pop(0)
+            if not tokens:
+                continue
+            name = os.path.basename(tokens[0].strip("\"'(){}")).lower()
+            if not name or not re.fullmatch(r"[\w.+-]+", name):
+                continue
+            entry = inventory.setdefault(name, {"binary": name, "flags": [], "roles": []})
+            for tok in tokens[1:]:
+                if tok.startswith("-") or (tok.startswith("/") and len(tok) <= 3):
+                    if tok not in entry["flags"]:
+                        entry["flags"].append(tok)
+            if name in LOLBIN_CANDIDATES and "lolbin" not in entry["roles"]:
+                entry["roles"].append("lolbin")
+            if name in INTERPRETER_NAMES and "interpreter" not in entry["roles"]:
+                entry["roles"].append("interpreter")
+    return list(inventory.values())
+
+
 def collect_indicator_evidence(
     raw_cmd: str,
     decoded_cmd: str,
@@ -265,13 +296,15 @@ def collect_indicator_evidence(
         ):
             parsed[key] = list(dict.fromkeys([*(parsed.get(key) or []), *(decoded.get(key) or [])]))
     rules = _build_rule_result(parsed, sem)
-    return build_evidence(
+    evidence = build_evidence(
         parsed,
         sem,
         rules,
         was_obfuscated=was_obfuscated,
         deobfuscated_cmd=decoded_cmd if was_obfuscated else None,
     )
+    evidence["binaries"] = extract_binary_inventory(raw_cmd, decoded_cmd if decoded_cmd != raw_cmd else None)
+    return evidence
 
 
 class EvidenceExtractor:

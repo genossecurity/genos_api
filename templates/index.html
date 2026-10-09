@@ -1,143 +1,538 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Genos Engine Pipeline</title>
-  <style>
-    * { box-sizing: border-box; }
-    :root {
-      --bg: #0d1117; --panel: #161b22; --panel2: #1c2128; --ink: #e6edf3; --soft: #c9d1d9; --muted: #8b949e; --border: #30363d;
-      --input: #8b949e; --obfuscation: #d29922; --gatekeeper: #58a6ff; --decision: #f778ba; --behavior: #bc8cff; --evidence: #39d0d8; --response: #3fb950; --danger: #f85149;
-    }
-    html { scroll-behavior: smooth; }
-    body { margin: 0; overflow-x: hidden; background: var(--bg); color: var(--ink); font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
-    a { color: inherit; text-decoration: none; }
-    code, .field, .literal { font-family: "SFMono-Regular", Consolas, monospace; }
-    .shell { width: min(1280px, calc(100vw - 32px)); margin: 0 auto; padding-bottom: 56px; }
-    .topbar { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; background: rgba(13,17,23,.95); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); }
-    .brand { display: flex; align-items: center; gap: 10px; font-weight: 850; letter-spacing: -.02em; }
-    .brand-mark { width: 28px; height: 28px; display: grid; place-items: center; flex: 0 0 auto; border: 1px solid var(--border); border-radius: 7px; background: #101722; color: var(--gatekeeper); font-weight: 900; }
-    .toplinks { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
-    .toplinks a, .tab-btn { border: 1px solid var(--border); background: var(--panel); color: var(--soft); border-radius: 7px; padding: 8px 11px; font: inherit; cursor: pointer; }
-    .toplinks a:hover, .tab-btn:hover { border-color: #6e7681; }
-    .tab-btn.active { border-color: var(--gatekeeper); color: var(--ink); background: #0d2340; }
-    .hero { padding: 26px 0 18px; }
-    h1 { margin: 0 0 8px; font-size: clamp(1.7rem,3vw,2.5rem); line-height: 1.08; letter-spacing: -.04em; }
-    .hero p { margin: 0; max-width: 780px; color: var(--muted); }
-    .legend { position: sticky; top: 58px; z-index: 20; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; margin-bottom: 18px; border: 1px solid var(--border); border-radius: 8px; background: rgba(22,27,34,.95); backdrop-filter: blur(12px); }
-    .key { display: inline-flex; align-items: center; gap: 7px; min-width: 0; padding: 3px 7px; border-radius: 999px; background: #10151d; color: var(--soft); font-size: .78rem; }
-    .dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-    .layout { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 18px; align-items: start; }
-    .tracker { position: sticky; top: 124px; border: 1px solid var(--border); background: var(--panel); border-radius: 8px; padding: 10px; }
-    .tracker a { display: flex; align-items: center; gap: 8px; padding: 8px 7px; border-radius: 6px; color: var(--muted); font-size: .78rem; }
-    .tracker a.active, .tracker a:hover { background: var(--panel2); color: var(--ink); }
-    .mini-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); flex: 0 0 auto; }
-    .tracker a.active .mini-dot { background: var(--decision); }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Genos Scanner</title>
+<script>
+  (function () {
+    var t = localStorage.getItem('genos-theme') ||
+      (window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    color-scheme: dark;
+    --bg: #0d1117; --bg-image: none; --panel: #161b22; --panel2: #1c2128; --inset: #0f141c; --mark: #101722;
+    --ink: #e6edf3; --soft: #c9d1d9; --muted: #8b949e; --border: #30363d;
+    --benign: #3fb950; --suspicious: #d29922; --malicious: #f85149; --context: #d29922;
+    --accent: #58a6ff; --accent-ink: #04121f; --shadow: none;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #eef3f8; --bg-image: linear-gradient(135deg, #dfeaf5 0%, #f4f7fb 55%, #f8f4f6 100%);
+    --panel: #ffffff; --panel2: #f8fafc; --inset: #f8fafc; --mark: #e8f1fa;
+    --ink: #0f172a; --soft: #334155; --muted: #64748b; --border: #e2e8f0;
+    --benign: #15803d; --suspicious: #b45309; --malicious: #dc2626; --context: #b45309;
+    --accent: #0ea5e9; --accent-ink: #ffffff; --shadow: 0 6px 24px rgba(15,23,42,.07);
+  }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg) var(--bg-image) fixed; min-height: 100vh; color: var(--ink); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+  code, .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+  .shell { width: min(880px, calc(100vw - 32px)); margin: 0 auto; padding: 40px 0 80px; }
 
-    .flow-list { display: grid; gap: 0; border: 1px solid var(--border); border-radius: 8px; background: #0f141c; padding: 12px 14px; }
-    .flow-row { display: grid; grid-template-columns: 140px 120px minmax(0,1fr); gap: 18px; align-items: center; padding: 14px 0; min-width: 0; scroll-margin-top: 128px; }
-    .flow-row + .flow-row { border-top: 1px solid rgba(48,54,61,.5); }
-    .flow-row.branch-row { padding-top: 10px; padding-bottom: 10px; border-top: 0; }
-    .stage-title { display: flex; align-items: flex-start; gap: 8px; min-width: 0; color: var(--soft); font-weight: 850; line-height: 1.25; }
-    .stage-title .meta { min-width: 0; }
-    .stage-title small { display: block; margin-top: 2px; color: var(--muted); font-weight: 700; font-size: .72rem; word-break: break-word; }
-    .branch-row .stage-title { padding-left: 18px; font-size: .84rem; }
-    .branch-row .stage-title::before { content: "\21B3"; margin-right: -2px; color: var(--decision); }
-    .visual-cell { display: grid; grid-template-rows: 26px auto 26px; place-items: center; min-width: 0; align-self: stretch; }
-    .visual-cell.has-bypass { grid-template-columns: 1fr 24px; column-gap: 14px; }
-    .visual-cell.has-bypass .vline, .visual-cell.has-bypass .stage-icon { grid-column: 1; }
-    .bypass-line { grid-column: 2; grid-row: 1 / -1; width: 2px; height: 100%; min-height: 100%; background: var(--response); }
-    .vline { width: 2px; height: 100%; min-height: 22px; background: var(--border); }
-    .fork-row { align-items: stretch; }
-    .fork-row .stage-title { padding-left: 18px; }
-    .fork-row .stage-title::before { content: "\21B3"; margin-right: -2px; color: var(--decision); }
-    .fork-visual { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; align-items: center; }
-    .fork-copy { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; min-width: 0; }
-    .stage-icon { width: 78px; min-height: 58px; display: grid; place-items: center; text-align: center; border: 2px solid var(--stage-color); border-radius: 10px; background: var(--panel); color: var(--ink); padding: 8px; font-weight: 850; font-size: .76rem; overflow-wrap: anywhere; }
-    .stage-icon.diamond { width: 68px; height: 68px; min-height: 68px; transform: rotate(45deg); border-radius: 9px; }
-    .stage-icon.diamond span { transform: rotate(-45deg); display: block; line-height: 1.15; overflow-wrap: normal; }
-    .stage-icon.branch { min-height: 44px; border-style: dashed; font-size: .72rem; }
-    .stage-icon.branch.yes { --stage-color: var(--behavior); }
-    .stage-icon.branch.no { --stage-color: var(--response); }
-    .explain { min-width: 0; border: 1px solid var(--border); border-top: 3px solid var(--stage-color); border-radius: 8px; background: var(--panel); padding: 11px 12px; }
-    .explain h3 { margin: 0 0 4px; font-size: .96rem; letter-spacing: -.01em; }
-    .explain p { margin: 0; color: var(--muted); font-size: .82rem; }
-    .outputs { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; min-width: 0; }
-    .pill { max-width: 100%; border: 1px solid var(--border); border-radius: 999px; padding: 2px 7px; color: var(--soft); font-size: .69rem; background: #10151d; overflow-wrap: anywhere; }
-    .flow-note { margin-top: 14px; border: 1px dashed var(--border); border-radius: 8px; padding: 10px 12px; color: var(--muted); background: rgba(28,33,40,.5); }
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+  .brand-text { flex: 1; }
+  .theme-toggle { display: inline-flex; border: 1px solid var(--border); background: var(--panel); border-radius: 999px; padding: 3px; }
+  .theme-toggle button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: .78rem; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+  .theme-toggle button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .brand-mark { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 7px; background: var(--mark); color: var(--accent); font-weight: 900; }
+  .brand-title { font-weight: 800; letter-spacing: -.02em; font-size: 1.05rem; }
+  .brand-sub { color: var(--muted); font-size: .8rem; }
 
-    .details-grid { margin-top: 18px; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
-    details.stage { border: 1px solid var(--border); background: var(--panel); border-radius: 8px; overflow: hidden; }
-    details.stage summary { cursor: pointer; list-style: none; padding: 12px 14px; display: grid; grid-template-columns: 10px minmax(0,1fr) auto; gap: 10px; align-items: center; }
-    details.stage summary::-webkit-details-marker { display: none; }
-    .summary-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .summary-title { font-weight: 850; }
-    .summary-sub { color: var(--muted); font-size: .78rem; margin-top: 2px; }
-    .chev { color: var(--muted); }
-    details[open] .chev { transform: rotate(90deg); }
-    .detail-body { border-top: 1px solid var(--border); padding: 12px 14px 14px; color: var(--soft); }
-    .detail-body ul { margin: 0; padding-left: 18px; }
-    .detail-body li { margin: 6px 0; }
-    .field-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .field-list .pill { font-family: "SFMono-Regular", Consolas, monospace; }
-    .config-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
-    .config-card { border: 1px solid var(--border); background: var(--panel); border-radius: 8px; padding: 14px; }
-    .config-card h3 { margin: 0 0 10px; font-size: .98rem; }
-    .config-row { display: grid; grid-template-columns: minmax(150px,1fr) 1.2fr; gap: 10px; padding: 8px 0; border-top: 1px solid #21262d; }
-    .config-row:first-of-type { border-top: 0; }
-    .config-row div:last-child { color: var(--muted); }
-    .bar { height: 7px; background: #21262d; border-radius: 999px; overflow: hidden; margin-top: 5px; }
-    .fill { height: 100%; border-radius: inherit; }
-    [data-stage="input"] { --stage-color: var(--input); } [data-stage="obfuscation"] { --stage-color: var(--obfuscation); } [data-stage="gatekeeper"] { --stage-color: var(--gatekeeper); } [data-stage="routing"] { --stage-color: var(--decision); } [data-stage="behavior"] { --stage-color: var(--behavior); } [data-stage="evidence"] { --stage-color: var(--evidence); } [data-stage="response"] { --stage-color: var(--response); }
-    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .tracker { position: static; display: flex; flex-wrap: wrap; } .details-grid, .config-grid { grid-template-columns: 1fr; } }
-    @media (max-width: 680px) { .shell { width: min(100vw - 20px, 1280px); } .topbar { align-items: flex-start; flex-direction: column; } .legend { top: 104px; } .flow-list { padding: 10px; } .flow-row { grid-template-columns: 1fr; gap: 8px; align-items: stretch; } .visual-cell, .visual-cell.has-bypass { display: flex; justify-content: flex-start; gap: 12px; } .visual-cell.has-bypass .vline, .visual-cell.has-bypass .stage-icon { grid-column: auto; } .bypass-line { width: 26px; height: 2px; min-height: 2px; align-self: center; } .vline { width: 26px; height: 2px; min-height: 2px; align-self: center; } .fork-visual, .fork-copy { grid-template-columns: 1fr; } .stage-icon { width: 72px; min-height: 44px; font-size: .68rem; } .stage-icon.diamond { width: 54px; height: 54px; min-height: 54px; margin: 8px; } .branch-row .stage-title, .fork-row .stage-title { padding-left: 0; } .config-row { grid-template-columns: 1fr; } }
-  </style>
+  /* ── Command Input Box ───────────────────────────────── */
+  .scan-box { border: 1px solid var(--border); background: var(--panel); border-radius: 10px; padding: 16px; box-shadow: var(--shadow); }
+  .scan-box label { display: block; margin-bottom: 8px; color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
+  textarea#cmdInput {
+    width: 100%; min-height: 96px; resize: vertical; background: var(--inset); color: var(--ink);
+    border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px;
+    font-family: "SFMono-Regular", Consolas, monospace; font-size: 14px; line-height: 1.5; outline: none;
+  }
+  textarea#cmdInput:focus { border-color: var(--accent); }
+  .scan-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+  button#scanBtn {
+    background: var(--accent); color: var(--accent-ink); border: none; border-radius: 8px; padding: 10px 22px;
+    font-weight: 800; font-size: .88rem; cursor: pointer; letter-spacing: .01em;
+  }
+  button#scanBtn:hover { filter: brightness(1.08); }
+  button#scanBtn:disabled { opacity: .55; cursor: wait; }
+  #scanStatus { color: var(--muted); font-size: .8rem; }
+
+  /* ── Results Area ────────────────────────────────────── */
+  #results { margin-top: 28px; }
+  #results.hidden { display: none; }
+
+  .verdict-card {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px; background: var(--panel); box-shadow: var(--shadow);
+  }
+  .verdict-left { display: flex; align-items: center; gap: 14px; }
+  .verdict-pill {
+    display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px;
+    font-weight: 800; font-size: .95rem; letter-spacing: .02em; text-transform: uppercase;
+  }
+  .verdict-pill.benign { background: rgba(63,185,80,.14); color: var(--benign); border: 1px solid rgba(63,185,80,.4); }
+  .verdict-pill.suspicious { background: rgba(210,153,34,.14); color: var(--suspicious); border: 1px solid rgba(210,153,34,.4); }
+  .verdict-pill.context_dependent { background: rgba(210,153,34,.14); color: var(--context); border: 1px solid rgba(210,153,34,.4); }
+  .verdict-pill.malicious { background: rgba(248,81,73,.14); color: var(--malicious); border: 1px solid rgba(248,81,73,.4); }
+  .verdict-conf { font-size: 1.6rem; font-weight: 900; }
+  .verdict-meta { color: var(--muted); font-size: .8rem; text-align: right; }
+  .verdict-meta div + div { margin-top: 2px; }
+
+  .decoded-box { margin-top: 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--inset); padding: 12px 14px; }
+  .decoded-box .label { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; font-weight: 700; }
+  .decoded-box code { color: var(--soft); word-break: break-all; white-space: pre-wrap; }
+
+  /* ── Family Cards (per-family IOC grouping, no overlap) ──────────── */
+  .families { margin-top: 20px; display: grid; gap: 14px; }
+  .family-card { border: 1px solid var(--border); border-radius: 10px; background: var(--panel); overflow: hidden; box-shadow: var(--shadow); }
+  .family-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; background: var(--panel2); border-bottom: 1px solid var(--border); }
+  .family-name { font-weight: 800; font-size: .95rem; }
+  .family-prob { font-weight: 800; color: var(--accent); font-size: .9rem; }
+  .family-body { padding: 14px 18px; display: grid; gap: 10px; }
+  .ioc-group { display: grid; gap: 6px; }
+  .ioc-group-label { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+  .ioc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ioc-chip { display: inline-flex; align-items: center; background: var(--inset); border: 1px solid var(--border); color: var(--soft); border-radius: 6px; padding: 4px 9px; font-size: .78rem; }
+  .ioc-chip.mono { font-family: "SFMono-Regular", Consolas, monospace; }
+
+
+  .section { margin-top: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); overflow: hidden; box-shadow: var(--shadow); }
+  .section-title { padding: 10px 18px; background: var(--panel2); border-bottom: 1px solid var(--border); color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; font-weight: 800; }
+  .section-body { padding: 14px 18px; display: grid; gap: 10px; }
+  .kv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .kv .k { color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+  .kv .v { margin-top: 2px; font-weight: 700; word-break: break-all; }
+  table.inv { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  table.inv th { text-align: left; color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; padding: 0 8px 6px 0; }
+  table.inv td { padding: 6px 8px 6px 0; border-top: 1px solid var(--border); vertical-align: top; }
+  .role { display: inline-block; margin-right: 4px; padding: 1px 7px; border-radius: 999px; font-size: .68rem; font-weight: 800; background: rgba(88,166,255,.14); color: var(--accent); border: 1px solid rgba(88,166,255,.35); }
+  .role.lolbin { background: rgba(210,153,34,.14); color: var(--suspicious); border-color: rgba(210,153,34,.4); }
+
+  .empty-note { color: var(--muted); font-size: .82rem; padding: 4px 0; }
+  footer { margin-top: 40px; color: var(--muted); font-size: .76rem; text-align: center; }
+</style>
 </head>
 <body>
-  <main class="shell">
-    <header class="topbar"><a class="brand" href="/"><span class="brand-mark">G</span><span>Genos Engine</span></a><nav class="toplinks"><button class="tab-btn active" data-tab="pipeline">Pipeline</button><button class="tab-btn" data-tab="config">Configuration</button><a href="/demo">Demo</a></nav></header>
-    <section class="hero"><h1>Command analysis flowchart</h1><p>A vertical map of how Genos moves from raw command text to verdict, behavior stage, evidence, and API response.</p></section>
-    <div class="legend"><span class="key"><span class="dot" style="background:var(--input)"></span>Input</span><span class="key"><span class="dot" style="background:var(--obfuscation)"></span>Obfuscation</span><span class="key"><span class="dot" style="background:var(--gatekeeper)"></span>Gatekeeper</span><span class="key"><span class="dot" style="background:var(--decision)"></span>Routing</span><span class="key"><span class="dot" style="background:var(--behavior)"></span>Behavior</span><span class="key"><span class="dot" style="background:var(--evidence)"></span>Evidence</span><span class="key"><span class="dot" style="background:var(--response)"></span>Response</span></div>
+<div class="shell">
 
-    <section class="tab-panel active" id="pipeline-panel"><div class="layout"><aside class="tracker"><a href="#input" class="active"><span class="mini-dot"></span>Input</a><a href="#obfuscation"><span class="mini-dot"></span>Obfuscation</a><a href="#gatekeeper"><span class="mini-dot"></span>Gatekeeper</a><a href="#routing"><span class="mini-dot"></span>Routing</a><a href="#behavior"><span class="mini-dot"></span>Behavior</a><a href="#evidence"><span class="mini-dot"></span>Evidence</a><a href="#response"><span class="mini-dot"></span>Response</a></aside><div>
-      <section class="flow-list" aria-label="Genos pipeline vertical flowchart">
-        <article class="flow-row" id="input" data-stage="input"><div class="stage-title"><span class="dot" style="background:var(--input)"></span><span class="meta">01 · Input<small>API entry</small></span></div><div class="visual-cell"><span class="vline"></span><div class="stage-icon">Input</div><span class="vline"></span></div><div class="explain"><h3>Input</h3><p>API receives the raw command string from <span class="field">/scan</span> or <span class="field">/scan/free</span>.</p><div class="outputs"><span class="pill literal">command</span></div></div></article>
-        <article class="flow-row" id="obfuscation" data-stage="obfuscation"><div class="stage-title"><span class="dot" style="background:var(--obfuscation)"></span><span class="meta">02 · Obfuscation<small>Decode pass</small></span></div><div class="visual-cell"><span class="vline"></span><div class="stage-icon">Decode</div><span class="vline"></span></div><div class="explain"><h3>Obfuscation</h3><p>Entropy and syntax checks detect evasive strings, then unwrap encoded payloads when possible.</p><div class="outputs"><span class="pill literal">current_cmd</span><span class="pill literal">was_obfuscated</span><span class="pill literal">deobfuscated_cmd</span></div></div></article>
-        <article class="flow-row" id="gatekeeper" data-stage="gatekeeper"><div class="stage-title"><span class="dot" style="background:var(--gatekeeper)"></span><span class="meta">03 · Gatekeeper<small>Tier 1 ML</small></span></div><div class="visual-cell"><span class="vline"></span><div class="stage-icon">ML</div><span class="vline"></span></div><div class="explain"><h3>Gatekeeper</h3><p>Fine-tuned CodeBERT predicts Benign, Context Dependent, or Malicious and records the class margin.</p><div class="outputs"><span class="pill literal">label</span><span class="pill literal">class_probabilities</span><span class="pill literal">decision_margin</span></div></div></article>
-        <article class="flow-row" id="routing" data-stage="routing"><div class="stage-title"><span class="dot" style="background:var(--decision)"></span><span class="meta">04 · Routing<small>Decision</small></span></div><div class="visual-cell"><span class="vline"></span><div class="stage-icon diamond"><span>Analyze<br>all</span></div><span class="vline"></span></div><div class="explain"><h3>Routing</h3><p>The gatekeeper selects the verdict. Family scoring, behavior, and evidence run for every command.</p><div class="outputs"><span class="pill literal">routing_policy</span><span class="pill literal">triggered_features</span><span class="pill literal">should_run_specialist</span></div></div></article>
+  <div class="brand">
+    <div class="brand-mark">G</div>
+    <div class="brand-text">
+      <div class="brand-title">Genos Scanner</div>
+      <div class="brand-sub">Command security analysis</div>
+    </div>
+    <div class="theme-toggle" role="group" aria-label="Color theme">
+      <button type="button" data-theme-btn="light" aria-pressed="false">Light</button>
+      <button type="button" data-theme-btn="dark" aria-pressed="true">Dark</button>
+    </div>
+  </div>
 
-        <article class="flow-row" id="behavior" data-stage="behavior"><div class="stage-title"><span class="dot" style="background:var(--behavior)"></span><span class="meta">05 · Behavior<small>Tier 2 ML</small></span></div><div class="visual-cell"><span class="vline"></span><div class="stage-icon">Stage</div><span class="vline"></span></div><div class="explain"><h3>Behavior</h3><p>The behavior encoder consumes residual command text and predicts attack stage plus action tags.</p><div class="outputs"><span class="pill literal">behavior.stage</span><span class="pill literal">stage_confidence</span><span class="pill literal">action_tags</span><span class="pill literal">model_type</span></div></div></article>
-        <article class="flow-row" id="evidence" data-stage="evidence"><div class="stage-title"><span class="dot" style="background:var(--evidence)"></span><span class="meta">06 · Evidence<small>Parser + rules</small></span></div><div class="visual-cell"><span class="vline"></span><div class="stage-icon">Proof</div><span class="vline"></span></div><div class="explain"><h3>Evidence</h3><p>On the behavior branch, parser, semantic features, and rules build analyst context and enrichment.</p><div class="outputs"><span class="pill literal">evidence</span><span class="pill literal">fired_rules</span><span class="pill literal">why_mapped</span><span class="pill literal">ioc_summary</span></div></div></article>
-        <article class="flow-row" id="response" data-stage="response"><div class="stage-title"><span class="dot" style="background:var(--response)"></span><span class="meta">07 · Response<small>API payload</small></span></div><div class="visual-cell"><span class="vline"></span><div class="stage-icon">JSON</div><span class="vline"></span></div><div class="explain"><h3>Response</h3><p>Final JSON combines verdict, model internals, behavior and evidence, deobfuscation data, and timing.</p><div class="outputs"><span class="pill literal">label</span><span class="pill literal">label_confidence</span><span class="pill literal">gatekeeper</span><span class="pill literal">behavior</span><span class="pill literal">evidence</span><span class="pill literal">elapsed_ms</span></div></div></article>
-      </section>
-      <div class="flow-note">Configuration and calibration remain separated into the Configuration tab so the pipeline stays readable.</div>
-      <section class="details-grid" aria-label="Expandable stage details">
-        <details class="stage"><summary><span class="summary-dot" style="background:var(--input)"></span><span><span class="summary-title">Input</span><span class="summary-sub">Accepts raw command text through Flask endpoints.</span></span><span class="chev">&gt;</span></summary><div class="detail-body"><ul><li><span class="field">/scan/free</span> is the no-key local demo endpoint.</li><li><span class="field">/scan</span> validates API keys and logs usage.</li></ul></div></details>
-        <details class="stage"><summary><span class="summary-dot" style="background:var(--obfuscation)"></span><span><span class="summary-title">Obfuscation</span><span class="summary-sub">Flags evasive strings and decodes up to five layers.</span></span><span class="chev">&gt;</span></summary><div class="detail-body"><ul><li>Checks <span class="field">[char]</span>, <span class="field">base64</span>, <span class="field">FromBase64String</span>, hex escapes, concatenation, and entropy above <span class="field">5.2</span>.</li><li>Scores both raw and decoded views when deobfuscation succeeds.</li></ul></div></details>
-        <details class="stage"><summary><span class="summary-dot" style="background:var(--gatekeeper)"></span><span><span class="summary-title">Gatekeeper</span><span class="summary-sub">Fine-tuned CodeBERT returns verdict scores.</span></span><span class="chev">&gt;</span></summary><div class="detail-body"><ul><li>Labels are <span class="field">Benign</span>, <span class="field">Context_Dependent</span>, and <span class="field">Malicious</span>.</li><li>Returns model scores, calibration status, margin, and the raw/decoded view policy.</li></ul></div></details>
-        <details class="stage"><summary><span class="summary-dot" style="background:var(--decision)"></span><span><span class="summary-title">Routing</span><span class="summary-sub">Runs family scoring, behavior, and evidence for every command.</span></span><span class="chev">&gt;</span></summary><div class="detail-body"><ul><li>Family scoring and behavior run for every verdict.</li><li>Evidence extraction is independent of the learned verdict.</li><li>Legacy technique ranking is available only in explicit MITRE mode.</li></ul><div class="field-list"><span class="pill">has_tunneling</span><span class="pill">has_base64_or_encoded_exec</span><span class="pill">has_exfil_data_movement</span><span class="pill">has_sensitive_file_read</span><span class="pill">has_reverse_shell_pattern</span></div></div></details>
-        <details class="stage"><summary><span class="summary-dot" style="background:var(--behavior)"></span><span><span class="summary-title">Behavior</span><span class="summary-sub">Predicts behavior stage and action tags.</span></span><span class="chev">&gt;</span></summary><div class="detail-body"><ul><li>Input format: <span class="field">RAW</span>, <span class="field">RESIDUAL</span>, and optional <span class="field">FEATURES</span>.</li><li>CodeBERT encoder with <span class="field">stage_head</span> and <span class="field">action_head</span>; fallback is <span class="field">heuristic_bootstrap</span>.</li></ul></div></details>
-        <details class="stage"><summary><span class="summary-dot" style="background:var(--evidence)"></span><span><span class="summary-title">Evidence</span><span class="summary-sub">Turns parser, semantic, and rule signals into analyst context.</span></span><span class="chev">&gt;</span></summary><div class="detail-body"><ul><li><span class="field">parser.py</span>, <span class="field">semantic_features.py</span>, and <span class="field">rule_engine.py</span> build fired rules, family context, IOC summary, severity, and analyst hint.</li></ul></div></details>
-        <details class="stage"><summary><span class="summary-dot" style="background:var(--response)"></span><span><span class="summary-title">Response</span><span class="summary-sub">Final compact API object consumed by UI and callers.</span></span><span class="chev">&gt;</span></summary><div class="detail-body"><div class="field-list"><span class="pill">label</span><span class="pill">label_confidence</span><span class="pill">class_probabilities</span><span class="pill">attack_families</span><span class="pill">behavior</span><span class="pill">evidence</span><span class="pill">attack_stage</span><span class="pill">severity</span><span class="pill">deobfuscated_cmd</span><span class="pill">elapsed_ms</span></div></div></details>
-      </section></div></div></section>
-    <section class="tab-panel" id="config-panel"><div class="config-grid">
-      <article class="config-card"><h3>View policy</h3><div class="config-row"><div class="field">GENOS_VIEW_POLICY</div><div>mean (default), raw, or decoded. Mean pools the available score distributions.</div></div></article>
-      <article class="config-card"><h3>Score interpretation</h3><div class="config-row"><div class="field">GENOS_CALIBRATION_PATH</div><div>Optional validation-fitted artifact bound to the exact models and preprocessing. Scores are otherwise uncalibrated estimates.</div></div><div class="config-row"><div class="field">GENOS_BEHAVIOR_ACTION_THRESHOLD</div><div>Default 0.5; reported with behavior output.</div></div></article>
-      <article class="config-card"><h3>Behavior availability</h3><div class="config-row"><div class="field">GENOS_ALLOW_BEHAVIOR_FALLBACK</div><div>Disabled by default. Explicitly setting 1 permits a reported heuristic baseline if the encoder cannot load.</div></div></article>
-      <article class="config-card"><h3>Reproducibility</h3><div class="config-row"><div class="field">provenance</div><div>Model and code hashes, input representations, view policy, and fallback status are included in responses.</div></div></article>
-    </div></section>
-  </main>
-  <script>
-    const buttons = document.querySelectorAll('.tab-btn');
-    const panels = { pipeline: document.getElementById('pipeline-panel'), config: document.getElementById('config-panel') };
-    buttons.forEach(button => button.addEventListener('click', () => { const tab = button.dataset.tab; buttons.forEach(other => other.classList.toggle('active', other === button)); Object.entries(panels).forEach(([name, panel]) => panel.classList.toggle('active', name === tab)); }));
-    const navLinks = [...document.querySelectorAll('.tracker a')];
-    const targets = navLinks.map(link => document.querySelector(link.getAttribute('href'))).filter(Boolean);
-    const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (!entry.isIntersecting) return; navLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id)); }), { rootMargin: '-35% 0px -55% 0px', threshold: 0 });
-    targets.forEach(target => observer.observe(target));
-  </script>
+  <div class="scan-box">
+    <label for="cmdInput">Command</label>
+    <textarea id="cmdInput" placeholder="Paste a shell or PowerShell command…" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+    <div class="scan-row">
+      <button id="scanBtn" type="button">Scan</button>
+      <span id="scanStatus">Ready</span>
+    </div>
+  </div>
+
+  <div id="results" class="hidden"></div>
+
+  <footer>Genos security analysis engine — Benign / Suspicious / Context-Dependent triage across 11 MITRE ATT&amp;CK tactic families</footer>
+</div>
+
+<script>
+(function () {
+  const cmdInput = document.getElementById('cmdInput');
+  const scanBtn = document.getElementById('scanBtn');
+  const scanStatus = document.getElementById('scanStatus');
+  const results = document.getElementById('results');
+
+  const themeButtons = document.querySelectorAll('[data-theme-btn]');
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('genos-theme', theme);
+    themeButtons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeBtn === theme)));
+  }
+  themeButtons.forEach(b => b.addEventListener('click', () => applyTheme(b.dataset.themeBtn)));
+  applyTheme(document.documentElement.getAttribute('data-theme') || 'dark');
+
+  // Maps evidence / triggered features / fired rules into the 11 MITRE ATT&CK
+  // tactic families so every family shows only its own relevant indicators.
+  const FAMILY_KEYWORDS = {
+    'Execution': ['runs_interpreter', 'executes_inline_code', 'inline_code', 'shell_spawn', 'eval_exec', 'interpreter', 'run_script_interpreter', 'execute_inline_code'],
+    'Persistence': ['persistence', 'scheduled_task', 'registry_autorun', 'schtasks', 'cron', 'rc.local', 'service', 'autorun', 'establish_persistence'],
+    'Privilege Escalation': ['privilege_escalation', 'privesc', 'setuid', 'sudoers', 'attempt_privilege_escalation'],
+    'Defense Evasion': ['obfuscation', 'encoded_payload', 'base64_or_encoded_exec', 'defense_impairment', 'signed_proxy', 'lolbin', 'encode_payload', 'obfuscate_command', 'disable_defenses', 'use_signed_proxy'],
+    'Credential Access': ['credential', 'reads_credential_store', 'shadow', 'mimikatz', 'secretsdump', 'access_credential_store', 'credential_dumping'],
+    'Discovery': ['enumeration_recon', 'enumerates_identity', 'enumerates_network_config', 'network_enum', 'process_enum', 'enumerate_identity', 'enumerate_network', 'enumerate_environment'],
+    'Lateral Movement': ['remote_execution_or_session', 'tunneling', 'remote_session', 'establish_tunnel'],
+    'Command-and-Control / Payload Retrieval': ['downloads_remote_resource', 'download', 'pipe_to_shell', 'reverse_shell', 'download_remote_resource', 'reverse_shell_pattern'],
+    'Exfiltration': ['exfil_data_movement', 'transfers_file_to_remote', 'transfer_file_remote', 'exfiltrate_data', 'remote_transfer'],
+    'Impact': ['destructive_write', 'deletes_shadow_copies', 'delete_shadow_copies', 'archive_or_bulk_copy', 'archive_or_stage_data'],
+  };
+
+  function matchesFamily(familyName, key) {
+    const kws = FAMILY_KEYWORDS[familyName] || [];
+    const lowered = String(key).toLowerCase();
+    return kws.some(kw => lowered.includes(kw));
+  }
+
+  function chip(text, mono) {
+    const span = document.createElement('span');
+    span.className = 'ioc-chip' + (mono ? ' mono' : '');
+    span.textContent = text;
+    return span;
+  }
+
+  function buildIocGroup(label, items, mono) {
+    if (!items || !items.length) return null;
+    const wrap = document.createElement('div');
+    wrap.className = 'ioc-group';
+    const l = document.createElement('div');
+    l.className = 'ioc-group-label';
+    l.textContent = label;
+    wrap.appendChild(l);
+    const chips = document.createElement('div');
+    chips.className = 'ioc-chips';
+    items.forEach(item => chips.appendChild(chip(item, mono)));
+    wrap.appendChild(chips);
+    return wrap;
+  }
+
+  // Artifact types each family owns; anything not claimed by a rendered family goes to "Other IOCs".
+  const FAMILY_ARTIFACTS = {
+    'Execution': ['files'],
+    'Persistence': ['registry', 'files'],
+    'Privilege Escalation': ['files'],
+    'Defense Evasion': ['files', 'registry'],
+    'Credential Access': ['files'],
+    'Discovery': ['network', 'ports'],
+    'Lateral Movement': ['network', 'ports'],
+    'Command-and-Control / Payload Retrieval': ['network', 'ports', 'files'],
+    'Exfiltration': ['network', 'ports', 'files'],
+    'Impact': ['files', 'registry'],
+  };
+
+  function artifactGroup(type, evidence) {
+    if (type === 'network') return buildIocGroup('Network', [...(evidence.urls || []), ...(evidence.domains || []), ...(evidence.ips || [])], true);
+    if (type === 'ports') return buildIocGroup('Ports', evidence.ports || [], true);
+    if (type === 'registry') return buildIocGroup('Registry', evidence.registry_paths || [], true);
+    if (type === 'files') return buildIocGroup('Files', evidence.file_paths || [], true);
+    return null;
+  }
+
+  function collectFamilyIndicators(familyName, data, claimed) {
+    const evidence = data.evidence || {};
+    const triggered = data.triggered_features || [];
+    const firedRules = evidence.fired_rules || [];
+    const semanticFeatures = evidence.semantic_features || [];
+
+    const flags = new Set();
+    triggered.filter(f => matchesFamily(familyName, f)).forEach(f => flags.add(f.replace(/^has_/, '').replace(/_/g, ' ')));
+    firedRules.filter(r => matchesFamily(familyName, r)).forEach(r => flags.add(r));
+    semanticFeatures.filter(s => matchesFamily(familyName, s)).forEach(s => flags.add(s.replace(/_/g, ' ')));
+
+    const groups = [];
+    const flagGroup = buildIocGroup('Indicators', Array.from(flags));
+    if (flagGroup) groups.push(flagGroup);
+
+    (FAMILY_ARTIFACTS[familyName] || []).forEach(type => {
+      const g = artifactGroup(type, evidence);
+      if (g) { groups.push(g); claimed.add(type); }
+    });
+    return groups;
+  }
+
+  function section(title) {
+    const sec = document.createElement('div');
+    sec.className = 'section';
+    const t = document.createElement('div');
+    t.className = 'section-title';
+    t.textContent = title;
+    const body = document.createElement('div');
+    body.className = 'section-body';
+    sec.appendChild(t);
+    sec.appendChild(body);
+    return { sec, body };
+  }
+
+  function renderProfile(data) {
+    const ev = data.evidence || {};
+    const rows = [
+      ['OS / Platform', ev.platform],
+      ['Binary', ev.executable],
+      ['Subcommand', ev.subcommand],
+      ['Interpreter', ev.interpreter],
+      ['Execution style', ev.execution_style],
+      ['Artifact type', ev.primary_artifact_type],
+      ['Pipe', ev.has_pipe ? 'yes' : null],
+      ['Chain', ev.has_chain ? 'yes' : null],
+      ['Redirect', ev.has_redirect ? 'yes' : null],
+      ['Obfuscated', ev.uses_obfuscation ? 'yes' : null],
+    ].filter(r => r[1]);
+    if (!rows.length) return;
+    const { sec, body } = section('Command profile');
+    const grid = document.createElement('div');
+    grid.className = 'kv-grid';
+    rows.forEach(([k, v]) => {
+      const kv = document.createElement('div');
+      kv.className = 'kv';
+      kv.innerHTML = '<div class="k"></div><div class="v"></div>';
+      kv.querySelector('.k').textContent = k;
+      kv.querySelector('.v').textContent = v;
+      grid.appendChild(kv);
+    });
+    body.appendChild(grid);
+    results.appendChild(sec);
+  }
+
+  function renderBinaries(data) {
+    const bins = (data.evidence || {}).binaries || [];
+    if (!bins.length) return;
+    const { sec, body } = section(`Binary inventory (${bins.length})`);
+    const table = document.createElement('table');
+    table.className = 'inv';
+    table.innerHTML = '<thead><tr><th>Binary</th><th>Roles</th><th>Flags</th></tr></thead><tbody></tbody>';
+    const tbody = table.querySelector('tbody');
+    bins.forEach(b => {
+      const tr = document.createElement('tr');
+      const tdName = document.createElement('td');
+      tdName.className = 'mono';
+      tdName.textContent = b.binary;
+      const tdRoles = document.createElement('td');
+      (b.roles || []).forEach(r => {
+        const span = document.createElement('span');
+        span.className = 'role ' + r;
+        span.textContent = r;
+        tdRoles.appendChild(span);
+      });
+      const tdFlags = document.createElement('td');
+      tdFlags.className = 'mono';
+      tdFlags.textContent = (b.flags || []).join(' ') || '—';
+      tr.append(tdName, tdRoles, tdFlags);
+      tbody.appendChild(tr);
+    });
+    body.appendChild(table);
+    results.appendChild(sec);
+  }
+
+  function renderFlags(data) {
+    const ev = data.evidence || {};
+    const groups = [
+      buildIocGroup('High-signal flags', ev.high_signal_flags || [], true),
+      buildIocGroup('Routing features', (data.triggered_features || []).map(f => f.replace(/^has_/, '').replace(/_/g, ' '))),
+      buildIocGroup('Fired rules', ev.fired_rules || []),
+      buildIocGroup('Obfuscation markers', ev.obfuscation_markers || []),
+    ].filter(Boolean);
+    if (!groups.length) return;
+    const { sec, body } = section('Flags');
+    groups.forEach(g => body.appendChild(g));
+    results.appendChild(sec);
+  }
+
+  function renderBenign(data) {
+    const card = document.createElement('div');
+    card.className = 'verdict-card';
+
+    const left = document.createElement('div');
+    left.className = 'verdict-left';
+    const pill = document.createElement('span');
+    pill.className = 'verdict-pill benign';
+    pill.textContent = 'Benign';
+    left.appendChild(pill);
+    const conf = document.createElement('span');
+    conf.className = 'verdict-conf';
+    conf.textContent = `${Number(data.label_confidence).toFixed(1)}%`;
+    left.appendChild(conf);
+    card.appendChild(left);
+
+    const meta = document.createElement('div');
+    meta.className = 'verdict-meta';
+    if (typeof data.elapsed_ms === 'number') {
+      const t = document.createElement('div');
+      t.textContent = `${data.elapsed_ms} ms`;
+      meta.appendChild(t);
+    }
+    card.appendChild(meta);
+    results.appendChild(card);
+  }
+
+  function renderSuspicious(data) {
+    const label = data.label || 'Suspicious';
+    const pillClass = label.toLowerCase().includes('context') ? 'context_dependent'
+      : label.toLowerCase().includes('malicious') ? 'malicious' : 'suspicious';
+
+    const card = document.createElement('div');
+    card.className = 'verdict-card';
+
+    const left = document.createElement('div');
+    left.className = 'verdict-left';
+    const pill = document.createElement('span');
+    pill.className = 'verdict-pill ' + pillClass;
+    pill.textContent = label.replace(/_/g, ' ');
+    left.appendChild(pill);
+    const conf = document.createElement('span');
+    conf.className = 'verdict-conf';
+    conf.textContent = `${Number(data.label_confidence).toFixed(1)}%`;
+    left.appendChild(conf);
+    card.appendChild(left);
+
+    const meta = document.createElement('div');
+    meta.className = 'verdict-meta';
+    if (data.attack_stage) {
+      const s = document.createElement('div');
+      s.textContent = `Stage: ${data.attack_stage}`;
+      meta.appendChild(s);
+    }
+    if (typeof data.elapsed_ms === 'number') {
+      const t = document.createElement('div');
+      t.textContent = `${data.elapsed_ms} ms`;
+      meta.appendChild(t);
+    }
+    card.appendChild(meta);
+    results.appendChild(card);
+
+    if (data.deobfuscated_cmd || data.decoded_payload) {
+      const box = document.createElement('div');
+      box.className = 'decoded-box';
+      const l = document.createElement('div');
+      l.className = 'label';
+      l.textContent = 'Deobfuscated Command';
+      box.appendChild(l);
+      const code = document.createElement('code');
+      code.textContent = data.deobfuscated_cmd || data.decoded_payload;
+      box.appendChild(code);
+      results.appendChild(box);
+    }
+
+    renderProfile(data);
+    renderBinaries(data);
+    renderFlags(data);
+
+    // Per-family cards, each with only its own relevant IOCs
+    const claimed = new Set();
+    const families = document.createElement('div');
+    families.className = 'families';
+
+    const predicted = (data.attack_families && data.attack_families.predicted_families) || [];
+    const allScores = (data.attack_families && data.attack_families.all_family_scores) || [];
+    const familyList = predicted.length ? predicted : allScores.filter(f => f.family !== 'Benign Admin').slice(0, 1);
+
+    let renderedAny = false;
+    familyList.forEach(f => {
+      const groups = collectFamilyIndicators(f.family, data, claimed);
+      if (!groups.length) return; // eliminate unused/empty family space
+      renderedAny = true;
+
+      const card = document.createElement('div');
+      card.className = 'family-card';
+
+      const head = document.createElement('div');
+      head.className = 'family-head';
+      const name = document.createElement('span');
+      name.className = 'family-name';
+      name.textContent = f.family;
+      head.appendChild(name);
+      const prob = document.createElement('span');
+      prob.className = 'family-prob';
+      prob.textContent = `${Number(f.probability).toFixed(1)}%`;
+      head.appendChild(prob);
+      card.appendChild(head);
+
+      const body = document.createElement('div');
+      body.className = 'family-body';
+      groups.forEach(g => body.appendChild(g));
+      card.appendChild(body);
+
+      families.appendChild(card);
+    });
+
+    if (renderedAny) {
+      results.appendChild(families);
+    }
+
+    // IOCs not owned by any rendered family
+    const ev = data.evidence || {};
+    const others = ['network', 'ports', 'registry', 'files']
+      .filter(t => !claimed.has(t)).map(t => artifactGroup(t, ev)).filter(Boolean);
+    if (others.length) {
+      const { sec, body } = section('Other IOCs');
+      others.forEach(g => body.appendChild(g));
+      results.appendChild(sec);
+    }
+
+    if (!renderedAny && !others.length && data.analyst_hint) {
+      const note = document.createElement('div');
+      note.className = 'empty-note';
+      note.textContent = data.analyst_hint;
+      results.appendChild(note);
+    }
+  }
+
+  function renderResults(data) {
+    results.innerHTML = '';
+    results.classList.remove('hidden');
+    const label = (data.label || '').toLowerCase();
+    if (label === 'benign') {
+      renderBenign(data);
+    } else {
+      renderSuspicious(data);
+    }
+  }
+
+  function renderError(message) {
+    results.innerHTML = '';
+    results.classList.remove('hidden');
+    const card = document.createElement('div');
+    card.className = 'verdict-card';
+    card.textContent = message;
+    results.appendChild(card);
+  }
+
+  async function runScan() {
+    const command = cmdInput.value.trim();
+    if (!command) {
+      scanStatus.textContent = 'Enter a command to scan.';
+      return;
+    }
+
+    scanBtn.disabled = true;
+    scanStatus.textContent = 'Scanning…';
+
+    try {
+      const resp = await fetch('/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        renderError(data.error || 'Scan failed.');
+        scanStatus.textContent = 'Error';
+        return;
+      }
+      renderResults(data);
+      scanStatus.textContent = 'Done';
+    } catch (err) {
+      renderError('Network error: ' + err.message);
+      scanStatus.textContent = 'Error';
+    } finally {
+      scanBtn.disabled = false;
+    }
+  }
+
+  scanBtn.addEventListener('click', runScan);
+  cmdInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      runScan();
+    }
+  });
+})();
+</script>
 </body>
 </html>
