@@ -263,13 +263,6 @@ def index():
     """Main web scanner interface."""
     return render_template("index.html")
 
-
-@app.route("/demo", methods=["GET"])
-def demo():
-    """Curated presentation and benchmark demo page."""
-    return render_template("demo.html")
-
-
 @app.route("/health", methods=["GET"])
 def health():
     """Health check reporting engine readiness and active specialist heads."""
