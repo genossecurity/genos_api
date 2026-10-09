@@ -31,8 +31,8 @@ import torch.nn.functional as F
 from torch.amp import autocast
 from transformers import RobertaConfig, RobertaModel, RobertaTokenizer
 
-from scientific_validation import PREPROCESSING_VERSION, sha256_file, temperature_scale
-from baseline import (
+from .scientific_validation import PREPROCESSING_VERSION, sha256_file, temperature_scale
+from .baseline import (
     BASELINE_VERSION,
     SIGNATURE_SCHEMA_VERSION,
     BaselineEvaluation,
@@ -42,8 +42,7 @@ from baseline import (
     ExecutionContext,
     SignatureExtractor,
 )
-
-from deobfuscator import (
+from .deobfuscator import (
     Deobfuscator,
     calculate_entropy,
     clean_concatenation,
@@ -59,8 +58,7 @@ from deobfuscator import (
     is_obfuscated,
     universal_decoder,
 )
-
-from gatekeeper import (
+from .gatekeeper import (
     GATE_LABELS_BINARY,
     GATE_LABELS_3CLASS,
     SUSPICIOUS_ROUTING_FEATURES,
@@ -69,8 +67,7 @@ from gatekeeper import (
     _MeanPool,
     extract_routing_features,
 )
-
-from specialist import (
+from .specialist import (
     FAMILY_LABELS,
     BehaviorEncoderModel,
     Specialist,
@@ -78,8 +75,7 @@ from specialist import (
     _resolve_asset_path,
     _resolve_behavior_model_path,
 )
-
-from evidence import (
+from .evidence import (
     HIGH_SIGNAL_FLAGS,
     INTERPRETER_NAMES,
     SURFACE_SEM_FEATURES,
@@ -99,7 +95,7 @@ def _env_flag(name: str, default: bool) -> bool:
     return os.getenv(name, "1" if default else "0").strip().lower() in {"1", "true", "yes", "on"}
 
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 import sys as _sys
 _PARSER_DIR = os.path.join(BASE_DIR, "parser")
@@ -251,12 +247,12 @@ class GenosEngine:
             "implementation_sha256": {
                 name: sha256_file(os.path.join(BASE_DIR, name))
                 for name in (
-                    "engine.py",
-                    "deobfuscator.py",
-                    "gatekeeper.py",
-                    "specialist.py",
-                    "evidence.py",
-                    "scientific_validation.py",
+                    "genos/engine.py",
+                    "genos/deobfuscator.py",
+                    "genos/gatekeeper.py",
+                    "genos/specialist.py",
+                    "genos/evidence.py",
+                    "genos/scientific_validation.py",
                     "parser/parser.py",
                     "parser/semantic_features.py",
                     "parser/rule_engine.py",

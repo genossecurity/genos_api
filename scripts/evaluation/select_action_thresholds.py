@@ -8,7 +8,7 @@ import numpy as np
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
-from scientific_validation import sha256_file
+from genos.scientific_validation import sha256_file
 
 
 def select_thresholds(scores,targets,labels):

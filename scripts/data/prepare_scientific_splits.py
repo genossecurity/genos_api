@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from scientific_validation import command_of, dataset_manifest, normalize_command, read_rows, require_disjoint, split_audit
+from genos.scientific_validation import command_of, dataset_manifest, normalize_command, read_rows, require_disjoint, split_audit
 
 def inferred_family(command):
     # A deliberately coarse split axis; never claim this proves template isolation.

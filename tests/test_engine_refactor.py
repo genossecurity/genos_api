@@ -10,18 +10,18 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "parser"))
 
-from baseline import (
+from genos.baseline import (
     BaselineMode,
     BaselineStatus,
     BaselineStore,
     ExecutionContext,
     SignatureExtractor,
 )
-from deobfuscator import Deobfuscator, is_obfuscated, deobfuscate, decode_bare_base64
-from gatekeeper import Gatekeeper, extract_routing_features, SUSPICIOUS_ROUTING_FEATURES
-from specialist import Specialist, FAMILY_LABELS
-from evidence import build_evidence, generate_evidence_summary, collect_indicator_evidence
-from engine import GenosEngine
+from genos.deobfuscator import Deobfuscator, is_obfuscated, deobfuscate, decode_bare_base64
+from genos.gatekeeper import Gatekeeper, extract_routing_features, SUSPICIOUS_ROUTING_FEATURES
+from genos.specialist import Specialist, FAMILY_LABELS
+from genos.evidence import build_evidence, generate_evidence_summary, collect_indicator_evidence
+from genos.engine import GenosEngine
 from parser import parse_command
 
 

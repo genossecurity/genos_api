@@ -15,7 +15,7 @@ from sklearn.pipeline import Pipeline
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from scientific_validation import read_rows, representation, require_disjoint, dataset_manifest, sha256_file, probability_metrics
+from genos.scientific_validation import read_rows, representation, require_disjoint, dataset_manifest, sha256_file, probability_metrics
 
 
 def build_rf_pipeline(n_estimators=400, seed=42, character=False):

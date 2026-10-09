@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from scientific_validation import read_rows
+from genos.scientific_validation import read_rows
 
 
 def _candidate(path: Path, metadata: dict) -> dict | None:

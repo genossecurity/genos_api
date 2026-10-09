@@ -36,8 +36,8 @@ import torch.nn.functional as F
 from torch.amp import autocast
 from transformers import RobertaConfig, RobertaModel, RobertaTokenizer
 
-from scientific_validation import sha256_file
-from evidence import (
+from .scientific_validation import sha256_file
+from .evidence import (
     HIGH_SIGNAL_FLAGS as _HIGH_SIGNAL_FLAGS,
     INTERPRETER_NAMES as _INTERPRETER_NAMES,
     SURFACE_SEM_FEATURES as _SURFACE_SEM_FEATURES,
@@ -46,7 +46,7 @@ from evidence import (
     generate_evidence_summary as _generate_evidence_summary_fn,
 )
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 _PARSER_DIR = os.path.join(BASE_DIR, "parser")
 if _PARSER_DIR not in sys.path:

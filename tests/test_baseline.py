@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 sys.path.append("/home/sam/genos/genos_api")
 sys.path.append("/home/sam/genos/genos_api/parser")
 
-from baseline import (
+from genos.baseline import (
     BaselineMode,
     BaselineStatus,
     BaselineStore,

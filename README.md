@@ -8,7 +8,7 @@ The system was developed as part of an IEEE research programme. See the [scienti
 
 ## How the engine works
 
-The core inference logic lives in `engine.py`. The Flask API in `app.py` wraps it.
+The core inference logic lives in the `genos/` package (`genos/engine.py` as the router, with `genos/gatekeeper.py`, `genos/specialist.py`, `genos/evidence.py`, `genos/deobfuscator.py`, and `genos/baseline.py` as dedicated components). The Flask API in `app.py` wraps it.
 
 ### Startup
 
@@ -19,7 +19,7 @@ When the process starts:
 3. The engine resolves its asset paths in this order for each file:
    - absolute path (if given)
    - relative to `os.getcwd()`
-   - relative to the directory containing `engine.py`
+   - relative to the directory containing `genos/engine.py`
    - each fallback candidate in turn
 4. The specialist label map is loaded from the first file that exists:
    - `map_path` argument passed by the caller
@@ -360,11 +360,11 @@ cp .env.example .env
 | `MONGO_URI` | `app.py` | — | Connection string for MongoDB; enables `/scan` route |
 | `INTERNAL_TEST_TOKEN` | `app.py` | — | Optional auth token for `/scan/internal`; unenforced if unset |
 | `GENOS_API_BIND` | `gunicorn.conf.py` | `127.0.0.1:6001` | Gunicorn bind address |
-| `GENOS_VIEW_POLICY` | `engine.py` | `mean` | Raw/decoded distribution fusion policy |
-| `GENOS_CALIBRATION_PATH` | `engine.py` | unset | Validation-fitted artifact bound to the runtime |
-| `GENOS_BEHAVIOR_POLICY_PATH` | `engine.py` | unset | Validation-selected per-action thresholds |
-| `GENOS_ALLOW_BEHAVIOR_FALLBACK` | `engine.py` | `0` | Explicitly allow reported heuristic fallback |
-| `GENOS_MAX_TOKENS` | `engine.py` | `256` | Tokeniser max sequence length |
+| `GENOS_VIEW_POLICY` | `genos/engine.py` | `mean` | Raw/decoded distribution fusion policy |
+| `GENOS_CALIBRATION_PATH` | `genos/engine.py` | unset | Validation-fitted artifact bound to the runtime |
+| `GENOS_BEHAVIOR_POLICY_PATH` | `genos/engine.py` | unset | Validation-selected per-action thresholds |
+| `GENOS_ALLOW_BEHAVIOR_FALLBACK` | `genos/engine.py` | `0` | Explicitly allow reported heuristic fallback |
+| `GENOS_MAX_TOKENS` | `genos/engine.py` | `256` | Tokeniser max sequence length |
 | `CURRENT_TIME` | `app.py` | `"2026-03-17T00:00:00.000+00:00"` | Timestamp written into Mongo usage records |
 | `GENOS_T1_EFFECTIVE_BATCH` | `trainer1.py` | `256` | Training only: effective batch size |
 | `GENOS_T1_MICRO_BATCH` | `trainer1.py` | `32` | Training only: micro-batch size for gradient accumulation |
@@ -412,7 +412,7 @@ The reload script is hardcoded to `127.0.0.1:6001` and activates `venv/bin/activ
 import sys
 sys.path.insert(0, "/path/to/genos_api")
 
-from engine import GenosEngine
+from genos.engine import GenosEngine
 
 engine = GenosEngine()
 result = engine.scan("net localgroup administrators")
@@ -499,11 +499,19 @@ These trainers default to the prepared task directories under `data/derived/scie
 
 ```
 app.py                              Flask application and route handling
-engine.py                           GenosEngine — deobfuscation and two-tier inference
-scientific_validation.py            Shared dataset audits and evaluation metrics
 gunicorn.conf.py                    Gunicorn runtime configuration
 requirements.txt                    Python dependencies
 .env.example                        Environment variable template
+
+genos/                              Core engine package (import as `genos.*`)
+  __init__.py                       Public package exports
+  engine.py                         GenosEngine router — coordinates the full scan pipeline
+  gatekeeper.py                     Tier 1 triage: Benign vs Suspicious classification
+  specialist.py                     Tier 2 specialist: 11 MITRE ATT&CK tactic families + behavior
+  evidence.py                       IOC extraction and analyst evidence summaries
+  deobfuscator.py                   Standalone multi-layer deobfuscation logic
+  baseline.py                       Stateful baseline store and novelty scoring
+  scientific_validation.py          Shared dataset audits and evaluation metrics
 
 config/
   specialist_map.json               Legacy MITRE-mode technique map

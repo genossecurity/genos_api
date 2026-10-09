@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from scientific_validation import read_rows, command_of, split_audit, dataset_manifest, probability_metrics
+from genos.scientific_validation import read_rows, command_of, split_audit, dataset_manifest, probability_metrics
 
 
 def main():
@@ -31,7 +31,7 @@ def main():
     audit = split_audit({'training': training, args.split: rows})
     if args.split != 'development' and not audit['passed']:
         raise ValueError('Exposure check failed: ' + json.dumps(audit))
-    from engine import GenosEngine
+    from genos.engine import GenosEngine
     engine = GenosEngine(t1_path=str(args.gatekeeper), t2_path=str(args.behavior), gatekeeper_meta_path=str(args.gatekeeper_meta), view_policy=args.view_policy)
     names = {'gatekeeper': engine._GATE_LABELS, 'mitre': [engine._tfidf_idx_to_label[int(i)] for i in engine.t2.classes_], 'behavior': [engine.behavior_stage_labels[i] for i in sorted(engine.behavior_stage_labels)]}[args.component]
     outputs = []

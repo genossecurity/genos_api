@@ -58,7 +58,7 @@ def parse_csv_values(value: str) -> list[str]:
 
 
 def audit_data(data_root: Path, gatekeeper_train_patch: Path | None = None) -> dict:
-    from scientific_validation import read_rows, require_disjoint, sha256_file
+    from genos.scientific_validation import read_rows, require_disjoint, sha256_file
 
     report = {"data_root": str(data_root.resolve()), "tasks": {}}
     for task, filenames in TASK_FILES.items():

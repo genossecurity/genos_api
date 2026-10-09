@@ -15,8 +15,8 @@ import torch
 from sklearn.feature_extraction.text import TfidfVectorizer
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from engine import GenosEngine, _resolve_behavior_model_path
-from scientific_validation import split_audit, require_disjoint, temperature_scale, probability_metrics
+from genos.engine import GenosEngine, _resolve_behavior_model_path
+from genos.scientific_validation import split_audit, require_disjoint, temperature_scale, probability_metrics
 from scripts.data.prepare_scientific_splits import prepare
 from scripts.evaluation.calibrate_scores import fit_temperature, fit_export
 from scripts.evaluation.compare_ablations import compare
@@ -328,7 +328,7 @@ class ActionThresholdTests(unittest.TestCase):
 class ApiTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        with patch('engine.GenosEngine',return_value=SimpleNamespace(device=torch.device('cpu'), scan=Mock(return_value={}))),patch.dict('os.environ',{'MONGO_URI':''}):
+        with patch('genos.engine.GenosEngine',return_value=SimpleNamespace(device=torch.device('cpu'), scan=Mock(return_value={}))),patch.dict('os.environ',{'MONGO_URI':''}):
             cls.api=importlib.import_module('app')
 
     def test_raw_input_and_score_semantics_survive_api(self):

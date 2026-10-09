@@ -1,89 +1,56 @@
-import sys
 import os
-import logging
+import sys
 import json
 import time
 import signal
-from datetime import datetime
+import logging
 from threading import Lock
+from datetime import datetime, timezone
 
 import torch
-from flask import Flask, request, Response, jsonify, render_template, redirect, url_for
-from pymongo import MongoClient
+from flask import Flask, request, jsonify, render_template
 from dotenv import load_dotenv
 
-# Add current directory to module search path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from engine import GenosEngine
+# Add current directory to path
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
+from genos.engine import GenosEngine
+from genos.specialist import FAMILY_LABELS
 
 # Load environment variables
 load_dotenv()
 
-# -----------------------
-# Flask App Initialization
-# -----------------------
+# -----------------------------------------------------------------------------
+# Flask Application Setup
+# -----------------------------------------------------------------------------
 app = Flask(__name__)
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
-# -----------------------
-# MongoDB Configuration
-# -----------------------
-MONGO_URI = os.getenv("MONGO_URI")
-client = None
-db = None
-keys_collection = None
-usage_collection = None
-if MONGO_URI:
-    client = MongoClient(MONGO_URI)
-    db = client['genos']
-    keys_collection = db['api_keys']
-    usage_collection = db['usage']
-
-# -----------------------
-# Genos Engine Initialization
-# -----------------------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-app.logger.info("Loading Genos engine — this may take a moment...")
+app.logger.info("Initializing Genos Engine...")
 engine = GenosEngine(
     t1_path=os.path.join(BASE_DIR, "models/gatekeeper.pt"),
     t2_path=os.path.join(BASE_DIR, "models/behavior_encoder.pt"),
 )
 
-# Warm-up inference
-app.logger.info("Running warm-up pass...")
+app.logger.info("Running warm-up inference pass...")
 engine.scan("warmup")
-app.logger.info("Genos engine ready.")
+app.logger.info("Genos Engine ready (11 MITRE tactic families active).")
 
-_engine_ready = True
 _inference_lock = Lock()
 
-# -----------------------
+
+# -----------------------------------------------------------------------------
 # Helper Functions
-# -----------------------
-def is_valid_key(api_key):
-    """Check if the API key exists in MongoDB."""
-    if not api_key:
-        return False
-    return keys_collection.find_one({"key": api_key}) is not None
-
-def _to_percentage(value):
-    """Normalize confidence value to percentage with 2 decimals.
-
-    Accepts either raw probability (0-1) or percentage (>1).
-    """
-    value = float(value)
-    if value <= 1.0:
-        value *= 100.0
-    return round(value, 2)
-
-
-def _api_label(label):
-    """Map internal labels to the public API contract."""
+# -----------------------------------------------------------------------------
+def _api_label(label: str) -> str:
+    """Map internal labels to public contract."""
     return "Context_Dependent" if label == "Suspicious" else label
 
 
-def _listening_pids_on_port(port):
-    """Return PIDs listening on a TCP port using Linux /proc data."""
+def _listening_pids_on_port(port: int) -> list[int]:
+    """Identify PIDs holding a TCP port using Linux /proc filesystem."""
     target_port = f"{int(port):04X}"
     socket_inodes = set()
 
@@ -92,14 +59,11 @@ def _listening_pids_on_port(port):
             with open(proc_net_path, "r", encoding="utf-8") as proc_net:
                 next(proc_net, None)
                 for line in proc_net:
-                    columns = line.split()
-                    if len(columns) < 10:
+                    cols = line.split()
+                    if len(cols) < 10:
                         continue
-                    local_address = columns[1]
-                    socket_state = columns[3]
-                    inode = columns[9]
-                    local_port = local_address.rsplit(":", 1)[-1].upper()
-                    if local_port == target_port and socket_state == "0A":
+                    local_address, state, inode = cols[1], cols[3], cols[9]
+                    if local_address.rsplit(":", 1)[-1].upper() == target_port and state == "0A":
                         socket_inodes.add(inode)
         except OSError:
             continue
@@ -117,63 +81,47 @@ def _listening_pids_on_port(port):
             continue
         fd_dir = os.path.join("/proc", pid_name, "fd")
         try:
-            fd_names = os.listdir(fd_dir)
+            for fd_name in os.listdir(fd_dir):
+                target = os.readlink(os.path.join(fd_dir, fd_name))
+                if target.startswith("socket:[") and target[8:-1] in socket_inodes:
+                    listening_pids.add(pid)
+                    break
         except OSError:
             continue
-        for fd_name in fd_names:
-            fd_path = os.path.join(fd_dir, fd_name)
-            try:
-                target = os.readlink(fd_path)
-            except OSError:
-                continue
-            if target.startswith("socket:[") and target[8:-1] in socket_inodes:
-                listening_pids.add(pid)
-                break
 
     return sorted(listening_pids)
 
 
-def _free_port(port, timeout=3.0):
-    """Terminate other processes listening on the requested TCP port."""
+def _free_port(port: int, timeout: float = 3.0) -> None:
+    """Terminate other processes holding the requested TCP port."""
     pids = _listening_pids_on_port(port)
     if not pids:
         return
 
-    app.logger.warning("Port %s is already in use by PID(s): %s. Terminating them...", port, pids)
+    app.logger.warning("Port %s in use by PID(s): %s. Terminating...", port, pids)
     for pid in pids:
         try:
             os.kill(pid, signal.SIGTERM)
-        except ProcessLookupError:
+        except (ProcessLookupError, PermissionError):
             pass
-        except PermissionError:
-            app.logger.warning("No permission to terminate PID %s using port %s", pid, port)
 
     deadline = time.time() + timeout
     while time.time() < deadline:
-        remaining_pids = [pid for pid in pids if os.path.exists(os.path.join("/proc", str(pid)))]
-        if not remaining_pids:
+        remaining = [p for p in pids if os.path.exists(os.path.join("/proc", str(p)))]
+        if not remaining:
             return
         time.sleep(0.1)
 
     for pid in pids:
-        if not os.path.exists(os.path.join("/proc", str(pid))):
-            continue
-        try:
-            os.kill(pid, signal.SIGKILL)
-            app.logger.warning("Force-killed PID %s still holding port %s", pid, port)
-        except ProcessLookupError:
-            pass
-        except PermissionError:
-            app.logger.warning("No permission to force-kill PID %s using port %s", pid, port)
+        if os.path.exists(os.path.join("/proc", str(pid))):
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError):
+                pass
 
 
-def _scan_with_gpu_memory(command):
-    """Measure this scan's PyTorch allocations, excluding the resident baseline.
-
-    CUDA peak counters belong to the process/device, so scans must not overlap
-    while resetting or reading them. Allocator-reserved memory includes cache;
-    it is reported separately from live tensor allocations.
-    """
+def _scan_with_gpu_memory(command: str) -> tuple[dict, dict]:
+    """Execute scan while profiling CUDA memory allocations."""
     with _inference_lock:
         device = engine.device
         memory = {
@@ -211,32 +159,23 @@ def _scan_with_gpu_memory(command):
                 })
             except (RuntimeError, AssertionError):
                 pass
+
         return result, memory
 
 
-def _run_inference(command, include_flags=None):
-    """Run engine, normalize response, and apply include flags.
-
-        include_flags is an optional dict of section booleans:
-            evidence, families, mitre, analysis, ioc, meta
-    All sections are included by default when include_flags is None.
-    """
-    # --- Run Genos engine ---
+def _run_inference(command: str, include_flags: dict | None = None) -> dict:
+    """Run full Genos inspection pipeline and structure the client payload."""
     t_start = time.perf_counter()
     raw_result, gpu_memory = _scan_with_gpu_memory(command)
     elapsed_ms = round((time.perf_counter() - t_start) * 1000, 1)
 
-    # Support both legacy and updated engine payload keys.
-    label = raw_result.get('label', raw_result.get('status'))
-    label_conf = raw_result.get('label_confidence', raw_result.get('gatekeeper_confidence'))
-    mitre_predictions = raw_result.get('MITRE_codes', raw_result.get('top_mitre', []))
-
+    label = raw_result.get("label", raw_result.get("status"))
+    label_conf = raw_result.get("label_confidence", raw_result.get("gatekeeper_confidence", 0.0))
     if label is None or label_conf is None:
         raise ValueError(f"Unexpected engine payload keys: {list(raw_result.keys())}")
 
     public_label = _api_label(label)
 
-    # --- Build default flags (all on) ---
     flags = {
         "evidence": True,
         "mitre": True,
@@ -246,62 +185,65 @@ def _run_inference(command, include_flags=None):
         "meta": True,
     }
     if include_flags and isinstance(include_flags, dict):
-        for key in flags:
-            if key in include_flags:
-                flags[key] = bool(include_flags[key])
+        flags.update({k: bool(v) for k, v in include_flags.items() if k in flags})
 
-    # --- Core fields (always returned) ---
+    # Core identification fields
     result = {
         "label": public_label,
         "canonical_label": label,
         "label_confidence": round(float(label_conf), 2),
     }
 
-    for key in ("class_probabilities", "decision_margin", "reason", "triggered_features", "routing_policy", "should_run_specialist", "gatekeeper", "behavior", "provenance", "score_type", "calibration", "input_truncated", "mitre_scope", "specialist_mode"):
+    # Pass-through metadata
+    for key in (
+        "class_probabilities", "decision_margin", "reason", "triggered_features",
+        "routing_policy", "should_run_specialist", "gatekeeper", "behavior",
+        "provenance", "score_type", "calibration", "input_truncated",
+        "mitre_scope", "specialist_mode", "baseline_status", "seen_count",
+    ):
         if key in raw_result:
             result[key] = raw_result[key]
 
-    # --- Context_Dependent action hint ---
     if "action" in raw_result:
         result["action"] = raw_result["action"]
 
-    # --- Label probabilities ---
+    # Normalized label probabilities
     if "label_probabilities" in raw_result:
-        probabilities = dict(raw_result["label_probabilities"])
-        if "suspicious" in probabilities:
-            probabilities.setdefault("context_dependent", probabilities.pop("suspicious"))
-        result["label_probabilities"] = probabilities
+        probs = dict(raw_result["label_probabilities"])
+        if "suspicious" in probs:
+            probs.setdefault("context_dependent", probs.pop("suspicious"))
+        result["label_probabilities"] = probs
 
-    # --- MITRE codes ---
+    # 11 MITRE Tactic Families
+    if flags["families"] and "attack_families" in raw_result:
+        result["attack_families"] = raw_result["attack_families"]
+
+    # Legacy technique ranking (active only in GENOS_SPECIALIST_MODE=mitre)
     if flags["mitre"] and "MITRE_codes" in raw_result:
         result["MITRE_codes"] = [
             {
                 "code": t["code"],
                 "confidence": round(float(t["confidence"]), 2),
-                "score_type": t.get("score_type", "uncalibrated_model_estimate")
+                "score_type": t.get("score_type", "uncalibrated_model_estimate"),
             }
-            for t in mitre_predictions
+            for t in raw_result.get("MITRE_codes", [])
         ]
-    if flags["families"] and "attack_families" in raw_result:
-        result["attack_families"] = raw_result["attack_families"]
 
-    # --- Evidence ---
+    # Observable evidence
     if flags["evidence"] and "evidence" in raw_result:
         result["evidence"] = raw_result["evidence"]
-    # --- Analysis ---
+
+    # Analyst explanations and decoded payloads
     if flags["analysis"]:
-        for key in ("mapping_reasons", "why_mapped", "confidence_driver", "analyst_hint"):
-            if key in raw_result:
-                result[key] = raw_result[key]
-        # Decoded payload data (present when obfuscation was detected)
-        for key in ("decoded_payload", "payload_mitre_codes", "deobfuscated_cmd"):
+        for key in ("analyst_hint", "confidence_driver", "decoded_payload", "deobfuscated_cmd", "mapping_reasons", "why_mapped"):
             if key in raw_result and raw_result[key] is not None:
                 result[key] = raw_result[key]
-    # --- IOC summary ---
+
+    # Network & host IOC summary
     if flags["ioc"] and "ioc_summary" in raw_result:
         result["ioc_summary"] = raw_result["ioc_summary"]
 
-    # --- Meta ---
+    # Execution telemetry
     if flags["meta"]:
         if "attack_stage" in raw_result:
             result["attack_stage"] = raw_result["attack_stage"]
@@ -312,102 +254,70 @@ def _run_inference(command, include_flags=None):
 
     return result
 
-# -----------------------
-# Routes
-# -----------------------
-@app.route('/', methods=['GET'])
+
+# -----------------------------------------------------------------------------
+# Routes (No dashboard, just index and demo templates)
+# -----------------------------------------------------------------------------
+@app.route("/", methods=["GET"])
 def index():
-    return render_template('index.html')
+    """Main web scanner interface."""
+    return render_template("index.html")
 
 
-@app.route('/demo', methods=['GET'])
+@app.route("/demo", methods=["GET"])
 def demo():
-    return render_template('demo.html')
+    """Curated presentation and benchmark demo page."""
+    return render_template("demo.html")
 
 
-@app.route('/health', methods=['GET'])
+@app.route("/health", methods=["GET"])
 def health():
-    status = "ok" if _engine_ready else "loading"
-    return Response(
-        json.dumps({"status": status}, indent=2),
-        mimetype='application/json'
-    )
-@app.route('/scan', methods=['POST'])
+    """Health check reporting engine readiness and active specialist heads."""
+    return jsonify({
+        "status": "ok",
+        "engine_ready": True,
+        "specialist_mode": engine.specialist_mode,
+        "supported_families": len(FAMILY_LABELS),
+        "device": engine.device.type,
+    })
+
+
+@app.route("/api/families", methods=["GET"])
+def families():
+    """Return the 11 MITRE ATT&CK tactic heads/families."""
+    return jsonify({
+        "count": len(FAMILY_LABELS),
+        "families": FAMILY_LABELS,
+    })
+
+
+@app.route("/scan", methods=["POST"])
+@app.route("/api/scan", methods=["POST"])
 def scan():
-    data = request.get_json()
+    """Execute command security scan (JSON or form POST)."""
+    command = None
+    include_flags = None
 
-    # --- Validate input ---
-    if not data:
-        return jsonify({"error": "Missing parameters: request body"}), 400
-    
-    missing_params = []
-    if 'api_key' not in data:
-        missing_params.append('api_key')
-    if 'command' not in data:
-        missing_params.append('command')
-    
-    if missing_params:
-        return jsonify({"error": f"Missing parameters: {', '.join(missing_params)}"}), 400
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+        command = data.get("command")
+        include_flags = data.get("include") or data.get("include_flags")
+    else:
+        command = request.form.get("command")
 
-    if keys_collection is None or usage_collection is None:
-        return jsonify({"error": "Internal error"}), 400
-
-    # --- Validate API key ---
-    user_record = keys_collection.find_one({"key": data['api_key']})
-    if not user_record:
-        return jsonify({"error": "Key Not Valid"}), 401
+    if not command or not isinstance(command, str) or not command.strip():
+        return jsonify({"error": "Command parameter is required and cannot be empty"}), 400
 
     try:
-        include_flags = data.get('include')
-        response = _run_inference(data['command'], include_flags=include_flags)
-
-        # --- Log usage ---
-        usage_collection.update_one(
-            {"user_id": user_record.get('user_id'), "api_key": data['api_key']},
-            {
-                "$inc": {"req_count": 1},
-                "$set": {"updated_at": datetime.utcnow().isoformat()}
-            }
-        )
-
-        return app.response_class(
-            response=json.dumps(response, indent=2),  # Pretty print
-            mimetype='application/json'
-        )
-
-    except Exception as e:
-        app.logger.error(f"Genos Engine Error: {str(e)}")
-        return jsonify({"error": "Internal server error"}), 500
+        result = _run_inference(command.strip(), include_flags=include_flags)
+        return jsonify(result), 200
+    except Exception as exc:
+        app.logger.exception("Inference error during command scan")
+        return jsonify({"error": "Inference failed", "details": str(exc)}), 500
 
 
-@app.route('/scan/free', methods=['POST'])
-def scan_free():
-    """Run inference without API key validation or usage logging.
-
-    Intended for the public GUI dashboard which enforces its own
-    IP-based rate limit (500/day) on the dashboard server side.
-    Only accepts requests from localhost.
-    """
-    data = request.get_json()
-    if not data or 'command' not in data:
-        return jsonify({"error": "Missing parameters: command"}), 400
-
-    try:
-        include_flags = data.get('include')
-        response = _run_inference(data['command'], include_flags=include_flags)
-        return app.response_class(
-            response=json.dumps(response, indent=2),
-            mimetype='application/json'
-        )
-    except Exception as e:
-        app.logger.error(f"Genos Engine Error (free): {str(e)}")
-        return jsonify({"error": "Internal server error"}), 500
-
-
-# -----------------------
-# Main
-# -----------------------
-if __name__ == '__main__':
-    port = int(os.getenv("PORT", "5000"))
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", "6001"))
+    host = os.getenv("HOST", "0.0.0.0")
     _free_port(port)
-    app.run(host='0.0.0.0', port=port)
+    app.run(host=host, port=port, debug=False)

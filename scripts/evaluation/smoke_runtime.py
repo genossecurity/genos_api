@@ -25,7 +25,7 @@ def main():
     args = parser.parse_args()
     if args.output.exists():
         raise ValueError('Choose a new output path; keep prior evidence')
-    from engine import GenosEngine
+    from genos.engine import GenosEngine
     engine = GenosEngine(t1_path=args.gatekeeper, t2_path=args.behavior,
                          gatekeeper_meta_path=args.gatekeeper_meta, view_policy=args.view_policy,
                          specialist_mode=args.specialist_mode)
@@ -60,7 +60,7 @@ def main():
     api_status = 'not_requested'
     if args.api:
         # Exercise the real inference and Flask normalization with this exact engine.
-        with patch('engine.GenosEngine', return_value=engine), patch.dict('os.environ', {'MONGO_URI': ''}):
+        with patch('genos.engine.GenosEngine', return_value=engine), patch.dict('os.environ', {'MONGO_URI': ''}):
             api = importlib.import_module('app')
         client = api.app.test_client()
         for route in ['/', '/demo', '/health']:

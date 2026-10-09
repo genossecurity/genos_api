@@ -10,7 +10,7 @@ from scipy.optimize import minimize_scalar
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from scientific_validation import probability_metrics, temperature_scale, sha256_file, require_disjoint
+from genos.scientific_validation import probability_metrics, temperature_scale, sha256_file, require_disjoint
 
 
 def fit_temperature(probabilities, targets):

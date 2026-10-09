@@ -8,7 +8,7 @@ from sklearn.metrics import f1_score
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
-from scientific_validation import normalize_command,probability_metrics,sha256_file
+from genos.scientific_validation import normalize_command,probability_metrics,sha256_file
 from scripts.evaluation.compare_ablations import compare
 LABELS=['Benign','Malicious','Context_Dependent']
 

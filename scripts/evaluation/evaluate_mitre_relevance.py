@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
-from scientific_validation import read_rows,normalize_command,command_of,sha256_file
+from genos.scientific_validation import read_rows,normalize_command,command_of,sha256_file
 
 
 def evaluate(annotations,predictions,minimum_score=0):

@@ -18,7 +18,7 @@ from transformers import RobertaModel, RobertaTokenizer
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(BASE_DIR))
-from scientific_validation import read_rows, representation, require_disjoint, dataset_manifest, sha256_file
+from genos.scientific_validation import read_rows, representation, require_disjoint, dataset_manifest, sha256_file
 DATA_DIR = BASE_DIR / "data/derived/scientific_v2/behavior"
 CONFIG_DIR = BASE_DIR / "config"
 MODELS_DIR = BASE_DIR / "models"

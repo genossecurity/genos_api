@@ -16,7 +16,7 @@ from torch.amp import autocast
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from scientific_validation import command_of, dataset_manifest, probability_metrics, read_rows, require_disjoint, sha256_file
+from genos.scientific_validation import command_of, dataset_manifest, probability_metrics, read_rows, require_disjoint, sha256_file
 from scripts.training.train_tfidf_gatekeeper import LABELS
 
 
@@ -219,7 +219,7 @@ def main() -> int:
     if list(tfidf_metadata.get("class_names", [])) != LABELS:
         raise ValueError("TF-IDF class order differs from the CodeBERT class order")
 
-    from engine import GenosEngine
+    from genos.engine import GenosEngine
     engine = GenosEngine(
         t1_path=str(checkpoint_dir / "gatekeeper.pt"),
         gatekeeper_meta_path=str(checkpoint_dir / "gatekeeper_meta.json"),

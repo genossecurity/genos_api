@@ -15,7 +15,7 @@ import re
 import sys
 from typing import Any, Dict, List, Optional, Set
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _PARSER_DIR = os.path.join(BASE_DIR, "parser")
 if _PARSER_DIR not in sys.path:
     sys.path.insert(0, _PARSER_DIR)

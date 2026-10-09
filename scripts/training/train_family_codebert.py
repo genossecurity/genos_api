@@ -19,7 +19,7 @@ from transformers import RobertaModel, RobertaTokenizer
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from scientific_validation import read_rows, require_disjoint, sha256_file
+from genos.scientific_validation import read_rows, require_disjoint, sha256_file
 from scripts.training.train_family_specialist import metric_summary, targets_for
 
 BACKBONE = os.getenv("GENOS_CODEBERT_BACKBONE", "microsoft/codebert-base")

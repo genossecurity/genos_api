@@ -25,7 +25,7 @@ from parser import parse_command
 from semantic_features import build_semantic_features
 from rule_engine import build_rule_result
 from candidate_mask import build_prior_vector, fuse_logits_with_priors
-from engine import Tier2_Specialist
+from genos.specialist import Tier2_Specialist
 
 
 def load_model_and_map():

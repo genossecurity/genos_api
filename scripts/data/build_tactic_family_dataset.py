@@ -12,8 +12,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from engine import GenosEngine
-from scientific_validation import command_of, normalize_command, read_rows, require_disjoint, sha256_file
+from genos.engine import GenosEngine
+from genos.scientific_validation import command_of, normalize_command, read_rows, require_disjoint, sha256_file
 
 FAMILY_LABELS = [
     "Execution",

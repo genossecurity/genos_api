@@ -21,7 +21,7 @@ from sklearn.svm import LinearSVC
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from scientific_validation import dataset_manifest, read_rows, require_disjoint, sha256_file
+from genos.scientific_validation import dataset_manifest, read_rows, require_disjoint, sha256_file
 
 WORD_TOKEN_PATTERN = r"(?u)(?:--?[A-Za-z][\w-]*|/[A-Za-z](?:[\w-]*)?|\b[\w][\w./:+#-]*\b)"
 BENIGN_LABEL = "Benign Admin"

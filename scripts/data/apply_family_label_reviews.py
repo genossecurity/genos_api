@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from scientific_validation import read_rows, require_disjoint, sha256_file
+from genos.scientific_validation import read_rows, require_disjoint, sha256_file
 
 
 def read_corrections(paths: list[Path], labels: set[str]) -> dict[tuple[str, str], dict]:

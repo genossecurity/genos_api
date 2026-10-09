@@ -7,7 +7,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-from engine import GenosEngine
+from genos.engine import GenosEngine
 
 DATA_DIR = BASE_DIR / "data" / "training" / "genos_residual_expanded"
 OUTPUT_DIR = BASE_DIR / "data" / "training" / "genos_behavior"

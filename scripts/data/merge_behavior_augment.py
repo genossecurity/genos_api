@@ -122,7 +122,7 @@ def main():
 
     # Final balance check per stage (using build_behavior_dataset mapping)
     print("\n[*] Checking stage distribution in merged train split...")
-    from engine import GenosEngine
+    from genos.engine import GenosEngine
 
     TACTIC_TO_STAGE = {
         "Reconnaissance": "Discovery / Recon", "Discovery": "Discovery / Recon",

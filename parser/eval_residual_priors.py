@@ -36,7 +36,7 @@ from semantic_features import build_semantic_features
 from rule_engine import build_rule_result
 from candidate_mask import build_prior_vector
 from build_residual_dataset import build_residual, build_feature_tags
-from engine import Tier2_Specialist
+from genos.specialist import Tier2_Specialist
 
 
 # ─────────────────────────────────────────────────────────────────────────────

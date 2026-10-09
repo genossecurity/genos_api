@@ -16,7 +16,7 @@ from sklearn.metrics import f1_score,confusion_matrix
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
-from scientific_validation import read_rows,command_of,require_disjoint,dataset_manifest,probability_metrics,sha256_file
+from genos.scientific_validation import read_rows,command_of,require_disjoint,dataset_manifest,probability_metrics,sha256_file
 
 
 def main():
@@ -34,7 +34,7 @@ def main():
         if meta['dataset_manifest'][split]['sha256']!=sha256_file(path):
             raise ValueError('Supplied datasets do not match training metadata')
     if args.output_dir.exists() and any(args.output_dir.iterdir()):raise ValueError('Choose an empty export directory')
-    from engine import GenosEngine
+    from genos.engine import GenosEngine
     engine=GenosEngine(t1_path=str(args.checkpoint_dir/'gatekeeper.pt'),gatekeeper_meta_path=str(args.checkpoint_dir/'gatekeeper_meta.json'),view_policy='raw')
     if engine.calibration:raise ValueError('Export uncalibrated scores for fitting')
     args.output_dir.mkdir(parents=True,exist_ok=True)

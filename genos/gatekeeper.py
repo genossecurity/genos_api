@@ -21,9 +21,9 @@ import torch.nn.functional as F
 from torch.amp import autocast
 from transformers import RobertaConfig, RobertaModel, RobertaTokenizer
 
-from scientific_validation import sha256_file
+from .scientific_validation import sha256_file
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # ── Gatekeeper Labels ─────────────────────────────────────────────────────────
 

@@ -10,7 +10,7 @@ from sklearn.metrics import confusion_matrix, f1_score
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
-from scientific_validation import read_rows,command_of,sha256_file
+from genos.scientific_validation import read_rows,command_of,sha256_file
 
 spec=importlib.util.spec_from_file_location('labeling_rules',ROOT/'parser/build_3class_dataset.py')
 rules=importlib.util.module_from_spec(spec)

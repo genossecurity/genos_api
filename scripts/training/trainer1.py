@@ -30,7 +30,7 @@ except Exception:  # pragma: no cover
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(BASE_DIR))
-from scientific_validation import read_rows, require_disjoint, dataset_manifest, sha256_file
+from genos.scientific_validation import read_rows, require_disjoint, dataset_manifest, sha256_file
 
 
 def resolve_data_path(filename: str) -> str:

@@ -1,6 +1,7 @@
 """
 deobfuscator.py — standalone deobfuscation helpers extracted from GenosEngine.
-Re-exports from root deobfuscator module.
+Re-exports from the genos/deobfuscator.py module so parser/ scripts can run
+standalone (with only parser/ on sys.path) without duplicating the logic.
 """
 
 import sys
@@ -8,7 +9,7 @@ import os
 import importlib.util
 
 _ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_root_deob_path = os.path.join(_ROOT_DIR, "deobfuscator.py")
+_root_deob_path = os.path.join(_ROOT_DIR, "genos", "deobfuscator.py")
 
 _spec = importlib.util.spec_from_file_location("_root_deobfuscator", _root_deob_path)
 _mod = importlib.util.module_from_spec(_spec)

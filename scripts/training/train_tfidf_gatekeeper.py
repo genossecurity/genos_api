@@ -20,7 +20,7 @@ from sklearn.svm import LinearSVC
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from scientific_validation import command_of, dataset_manifest, normalize_command, probability_metrics, read_rows, require_disjoint, sha256_file
+from genos.scientific_validation import command_of, dataset_manifest, normalize_command, probability_metrics, read_rows, require_disjoint, sha256_file
 
 LABELS = ["Benign", "Malicious", "Context_Dependent"]
 LABEL_TO_INDEX = {label: index for index, label in enumerate(LABELS)}

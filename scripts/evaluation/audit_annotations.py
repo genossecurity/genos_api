@@ -9,7 +9,7 @@ from sklearn.metrics import cohen_kappa_score
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
-from scientific_validation import read_rows,dataset_manifest
+from genos.scientific_validation import read_rows,dataset_manifest
 LABELS={'Benign','Malicious','Context_Dependent'}
 
 
