@@ -17,6 +17,7 @@ import base64
 import json
 import math
 import re
+from collections import Counter
 from typing import Optional, Tuple
 
 try:
@@ -37,11 +38,9 @@ def calculate_entropy(text: str) -> float:
         return 0.0
     entropy = 0.0
     text_len = len(text)
-    for x in range(256):
-        count = text.count(chr(x))
-        if count > 0:
-            p_x = float(count) / text_len
-            entropy += -p_x * math.log(p_x, 2)
+    for count in Counter(text).values():
+        p_x = count / text_len
+        entropy -= p_x * math.log2(p_x)
     return entropy
 
 
@@ -358,7 +357,7 @@ def deobfuscate(
     entropy_threshold: float = DEFAULT_ENTROPY_THRESHOLD,
 ) -> str:
     """
-    Iteratively deobfuscate until stable or entropy change is below threshold.
+    Iteratively deobfuscate until stable, a cycle, or a resource limit.
     Returns the deobfuscated text string.
     """
     cleaned, _, _ = deobfuscate_with_metadata(
@@ -377,31 +376,88 @@ def deobfuscate_with_metadata(
     entropy_threshold: float = DEFAULT_ENTROPY_THRESHOLD,
 ) -> Tuple[str, bool, int]:
     """
-    Iteratively deobfuscate until stable or entropy change is below threshold.
+    Iteratively deobfuscate until stable, a cycle, or a resource limit.
     Returns (cleaned_text, was_obfuscated, layers_applied).
     """
+    trace = deobfuscate_with_trace(text, max_layers=max_layers, entropy_threshold=entropy_threshold)
+    return trace["final"], trace["was_obfuscated"], len(trace["steps"])
+
+
+def deobfuscate_with_trace(text: str, max_layers: int = DEFAULT_MAX_LAYERS,
+                           entropy_threshold: float = DEFAULT_ENTROPY_THRESHOLD,
+                           max_input_chars: int = 65536, max_output_chars: int = 262144,
+                           max_trace_chars: int = 524288) -> dict:
+    """Return bounded, non-executing decoding views and their transform provenance."""
+    if len(text) > max_input_chars:
+        return {"final": text, "was_obfuscated": False, "steps": [],
+                "stop_reason": "input_limit", "limited": True}
     current = text.strip()
+    expansion_limit = min(max_output_chars, max(4096, len(current) * 8))
     was_obfuscated = is_obfuscated(current, entropy_threshold)
+    steps = []
+    trace_chars = 0
+    seen = {current}
     if not was_obfuscated:
-        return current, False, 0
-
-    prev_entropy = calculate_entropy(current)
-    layers_applied = 0
-
-    for _ in range(max_layers):
-        if not is_obfuscated(current, entropy_threshold):
+        return {"final": current, "was_obfuscated": False, "steps": steps,
+                "stop_reason": "no_obfuscation", "limited": False}
+    transforms = (
+        ("bare_base64", decode_bare_base64),
+        ("powershell_encoded_command", decode_powershell_encoded_command),
+        ("shell_base64_pipe", decode_shell_base64_pipe),
+        ("universal_base64", universal_decoder),
+        ("embedded_base64", decode_embedded_base64),
+        ("powershell_wrapper", lambda value: extract_powershell_payload(value) or value),
+        ("character_construction", deobfuscate_char_constructions),
+        ("concatenation", clean_concatenation),
+    )
+    stop_reason = "layer_limit"
+    for layer in range(max_layers):
+        changed = False
+        for name, transform in transforms:
+            candidate = transform(current)
+            if candidate == current:
+                continue
+            if len(candidate) > expansion_limit:
+                return {"final": current, "was_obfuscated": True, "steps": steps,
+                        "stop_reason": "output_limit", "limited": True}
+            if trace_chars + len(candidate) > max_trace_chars:
+                return {"final": current, "was_obfuscated": True, "steps": steps,
+                        "stop_reason": "trace_limit", "limited": True}
+            steps.append({"layer": layer + 1, "transform": name,
+                          "source_span": [0, len(current)], "output_span": [0, len(candidate)],
+                          "text": candidate})
+            current = candidate
+            trace_chars += len(candidate)
+            changed = True
+        if pyminusone and ("powershell" in current.lower() or "[char]" in current.lower()):
+            try:
+                candidate = pyminusone.deobfuscate(current, lang="powershell")
+            except Exception:
+                candidate = current
+            if not isinstance(candidate, str):
+                candidate = current
+            if candidate != current:
+                if len(candidate) > expansion_limit:
+                    return {"final": current, "was_obfuscated": True, "steps": steps,
+                            "stop_reason": "output_limit", "limited": True}
+                if trace_chars + len(candidate) > max_trace_chars:
+                    return {"final": current, "was_obfuscated": True, "steps": steps,
+                            "stop_reason": "trace_limit", "limited": True}
+                steps.append({"layer": layer + 1, "transform": "pyminusone",
+                              "source_span": [0, len(current)], "output_span": [0, len(candidate)],
+                              "text": candidate})
+                current = candidate
+                trace_chars += len(candidate)
+                changed = True
+        if not changed:
+            stop_reason = "stable"
             break
-        new_text = deobfuscate_layer(current)
-        if new_text == current:
+        if current in seen:
+            stop_reason = "cycle"
             break
-        current = new_text
-        layers_applied += 1
-        new_entropy = calculate_entropy(current)
-        if abs(prev_entropy - new_entropy) < entropy_delta_stop:
-            break
-        prev_entropy = new_entropy
-
-    return current, was_obfuscated, layers_applied
+        seen.add(current)
+    return {"final": current, "was_obfuscated": True, "steps": steps,
+            "stop_reason": stop_reason, "limited": False}
 
 
 # ── Class Wrapper ─────────────────────────────────────────────────────────────
@@ -443,6 +499,10 @@ class Deobfuscator:
             entropy_delta_stop=self.entropy_delta_stop,
             entropy_threshold=self.entropy_threshold,
         )
+
+    def deobfuscate_with_trace(self, text: str) -> dict:
+        return deobfuscate_with_trace(text, max_layers=self.max_layers,
+                                      entropy_threshold=self.entropy_threshold)
 
     def decode_bare_base64(self, text: str) -> str:
         return decode_bare_base64(text)

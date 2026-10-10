@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from genos.scientific_validation import command_of, dataset_manifest, normalize_command, probability_metrics, read_rows, require_disjoint, sha256_file
 
-LABELS = ["Benign", "Malicious", "Context_Dependent"]
+LABELS = ["Benign", "Context_Dependent"]
 LABEL_TO_INDEX = {label: index for index, label in enumerate(LABELS)}
 WORD_TOKEN_PATTERN = r"(?u)(?:--?[A-Za-z][\w-]*|/[A-Za-z](?:[\w-]*)?|\b[\w][\w./:+#-]*\b)"
 
@@ -94,6 +94,8 @@ def top_linear_features(model: Pipeline, limit: int) -> dict:
     fitted_linear = calibrated.calibrated_classifiers_[0].estimator
     feature_names = model.named_steps["features"].get_feature_names_out()
     coefficients = fitted_linear.coef_
+    if coefficients.shape[0] == 1 and len(LABELS) == 2:
+        coefficients = np.vstack([-coefficients[0], coefficients[0]])
     result = {}
     for class_index, label in enumerate(LABELS):
         weights = coefficients[class_index]

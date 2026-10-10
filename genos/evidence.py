@@ -13,6 +13,8 @@ Performs regex parsing, flag analysis, and indicator synthesis:
 import os
 import re
 import sys
+import ipaddress
+from urllib.parse import urlsplit
 from typing import Any, Dict, List, Optional, Set
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -276,25 +278,110 @@ def extract_binary_inventory(*commands: Optional[str]) -> List[dict]:
     return list(inventory.values())
 
 
+_HASH_RE = re.compile(r"(?<![A-Fa-f0-9])(?:[A-Fa-f0-9]{64}|[A-Fa-f0-9]{40}|[A-Fa-f0-9]{32})(?![A-Fa-f0-9])")
+_DEFANGED_URL_RE = re.compile(r"\bhxxps?://[^\s\"'<>|]+", re.I)
+_IPV6_CANDIDATE_RE = re.compile(r"(?<![\w:])\[?[0-9A-Fa-f:]{3,}\]?(?![\w:])")
+_URL_RE = re.compile(r"\b(?:https?|ftp)://[^\s\"'<>|]+", re.I)
+
+
+def _extra_indicators(text: str) -> dict:
+    ipv6 = []
+    for match in _IPV6_CANDIDATE_RE.finditer(text):
+        candidate = match.group().strip("[]")
+        if ":" not in candidate:
+            continue
+        try:
+            address = ipaddress.ip_address(candidate)
+        except ValueError:
+            continue
+        if address.version == 6 and str(address) not in ipv6:
+            ipv6.append(str(address))
+    defanged = [re.sub(r"\[\.\]", ".", value.rstrip(";,.!)"), flags=re.I).replace("hxxps", "https").replace("hxxp", "http")
+                for value in _DEFANGED_URL_RE.findall(text)]
+    return {"hashes": list(dict.fromkeys(match.group().lower() for match in _HASH_RE.finditer(text))),
+            "ipv6": ipv6, "defanged_urls": list(dict.fromkeys(defanged))}
+
+
+def _indicator_records(views: list[tuple[str, str, str | None]], parsed_by_view: dict) -> list[dict]:
+    records = []
+    seen = set()
+    kinds = {"urls": "url", "domains": "domain", "ips": "ip", "ports": "port",
+             "file_paths": "file", "registry_paths": "registry", "hashes": "hash",
+             "ipv6": "ip", "defanged_urls": "defanged_url"}
+    for source_view, text, decoder in views:
+        parsed = parsed_by_view.get(source_view) or {}
+        extra = _extra_indicators(text)
+        values = {key: parsed.get(key, []) for key in ("urls", "domains", "ips", "ports", "file_paths", "registry_paths")}
+        values.update(extra)
+        if not parsed:
+            values["urls"] = _URL_RE.findall(text)
+            values["domains"] = []
+            values["ips"] = []
+            for url in values["urls"]:
+                try:
+                    host = urlsplit(url).hostname
+                except ValueError:
+                    continue
+                if host:
+                    try:
+                        address = ipaddress.ip_address(host)
+                        values["ips"].append(str(address))
+                    except ValueError:
+                        values["domains"].append(host.lower())
+        for field, items in values.items():
+            for value in items:
+                key = (source_view, field, value)
+                if key in seen:
+                    continue
+                seen.add(key)
+                match = re.search(re.escape(value), text, re.I)
+                records.append({"type": kinds[field], "value": value, "source_view": source_view,
+                                "span": [match.start(), match.end()] if match else None,
+                                "decoder": decoder, "confidence": "observed" if match else "derived"})
+    return records
+
+
 def collect_indicator_evidence(
     raw_cmd: str,
     decoded_cmd: str,
     was_obfuscated: bool = False,
+    *, view_cache: dict | None = None, decoding_trace: dict | None = None,
 ) -> dict:
     """Extract observable IOC indicators and evidence from both raw and decoded command views."""
-    parsed = _parse_command(raw_cmd)
-    sem = _build_semantic_features(parsed)
+    cache = view_cache if view_cache is not None else {}
+    raw_entry = cache.setdefault(raw_cmd, {})
+    raw_parsed = raw_entry.get("parsed")
+    if raw_parsed is None:
+        raw_parsed = _parse_command(raw_cmd, deobfuscate_input=False)
+        raw_entry["parsed"] = raw_parsed
+    sem = raw_entry.get("sem")
+    if sem is None:
+        sem = _build_semantic_features(raw_parsed)
+        raw_entry["sem"] = sem
+    parsed = dict(raw_parsed)
+    parsed_by_view = {"raw": raw_parsed}
     if decoded_cmd != raw_cmd:
-        decoded = _parse_command(decoded_cmd)
-        decoded_sem = _build_semantic_features(decoded)
+        decoded_entry = cache.setdefault(decoded_cmd, {})
+        decoded = decoded_entry.get("parsed")
+        if decoded is None:
+            decoded = _parse_command(decoded_cmd, deobfuscate_input=False)
+            decoded_entry["parsed"] = decoded
+        parsed_by_view["decoded"] = decoded
+        decoded_sem = decoded_entry.get("sem")
+        if decoded_sem is None:
+            decoded_sem = _build_semantic_features(decoded)
+            decoded_entry["sem"] = decoded_sem
         for key, value in decoded_sem.items():
             if value and not sem.get(key):
                 sem[key] = value
         for key in (
             "file_paths", "registry_paths", "urls", "domains", "ips", "ports",
-            "lolbin_matches", "local_targets", "remote_targets"
+            "lolbin_matches", "local_targets", "remote_targets", "flags",
+            "encoded_markers", "obfuscation_markers",
         ):
             parsed[key] = list(dict.fromkeys([*(parsed.get(key) or []), *(decoded.get(key) or [])]))
+        for key in ("has_pipe", "has_redirect", "has_chain", "inline_code"):
+            parsed[key] = bool(parsed.get(key) or decoded.get(key))
     rules = _build_rule_result(parsed, sem)
     evidence = build_evidence(
         parsed,
@@ -304,6 +391,21 @@ def collect_indicator_evidence(
         deobfuscated_cmd=decoded_cmd if was_obfuscated else None,
     )
     evidence["binaries"] = extract_binary_inventory(raw_cmd, decoded_cmd if decoded_cmd != raw_cmd else None)
+    views = [("raw", raw_cmd, None)]
+    if decoding_trace:
+        for index, step in enumerate(decoding_trace.get("steps", [])):
+            if step["text"] != decoded_cmd:
+                views.append((f"layer_{index + 1}", step["text"], step["transform"]))
+    if decoded_cmd != raw_cmd:
+        last_transform = (decoding_trace or {}).get("steps", [])
+        views.append(("decoded", decoded_cmd, last_transform[-1]["transform"] if last_transform else None))
+    records = _indicator_records(views, parsed_by_view)
+    evidence["indicator_records"] = records
+    evidence["hashes"] = list(dict.fromkeys(row["value"] for row in records if row["type"] == "hash"))
+    evidence["ipv6"] = list(dict.fromkeys(row["value"] for row in records if row["type"] == "ip" and ":" in row["value"]))
+    evidence["defanged_urls"] = list(dict.fromkeys(row["value"] for row in records if row["type"] == "defanged_url"))
+    for field, kind in (("urls", "url"), ("domains", "domain"), ("ips", "ip")):
+        evidence[field] = list(dict.fromkeys([*evidence[field], *(row["value"] for row in records if row["type"] == kind)]))
     return evidence
 
 

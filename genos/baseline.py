@@ -371,8 +371,8 @@ class BaselineStore:
         genos_result: Dict[str, Any],
     ) -> bool:
         day_str = ctx.timestamp.strftime("%Y-%m-%d")
-        mal_prob = float(genos_result.get("class_probabilities", {}).get("Malicious", 0.0) / 100.0)
-        context_prob = float(genos_result.get("class_probabilities", {}).get("Context_Dependent", 0.0) / 100.0)
+        mal_prob = float((genos_result.get("class_probabilities", {}).get("Malicious") or 0.0) / 100.0)
+        context_prob = float((genos_result.get("class_probabilities", {}).get("Context_Dependent") or 0.0) / 100.0)
 
         self._record_total("host", self._scope_id("host", ctx), sig.level3_full)
         self._record_total("role", self._scope_id("role", ctx), sig.level3_full)

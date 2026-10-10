@@ -32,28 +32,32 @@ def main():
     cases = []
     for command in ['pwd', 'whoami', 'd2hvYW1p', 'curl https://example.org/tool.sh -o /tmp/tool.sh']:
         result = engine.scan(command, include_evaluation=True)
-        components = ['gatekeeper', 'behavior'] + (['mitre'] if engine.specialist_mode == 'mitre' else ['family_specialist'])
+        stage2_ran = result['should_run_specialist']
+        components = ['gatekeeper'] + ((['behavior', 'mitre'] if engine.specialist_mode == 'mitre' else
+                                       ['behavior', 'family_specialist']) if stage2_ran else [])
         for component in components:
             scores = np.asarray(result['_evaluation'][component], dtype=float)
             if scores.ndim != 1 or not np.isfinite(scores).all() or (scores < 0).any() or (scores > 1).any():
                 raise AssertionError(f'Invalid {component} distribution')
             if component != 'family_specialist' and not np.isclose(scores.sum(), 1, atol=1e-5):
                 raise AssertionError(f'Invalid normalized {component} distribution')
-        if not result['should_run_specialist'] or result['behavior']['model_type'] != 'behavior_encoder':
-            raise AssertionError('Learned behavior must run for every smoke case')
+        if stage2_ran and result['behavior']['model_type'] != 'behavior_encoder':
+            raise AssertionError('Learned behavior must run when specialist is routed')
+        if not stage2_ran and result['label'] != 'Benign':
+            raise AssertionError('Only benign commands may bypass the specialist')
         if engine.specialist_mode == 'family':
-            if 'MITRE_codes' in result or len(result['attack_families']['all_family_scores']) != 11:
+            if 'MITRE_codes' in result or (stage2_ran and len(result['attack_families']['all_family_scores']) != 11):
                 raise AssertionError('Family mode must return 11 family scores and no MITRE codes')
-        elif 'MITRE_codes' not in result:
+        elif stage2_ran and 'MITRE_codes' not in result:
             raise AssertionError('MITRE mode did not return technique candidates')
         if command == 'd2hvYW1p' and result['deobfuscated_cmd'] != 'whoami':
             raise AssertionError('Bare Base64 decoding failed')
-        cases.append({'command': command, 'label': result['label'],
+        cases.append({'command': command, 'label': result['label'], 'specialist_ran': stage2_ran,
                       'class_scores': result['class_probabilities'],
                       'specialist_mode': engine.specialist_mode,
                       'family_predictions': result.get('attack_families', {}).get('predicted_families'),
                       'behavior': result['attack_stage'],
-                      'behavior_model_type': result['behavior']['model_type'],
+                      'behavior_model_type': result.get('behavior', {}).get('model_type'),
                       'view': result['gatekeeper']['model_view'],
                       'score_type': result['score_type'],
                       'input_truncated': result['input_truncated']})
@@ -63,7 +67,7 @@ def main():
         with patch('genos.engine.GenosEngine', return_value=engine), patch.dict('os.environ', {'MONGO_URI': ''}):
             api = importlib.import_module('app')
         client = api.app.test_client()
-        for route in ['/', '/demo', '/health']:
+        for route in ['/', '/api', '/health']:
             if client.get(route).status_code != 200:
                 raise AssertionError(f'Route failed: {route}')
         result = api._run_inference('d2hvYW1p')
@@ -71,7 +75,8 @@ def main():
             raise AssertionError('API changed verdict or score semantics')
         if result.get('deobfuscated_cmd') != 'whoami' or result['provenance'] != engine.provenance:
             raise AssertionError('API lost decoding or provenance')
-        if engine.specialist_mode == 'family' and ('MITRE_codes' in result or 'attack_families' not in result):
+        if engine.specialist_mode == 'family' and ('MITRE_codes' in result or
+                                                   (cases[2]['specialist_ran'] and 'attack_families' not in result)):
             raise AssertionError('API lost family output or returned technique codes in family mode')
         api_status = 'passed'
     report = {'provenance': engine.provenance, 'cases': cases, 'api_and_templates': api_status,

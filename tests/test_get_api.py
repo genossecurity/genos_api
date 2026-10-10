@@ -109,6 +109,11 @@ class GetApiTests(unittest.TestCase):
                 self.assertEqual(response.headers["Cache-Control"], "no-store")
         self.engine.scan.assert_not_called()
 
+    def test_oversized_command_is_rejected_before_inference(self):
+        response = self.client.get("/api/scan", query_string={"command": "x" * 65537})
+        self.assertEqual(response.status_code, 400)
+        self.engine.scan.assert_not_called()
+
     def test_builder_and_scanner_navigation(self):
         response = self.client.get("/api")
         self.assertEqual(response.status_code, 200)

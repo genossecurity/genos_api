@@ -452,7 +452,8 @@ def _classify_targets(
     return {"local_targets": local_targets, "remote_targets": remote_targets}
 
 
-def parse_command(raw_command: str, schema_path: Optional[str] = None) -> Dict[str, Any]:
+def parse_command(raw_command: str, schema_path: Optional[str] = None,
+                  *, deobfuscate_input: bool = True) -> Dict[str, Any]:
     result = _new_result(raw_command, schema_path=schema_path)
     normalized = result["normalized_command"]
 
@@ -460,7 +461,7 @@ def parse_command(raw_command: str, schema_path: Optional[str] = None) -> Dict[s
     # structural parsing (executable, flags, operators) uses the original command.
     # network/path extraction uses the deobfuscated form so buried IOCs are surfaced.
     extraction_target = normalized
-    if is_obfuscated(normalized):
+    if deobfuscate_input and is_obfuscated(normalized):
         deobfuscated = deobfuscate(normalized)
         if deobfuscated != normalized:
             result["deobfuscated_command"] = deobfuscated

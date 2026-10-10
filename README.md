@@ -1,6 +1,6 @@
 # Genos API
 
-Flask API that triages a single command line: is it benign, malicious, or does it need context, and if not benign, which attack families and stage it matches.
+Flask API that triages a single command line as benign or context-dependent, then reports attack families and stage when specialist analysis is needed.
 
 Results are research-grade and unvalidated on independent data. See the [validation report](artifacts/scientific_validation/REPORT.md).
 
@@ -11,7 +11,7 @@ command
   │
   ├─ 1. Deobfuscate        entropy > 5.2 or known patterns → up to 5 decode passes
   │
-  ├─ 2. Tier 1 gatekeeper  CodeBERT → Benign / Malicious / Context_Dependent
+  ├─ 2. Tier 1 gatekeeper  CodeBERT → Benign / Context_Dependent
   │                        raw and decoded scores averaged (GENOS_VIEW_POLICY=mean)
   │
   ├─ 3. Routing            rule features can adjust the verdict and routing
@@ -96,7 +96,7 @@ curl --get 'http://127.0.0.1:6001/api/scan' \
 |---|---|---|
 | `command` | required | Command to scan |
 | `tier2` | `false` | `true` adds `tier2.stage` and `tier2.stage_confidence`. Benign commands return `status: "skipped_benign"`. |
-| `iocs` | omitted | `all`, or any of `urls,domains,ips,ports,files,registry` |
+| `iocs` | omitted | `all`, or any of `urls,domains,ips,ports,files,registry,ipv6,hashes,defanged_urls` |
 
 Returns `label`, `label_confidence` (0-100), and `deobfuscated_cmd` (null if not obfuscated). Unknown or repeated parameters return 400. Responses are `Cache-Control: no-store`.
 
@@ -114,15 +114,21 @@ Main response fields:
 
 | Field | Meaning |
 |---|---|
-| `label` | `Benign`, `Malicious`, or `Context_Dependent` |
-| `label_confidence` | 0-100 model score; see `score_type` |
+| `label` | `Benign` or `Context_Dependent` |
+| `label_confidence` | 0-100 model score, or null for a stable-baseline policy bypass; see `score_type` |
 | `attack_families` | `predicted_families` plus `all_family_scores` for the 11 families |
 | `attack_stage`, `behavior` | Stage and action tags (non-benign only) |
+| `triage_consistency` | Flags gate/family disagreement when the family specialist runs; does not change the verdict |
 | `deobfuscated_cmd`, `decoded_payload` | Decoded text when obfuscation was found |
 | `evidence`, `ioc_summary` | Extracted indicators |
+| `deobfuscation_trace` | Bounded decoding steps and stop reason (POST analysis output) |
 | `action` | `pass` or `requires_context` |
 
 Scores are uncalibrated unless `GENOS_CALIBRATION_PATH` is set. `Context_Dependent` means the command can't be judged without more context.
+
+Runtime profiling with local checkpoints: `HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 venv/bin/python scripts/evaluation/benchmark_triage_runtime.py --output /tmp/genos_triage_benchmark.json`. The report measures in-process scan latency across benign, URL, suspicious, and encoded workloads; it does not establish classification accuracy.
+
+To find `pwd`-style disagreements, run `HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 venv/bin/python scripts/evaluation/audit_triage_disagreements.py --input scripts/evaluation/triage_probe_cases.jsonl --output /tmp/genos_triage_audit.json --blind-review-queue /tmp/genos_triage_review.jsonl`. The report separates model verdicts from routing overrides and family predictions. The blind queue is for targeted error analysis; keep a separate untouched, source-grouped test set for accuracy claims.
 
 ## Configuration
 

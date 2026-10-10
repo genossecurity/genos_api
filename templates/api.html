@@ -80,7 +80,7 @@
           <p class="hint">Pick individual types or include all. Leave unchecked to skip IOC extraction.</p>
           <label class="option select-all"><input id="allIocs" type="checkbox"><span>All IOC types</span></label>
           <div class="ioc-options">
-            {% set labels = {'urls': 'URLs', 'domains': 'Domains', 'ips': 'IP addresses', 'ports': 'Ports', 'files': 'File paths', 'registry': 'Registry paths'} %}
+            {% set labels = {'urls': 'URLs', 'domains': 'Domains', 'ips': 'IP addresses', 'ports': 'Ports', 'files': 'File paths', 'registry': 'Registry paths', 'ipv6': 'IPv6 addresses', 'hashes': 'Hashes', 'defanged_urls': 'Defanged URLs'} %}
             {% for field in ioc_fields %}
             <label class="option"><input type="checkbox" data-ioc="{{ field }}"><span>{{ labels[field] }}</span></label>
             {% endfor %}

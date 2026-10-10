@@ -36,6 +36,9 @@ IOC_FIELDS = {
     "ports": "ports",
     "files": "file_paths",
     "registry": "registry_paths",
+    "ipv6": "ipv6",
+    "hashes": "hashes",
+    "defanged_urls": "defanged_urls",
 }
 
 
@@ -185,7 +188,7 @@ def _run_inference(command: str, include_flags: dict | None = None) -> dict:
 
     label = raw_result.get("label", raw_result.get("status"))
     label_conf = raw_result.get("label_confidence", raw_result.get("gatekeeper_confidence", 0.0))
-    if label is None or label_conf is None:
+    if label is None:
         raise ValueError(f"Unexpected engine payload keys: {list(raw_result.keys())}")
 
     public_label = _api_label(label)
@@ -205,7 +208,7 @@ def _run_inference(command: str, include_flags: dict | None = None) -> dict:
     result = {
         "label": public_label,
         "canonical_label": label,
-        "label_confidence": round(float(label_conf), 2),
+        "label_confidence": round(float(label_conf), 2) if label_conf is not None else None,
     }
 
     # Pass-through metadata
@@ -214,6 +217,7 @@ def _run_inference(command: str, include_flags: dict | None = None) -> dict:
         "routing_policy", "should_run_specialist", "gatekeeper", "behavior",
         "provenance", "score_type", "calibration", "input_truncated",
         "mitre_scope", "specialist_mode", "baseline_status", "seen_count",
+        "triage_consistency",
     ):
         if key in raw_result:
             result[key] = raw_result[key]
@@ -249,7 +253,7 @@ def _run_inference(command: str, include_flags: dict | None = None) -> dict:
 
     # Analyst explanations and decoded payloads
     if flags["analysis"]:
-        for key in ("analyst_hint", "confidence_driver", "decoded_payload", "deobfuscated_cmd", "mapping_reasons", "why_mapped"):
+        for key in ("analyst_hint", "confidence_driver", "decoded_payload", "deobfuscated_cmd", "deobfuscation_trace", "mapping_reasons", "why_mapped"):
             if key in raw_result and raw_result[key] is not None:
                 result[key] = raw_result[key]
 
@@ -304,6 +308,8 @@ def scan_get():
     command = request.args.get("command", "").strip()
     if not command:
         return _get_api_response({"error": "Command parameter is required and cannot be empty"}, 400)
+    if len(command) > 65536:
+        return _get_api_response({"error": "Command exceeds 65536 characters"}, 400)
 
     tier2_value = request.args.get("tier2", "false").lower()
     if tier2_value not in {"true", "false", "1", "0"}:
@@ -343,6 +349,7 @@ def scan_get():
                 "stage": behavior.get("stage") if completed else None,
                 "stage_confidence": behavior.get("stage_confidence") if completed else None,
             }
+            result["triage_consistency"] = raw_result.get("triage_consistency")
         if selected_iocs:
             evidence = raw_result.get("evidence") or {}
             result["iocs"] = {
@@ -391,6 +398,8 @@ def scan():
 
     if not command or not isinstance(command, str) or not command.strip():
         return jsonify({"error": "Command parameter is required and cannot be empty"}), 400
+    if len(command.strip()) > 65536:
+        return jsonify({"error": "Command exceeds 65536 characters"}), 400
 
     try:
         result = _run_inference(command.strip(), include_flags=include_flags)

@@ -17,7 +17,7 @@ from typing import Dict, List, Optional
 
 RULE_CLASS_TO_MITRE: Dict[str, List[str]] = {
     # Persistence
-    "persistence:registry_run_key":            ["T1547", "T1060"],
+    "persistence:registry_run_key":            ["T1547"],
     "persistence:scheduled_task":              ["T1053"],
     "persistence:create_modify_system_process": ["T1543"],
     "persistence:event_triggered_execution":   ["T1546"],
@@ -79,8 +79,7 @@ RULE_CLASS_TO_MITRE: Dict[str, List[str]] = {
 
 MITRE_NEIGHBORS: Dict[str, List[str]] = {
     # Original neighbours (expanded with cross-cluster links)
-    "T1547": ["T1546", "T1037", "T1060", "T1543"],
-    "T1060": ["T1547", "T1546"],
+    "T1547": ["T1546", "T1037", "T1543"],
     "T1053": ["T1546", "T1082"],
     "T1543": ["T1569", "T1547"],
     "T1059": ["T1202", "T1106", "T1562", "T1546", "T1005"],
@@ -159,7 +158,7 @@ TACTIC_EXPANSION: Dict[str, List[str]] = {
                             "T1205", "T1219", "T1573"],
     "lateral_movement": ["T1021", "T1570"],
     "exfiltration": ["T1041", "T1048", "T1567"],
-    "initial_access": ["T1060", "T1156", "T1566", "T1680"],
+    "initial_access": ["T1156", "T1566", "T1680"],
     "resource_development": ["T1127"],
 }
 

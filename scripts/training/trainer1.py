@@ -54,25 +54,31 @@ def set_seed(seed: int) -> None:
     torch.cuda.manual_seed_all(seed)
 
 
-NUM_CLASSES = 3
-LABEL_NAMES = ["Benign", "Malicious", "Context_Dependent"]
+NUM_CLASSES = 2
+LABEL_NAMES = ["Benign", "Context_Dependent"]
 LABEL_TO_IDX = {name: i for i, name in enumerate(LABEL_NAMES)}
-EVIDENCE_LABEL_NAMES = ["Routine_Operational", "Direct_Abuse", "Needs_Context"]
+EVIDENCE_LABEL_NAMES = ["Routine_Operational", "Needs_Context"]
 SOFT_TARGET_SCHEMA_KEYS = ["Routine_Operational", "Needs_Context", "Direct_Abuse"]
 NON_BENIGN_TARGET = {
     "Benign": 0.0,
-    "Malicious": 1.0,
     "Context_Dependent": 1.0,
 }
 MALICIOUS_GIVEN_NON_BENIGN_TARGET = {
-    "Malicious": 1.0,
     "Context_Dependent": 0.0,
 }
 ORDINAL_RISK_TARGET = {
     "Benign": 0.0,
     "Context_Dependent": 0.5,
-    "Malicious": 1.0,
 }
+
+
+def canonical_label(label: str) -> str:
+    label = str(label).strip()
+    if label == "Benign":
+        return label
+    if label in {"Malicious", "Suspicious", "Context_Dependent"}:
+        return "Context_Dependent"
+    raise ValueError(f"Unknown gatekeeper label: {label!r}")
 
 
 def resolve_optional_data_path(path_value: str | None) -> str | None:
@@ -82,8 +88,7 @@ def resolve_optional_data_path(path_value: str | None) -> str | None:
 
 
 def hard_label_to_soft_target(label: str) -> List[float]:
-    if label not in LABEL_TO_IDX:
-        raise ValueError(f"Unknown hard label: {label}")
+    label = canonical_label(label)
     soft_target = [0.0] * NUM_CLASSES
     soft_target[LABEL_TO_IDX[label]] = 1.0
     return soft_target
@@ -107,17 +112,17 @@ def normalize_soft_target(raw_target: Dict[str, float], row_idx: int, source_pat
     total = sum(values)
     if total <= 0.0:
         raise ValueError(f"Soft target must sum to a positive value in {source_path} row {row_idx}: {raw_target}")
-    normalized = [value / total for value in values]
+    normalized = [routine / total, (needs_context + direct_abuse) / total]
     if abs(sum(normalized) - 1.0) > 1e-6:
         raise ValueError(f"Normalized soft target does not sum to 1 in {source_path} row {row_idx}: {raw_target}")
     return normalized
 
 
 def soft_target_to_auxiliary_targets(soft_target: List[float]) -> Tuple[float, float, float]:
-    routine_operational, direct_abuse, needs_context = soft_target
-    non_benign = direct_abuse + needs_context
-    malicious_given_non_benign = 0.0 if non_benign <= 0.0 else direct_abuse / non_benign
-    ordinal_risk = (0.5 * needs_context) + direct_abuse
+    routine_operational, needs_context = soft_target
+    non_benign = needs_context
+    malicious_given_non_benign = 0.0
+    ordinal_risk = 0.5 * needs_context
     return non_benign, malicious_given_non_benign, ordinal_risk
 
 
@@ -175,10 +180,17 @@ def compute_verdict_loss(
 class GatekeeperModel(nn.Module):
     def __init__(
         self,
-        num_classes: int = NUM_CLASSES,
+        num_classes: int | None = None,
     ) -> None:
         super().__init__()
-        self.encoder = RobertaModel.from_pretrained(os.getenv("GENOS_CODEBERT_BACKBONE", "microsoft/codebert-base"), use_safetensors=True)
+        backbone = os.getenv("GENOS_CODEBERT_BACKBONE", "microsoft/codebert-base")
+        backbone_path = Path(backbone)
+        # Prefer safetensors, but allow an explicitly local legacy PyTorch
+        # backbone. This keeps offline retraining reproducible when the local
+        # model cache predates safetensors conversion.
+        use_safetensors = not backbone_path.is_dir() or (backbone_path / "model.safetensors").exists()
+        self.encoder = RobertaModel.from_pretrained(backbone, use_safetensors=use_safetensors)
+        num_classes = NUM_CLASSES if num_classes is None else num_classes
         self.classifier = nn.Sequential(
             nn.Dropout(0.2),
             nn.Linear(768, 1024),
@@ -201,8 +213,8 @@ class GatekeeperModel(nn.Module):
         }
 
 
-class ThreeClassDataset(Dataset):
-    """Load a unified 3-class CSV (command, label, original_label, mitre_id)."""
+class TwoClassDataset(Dataset):
+    """Load gatekeeper data as Benign or Context_Dependent."""
 
     def __init__(
         self,
@@ -213,13 +225,13 @@ class ThreeClassDataset(Dataset):
         hard_label_jsonl: str | None = None,
         soft_label_jsonl: str | None = None,
     ):
-        print(f"[*] Loading and pre-tokenizing Gatekeeper 3-class dataset ({phase})...")
+        print(f"[*] Loading and pre-tokenizing Gatekeeper 2-class dataset ({phase})...")
         rows: List[Dict[str, object]] = []
 
         if csv_path:
             df = pd.read_csv(csv_path).dropna(subset=["command"])
             for record in df.to_dict("records"):
-                label = str(record["label"])
+                label = canonical_label(record["label"])
                 soft_target = hard_label_to_soft_target(label)
                 non_benign, malicious_given_non_benign, ordinal_risk = soft_target_to_auxiliary_targets(soft_target)
                 rows.append(
@@ -246,9 +258,7 @@ class ThreeClassDataset(Dataset):
                     command = str(payload.get("command", "")).strip()
                     if not command:
                         raise ValueError(f"Missing command in {hard_label_jsonl} row {row_idx}")
-                    label = str(payload.get("label", "")).strip()
-                    if label not in LABEL_TO_IDX:
-                        raise ValueError(f"Invalid label in {hard_label_jsonl} row {row_idx}: {label!r}")
+                    label = canonical_label(payload.get("label", ""))
                     soft_target = hard_label_to_soft_target(label)
                     non_benign, malicious_given_non_benign, ordinal_risk = soft_target_to_auxiliary_targets(soft_target)
                     rows.append(
@@ -525,7 +535,7 @@ def train(args: argparse.Namespace) -> None:
     independence = require_disjoint(audit_rows)
     tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
 
-    train_dataset = ThreeClassDataset(
+    train_dataset = TwoClassDataset(
         str(Path(args.data_dir) / "gatekeeper_3class_train.csv"),
         tokenizer,
         max_len=args.max_len,
@@ -533,7 +543,7 @@ def train(args: argparse.Namespace) -> None:
         hard_label_jsonl=resolve_optional_data_path(args.train_patch_jsonl),
         soft_label_jsonl=resolve_optional_data_path(args.soft_train_jsonl),
     )
-    val_dataset = ThreeClassDataset(
+    val_dataset = TwoClassDataset(
         str(Path(args.data_dir) / "gatekeeper_3class_val.csv"),
         tokenizer,
         max_len=args.max_len,
@@ -541,7 +551,7 @@ def train(args: argparse.Namespace) -> None:
         hard_label_jsonl=None,
         soft_label_jsonl=resolve_optional_data_path(args.soft_val_jsonl),
     )
-    test_dataset = ThreeClassDataset(
+    test_dataset = TwoClassDataset(
         str(Path(args.data_dir) / "gatekeeper_3class_test.csv"),
         tokenizer,
         max_len=args.max_len,

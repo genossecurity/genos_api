@@ -36,4 +36,8 @@ The corrected runs are `models/experiments/family_specialist_20261004_curated_se
 | CodeBERT original | 0.5278 | 0.9230 | 0.5035 | 0.9114 |
 | CodeBERT corrected | 0.5168 | 0.9241 | 0.5111 | 0.9169 |
 
-TF-IDF's validation change is negligible. CodeBERT's validation macro-F1 is lower after correction despite a higher test score. The test labels are weak and these rows have already been examined in prior comparisons, so test differences are descriptive. This limited curation does not justify promoting either checkpoint to the active runtime model. Most weak labels remain unreviewed, and rare-family support remains small.
+TF-IDF's validation change is negligible. CodeBERT's validation macro-F1 is lower after correction despite a higher test score. The test labels are weak and these rows have already been examined in prior comparisons, so test differences are descriptive. Most weak labels remain unreviewed, and rare-family support remains small.
+
+## Runtime promotion
+
+The corrected TF-IDF checkpoint and matching metadata were copied to the local API's default paths, `models/family_specialist_tfidf.joblib` and `models/family_specialist_tfidf.json`, at the user's request. The active local checkpoint SHA-256 is `8e66c5a2a86ea06b151dd88ab2e5da8b9ae38832d2843813ce0aa49aa5387e44`. The original checkpoint remains in `models/experiments/family_specialist_20261004_seed42/`. The `models/` directory is gitignored, so another environment needs the same artifact copied there separately. This promotion changes which family model the local API loads on startup; it does not establish operational accuracy beyond the weak-label evaluation above.

@@ -417,9 +417,21 @@ class Gatekeeper:
             normalized,
             return_tensors="pt",
             truncation=True,
-            padding="max_length",
+            padding=True,
             max_length=self.max_length,
         ).to(self.device)
+        outputs = self.t1(encoded["input_ids"], encoded["attention_mask"])
+        return F.softmax(outputs["verdict_logits"].float(), dim=1)
+
+    def predict_probs_batch(self, texts: list[str]) -> torch.Tensor:
+        """Score related command views in one vectorizer or encoder call."""
+        normalized = [(text or "").lower().strip() for text in texts]
+        if self.backend == "tfidf":
+            probabilities = self.model.predict_proba(normalized)
+            class_indices = [list(self.model.classes_).index(index) for index in range(len(self._labels))]
+            return torch.as_tensor(probabilities[:, class_indices], dtype=torch.float32)
+        encoded = self.tokenizer(normalized, return_tensors="pt", truncation=True,
+                                 padding=True, max_length=self.max_length).to(self.device)
         outputs = self.t1(encoded["input_ids"], encoded["attention_mask"])
         return F.softmax(outputs["verdict_logits"].float(), dim=1)
 

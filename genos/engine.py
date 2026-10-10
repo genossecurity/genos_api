@@ -96,6 +96,26 @@ def _env_flag(name: str, default: bool) -> bool:
     return os.getenv(name, "1" if default else "0").strip().lower() in {"1", "true", "yes", "on"}
 
 
+def summarize_triage_consistency(gate_label: str, family_result: dict | None) -> dict:
+    """Surface gate/family disagreement without changing the gate verdict."""
+    if family_result is None:
+        return {"status": "not_evaluated", "selected_families": []}
+    selected = [item["family"] for item in family_result.get("predicted_families", [])]
+    benign_admin = "Benign Admin" in selected
+    attack = any(family != "Benign Admin" for family in selected)
+    if benign_admin and not attack and gate_label != "Benign":
+        status = "gate_family_disagreement"
+    elif benign_admin and not attack:
+        status = "benign_family_candidate"
+    elif benign_admin and attack:
+        status = "mixed_family_prediction"
+    elif attack:
+        status = "attack_family_candidate"
+    else:
+        status = "no_family_selected"
+    return {"status": status, "selected_families": selected}
+
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 import sys as _sys
@@ -292,7 +312,9 @@ class GenosEngine:
             "package_versions": {name: package_version(name) for name in ("transformers", "scikit-learn", "numpy", "joblib")},
             "encoder_config_sha256": hashlib.sha256(self.t1.encoder.config.to_json_string().encode()).hexdigest() if self.gatekeeper_backend == "codebert" and self.t1 else None,
             "tokenizer_sha256": hashlib.sha256(self.tokenizer.backend_tokenizer.to_str().encode()).hexdigest(),
-            "deobfuscation_policy": {"entropy_threshold": 5.2, "entropy_delta_stop": 0.01, "max_layers": self.max_deobfuscation_layers},
+            "deobfuscation_policy": {"entropy_threshold": 5.2, "stop_policy": "stable_cycle_or_limit",
+                                      "max_layers": self.max_deobfuscation_layers, "max_input_chars": 65536,
+                                      "max_output_chars": 262144, "max_trace_chars": 524288},
             "device_type": self.device.type,
             "device_name": torch.cuda.get_device_name(self.device) if self.device.type == "cuda" else "cpu",
             "cuda_runtime": torch.version.cuda,
@@ -464,10 +486,11 @@ class GenosEngine:
             return self.specialist._extract_behavior_action_tags(sem, rules, features)
         return Specialist._extract_behavior_action_tags(self, sem, rules, features)
 
-    def _predict_behavior(self, cmd: str, routed_label: str, features: dict, raw_cmd: str | None = None) -> tuple[dict, dict]:
+    def _predict_behavior(self, cmd: str, routed_label: str, features: dict, raw_cmd: str | None = None,
+                          view_cache: dict | None = None) -> tuple[dict, dict]:
         if "_predict_behavior_with_model" in self.__dict__ or not hasattr(self, "specialist"):
-            return Specialist.predict_behavior(self, cmd, routed_label, features, raw_cmd=raw_cmd)
-        return self.specialist.predict_behavior(cmd, routed_label, features, raw_cmd=raw_cmd)
+            return Specialist.predict_behavior(self, cmd, routed_label, features, raw_cmd=raw_cmd, view_cache=view_cache)
+        return self.specialist.predict_behavior(cmd, routed_label, features, raw_cmd=raw_cmd, view_cache=view_cache)
 
     def _predict_behavior_with_model(self, behavior_text: str | list[str]) -> dict | None:
         if hasattr(self, "specialist"):
@@ -499,8 +522,10 @@ class GenosEngine:
         return [{"code": code, "confidence": round(probability * 100, 2), "score_type": self._score_status("mitre")}
                 for code, probability in ranked[:5]]
 
-    def _collect_indicator_evidence(self, raw_cmd: str, decoded_cmd: str, was_obfuscated: bool) -> dict:
-        return collect_indicator_evidence(raw_cmd, decoded_cmd, was_obfuscated=was_obfuscated)
+    def _collect_indicator_evidence(self, raw_cmd: str, decoded_cmd: str, was_obfuscated: bool,
+                                    view_cache: dict | None = None, decoding_trace: dict | None = None) -> dict:
+        return collect_indicator_evidence(raw_cmd, decoded_cmd, was_obfuscated=was_obfuscated,
+                                          view_cache=view_cache, decoding_trace=decoding_trace)
 
     def _load_behavior_model(self) -> None:
         if not hasattr(self, "specialist"):
@@ -551,6 +576,20 @@ class GenosEngine:
         baseline_eval = None
         baseline_signature = None
         baseline_ctx = None
+        raw_cmd = raw_cmd.strip()
+        if len(raw_cmd) > 65536:
+            raise ValueError("command exceeds 65536 characters")
+        trace = self.deobfuscator.deobfuscate_with_trace(raw_cmd)
+        current_cmd = trace["final"]
+        was_obfuscated = trace["was_obfuscated"]
+        try:
+            raw_parsed = _parse_command(raw_cmd, deobfuscate_input=False) if _RESIDUAL_PIPELINE_AVAILABLE else None
+        except Exception:
+            raw_parsed = None
+        view_cache = {raw_cmd: {"parsed": raw_parsed}} if raw_parsed is not None else {}
+        routing_features = self._extract_routing_features(
+            raw_cmd, current_cmd if current_cmd != raw_cmd else None,
+        )
 
         if context is not None:
             if isinstance(context, ExecutionContext):
@@ -563,8 +602,7 @@ class GenosEngine:
         store = (baseline_store if baseline_store is not None else getattr(self, "baseline_store", None)) if use_baseline else None
         if store is not None and baseline_ctx is not None:
             try:
-                parsed = _parse_command(raw_cmd)
-                baseline_signature = SignatureExtractor.extract(parsed)
+                baseline_signature = SignatureExtractor.extract(raw_parsed)
                 baseline_eval = store.evaluate(baseline_signature, baseline_ctx)
             except Exception:
                 baseline_eval = BaselineEvaluation(
@@ -594,17 +632,25 @@ class GenosEngine:
             )
 
         # Baseline Short-Circuit with Repeat-Sighting Write-Back
-        if baseline_eval.status == BaselineStatus.KNOWN_STABLE and not baseline_eval.should_run_genos:
+        bypass_indicators = bool(raw_parsed and any(raw_parsed.get(key) for key in (
+            "urls", "domains", "ips", "registry_paths", "remote_targets",
+        )))
+        can_bypass = (baseline_eval.status == BaselineStatus.KNOWN_STABLE
+                      and not baseline_eval.should_run_genos
+                      and not was_obfuscated and not trace["limited"]
+                      and not bypass_indicators and not any(routing_features.values()))
+        if can_bypass:
             response = {
                 "label": "Benign",
                 "internal_label": "Benign",
                 "public_label": "Benign",
-                "label_confidence": 100.0,
-                "model_confidence": 100.0,
+                "label_confidence": None,
+                "model_confidence": None,
                 "confidence_driver": "baseline_known_stable",
-                "class_probabilities": {"Benign": 100.0, "Suspicious": 0.0, "Context_Dependent": 0.0, "Malicious": 0.0},
-                "label_probabilities": {"benign": 100.0, "suspicious": 0.0, "malicious": 0.0, "context_dependent": 0.0},
-                "decision_margin": 100.0,
+                "class_probabilities": {},
+                "label_probabilities": {},
+                "decision_margin": None,
+                "score_type": "baseline_policy_no_model_score",
                 "reason": "known_stable_baseline",
                 "triggered_features": [],
                 "routing_policy": "baseline",
@@ -616,6 +662,7 @@ class GenosEngine:
                 "lineage_novel": baseline_eval.lineage_novel,
                 "novelty_score": baseline_eval.novelty_score,
                 "action": "pass",
+                "triage_consistency": {"status": "not_evaluated", "selected_families": []},
                 "provenance": {
                     **self.provenance,
                     "baseline_version": BASELINE_VERSION,
@@ -627,12 +674,7 @@ class GenosEngine:
                 store.observe_and_admit(baseline_signature, baseline_ctx, response)
             return response
 
-        # Obfuscation detection and deobfuscation happen before Stage 1.
-        was_obfuscated = self.deobfuscator.is_obfuscated(raw_cmd)
-        if was_obfuscated:
-            current_cmd, _, _ = self.deobfuscator.deobfuscate_with_metadata(raw_cmd)
-        else:
-            current_cmd = raw_cmd.strip()
+        # Views and decoding trace were prepared before baseline evaluation.
         processed_cmd = current_cmd.lower().strip()
         raw_processed = raw_cmd.strip().lower()
 
@@ -642,14 +684,19 @@ class GenosEngine:
         with torch.no_grad():
             gate_autocast = autocast(device_type=device_type, dtype=autocast_dtype) if self.gatekeeper_backend == "codebert" else nullcontext()
             with gate_autocast:
-                g_probs = self._gate_probs(processed_cmd)
-                raw_g_probs = self._gate_probs(raw_processed) if was_obfuscated and raw_processed != processed_cmd else None
+                changed_view = raw_processed != processed_cmd
+                if changed_view and self.view_policy == "mean" and hasattr(self, "gatekeeper"):
+                    batch_probs = self.gatekeeper.predict_probs_batch([processed_cmd, raw_processed])
+                    g_probs, raw_g_probs = batch_probs[:1], batch_probs[1:2]
+                elif changed_view and self.view_policy == "raw":
+                    g_probs, raw_g_probs = self._gate_probs(raw_processed), None
+                else:
+                    g_probs = self._gate_probs(processed_cmd)
+                    raw_g_probs = self._gate_probs(raw_processed) if changed_view and self.view_policy == "mean" else None
 
                 gate = self._select_gate_summary(g_probs, raw_g_probs)
-                routing_features = self._extract_routing_features(
-                    raw_cmd.strip(),
-                    current_cmd if was_obfuscated else None,
-                )
+                if changed_view and self.view_policy == "decoded":
+                    gate["model_view"] = "decoded"
                 routed = self._route_gatekeeper(gate, routing_features)
                 # Stage 2 is optional and only applies to non-benign verdicts.
                 run_stage2 = run_specialist and routed["label"] != "Benign" and (
@@ -712,6 +759,8 @@ class GenosEngine:
                         "routing_policy": routed["routing_policy"],
                     },
                     "deobfuscated_cmd": current_cmd if was_obfuscated else None,
+                    "deobfuscation_trace": trace,
+                    "triage_consistency": {"status": "not_evaluated", "selected_families": []},
                 }
 
                 if routed["label"] in {"Suspicious", "Context_Dependent"}:
@@ -766,12 +815,11 @@ class GenosEngine:
                     specialist_cmd = current_cmd if was_obfuscated and current_cmd != raw_cmd.strip() else raw_cmd.strip()
                     if self.specialist_mode == "family":
                         response["attack_families"] = self._predict_family_specialist(specialist_cmd)
+                        response["triage_consistency"] = summarize_triage_consistency(routed["label"], response["attack_families"])
 
                     behavior, _ = self._predict_behavior(
-                        specialist_cmd,
-                        routed["label"],
-                        routing_features,
-                        raw_cmd=raw_cmd.strip(),
+                        specialist_cmd, routed["label"], routing_features,
+                        raw_cmd=raw_cmd, view_cache=view_cache,
                     )
                     behavior_probabilities = behavior.pop("_stage_probabilities", None)
                     action_probabilities = behavior.pop("_action_probabilities", None)
@@ -792,7 +840,10 @@ class GenosEngine:
                     }
 
                 if collect_iocs and _RESIDUAL_PIPELINE_AVAILABLE:
-                    evidence = self._collect_indicator_evidence(raw_cmd.strip(), current_cmd, was_obfuscated)
+                    evidence = self._collect_indicator_evidence(
+                        raw_cmd, current_cmd, was_obfuscated=was_obfuscated,
+                        view_cache=view_cache, decoding_trace=trace,
+                    )
                     evidence.update({
                         "triggered_features": routed["triggered_features"],
                         "routing_reason": routed["reason"],
@@ -806,11 +857,16 @@ class GenosEngine:
                         "ips": evidence["ips"],
                         "notable_files": evidence["file_paths"],
                         "registry_paths": evidence["registry_paths"],
+                        "ipv6": evidence.get("ipv6", []),
+                        "hashes": evidence.get("hashes", []),
+                        "defanged_urls": evidence.get("defanged_urls", []),
                     }
 
                 if include_evaluation:
                     response["_evaluation"] = {
-                        "gatekeeper": [gate["class_probabilities"][name] for name in self._gate_labels if name in gate["class_probabilities"]],
+                        "gatekeeper": ([gate.get("benign_prob", 0.0), gate.get("malicious_prob", 0.0),
+                                        gate.get("ctx_prob", 0.0)] if len(self._gate_labels) == 3 else
+                                       [gate.get("benign_prob", 0.0), gate.get("suspicious_prob", 0.0)]),
                         "behavior": behavior_probabilities,
                         "behavior_actions": action_probabilities,
                     }
